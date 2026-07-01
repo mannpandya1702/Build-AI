@@ -45,7 +45,10 @@ export default function Hero() {
               className="h-full w-full object-cover"
               fetchPriority="high"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-ink/80 via-ink/70 to-ink" />
+            {/* Two scrims: a full graded wash + a left column band, so white type stays readable
+                even over bright skies (accessibility contrast, CLAUDE.md §5b). */}
+            <div className="absolute inset-0 bg-gradient-to-b from-ink/90 via-ink/80 to-ink" />
+            <div className="absolute inset-0 bg-gradient-to-r from-ink/80 via-ink/40 to-transparent" />
           </>
         ) : (
           <div
