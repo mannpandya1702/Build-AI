@@ -9,6 +9,11 @@ export interface DemoReview {
   text: string;
 }
 
+export interface DemoFaq {
+  q: string;
+  a: string;
+}
+
 export interface DemoContent {
   placeId: string;
   businessName: string;
@@ -16,14 +21,19 @@ export interface DemoContent {
   state: string;
   phone: string | null;
   primaryService: string;
-  services: string[];
+  services: { name: string; blurb: string }[];
   reviews: DemoReview[];
   photos: { src: string; alt: string }[];
+  heroPhoto: string | null;
   address: string;
   mapQuery: string;
   rating: number | null;
   reviewCount: number | null;
   brandColor: string;
+  // Niche-need band (CLAUDE.md §5b): shown only when flagged on. For roofers this is the
+  // storm-damage/insurance moment. The claim itself stays [NEEDS]-flagged for owner confirmation.
+  stormBand: boolean;
+  faq: DemoFaq[];
   needs: string[];
 }
 

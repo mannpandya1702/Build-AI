@@ -1,7 +1,23 @@
 import type { Metadata } from "next";
+import { Bricolage_Grotesque, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { site } from "../lib/content";
 import StickyCallBar from "../components/StickyCallBar";
+
+// Distinctive type pairing per CLAUDE.md §5b-bis: sturdy grotesque display + readable body.
+// next/font self-hosts, so there is no render-blocking request and no layout shift.
+const display = Bricolage_Grotesque({
+  subsets: ["latin"],
+  weight: ["300", "500", "800"],
+  variable: "--font-display",
+  display: "swap",
+});
+const body = Source_Sans_3({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-body",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: `${site.businessName} — ${site.primaryService} in ${site.city}, ${site.state}`,
@@ -38,8 +54,8 @@ function localBusinessSchema() {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const brandStyle = { ["--brand" as string]: site.brandColor } as React.CSSProperties;
   return (
-    <html lang="en">
-      <body style={brandStyle}>
+    <html lang="en" className={`${display.variable} ${body.variable}`}>
+      <body style={brandStyle} className="font-body">
         {/* JSON-LD structured data. Serialized from our own schema object; no user input. */}
         <script
           type="application/ld+json"

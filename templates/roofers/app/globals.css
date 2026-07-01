@@ -2,9 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Anti-slop palette (CLAUDE.md §5b-bis): one dominant ink, warm paper, one sharp brand accent.
+   --brand is set per lead from content.json in layout.tsx. */
 :root {
-  --brand: #b91c1c;
+  --brand: #b4380d; /* brick / terracotta: the trade's own color */
   --brand-ink: #ffffff;
+  --ink: #10181f; /* deep slate, never pure black */
+  --paper: #faf7f2; /* warm off-white, never pure white */
+  --paper-2: #f1ebe2; /* deeper paper for alternating sections */
 }
 
 html {
@@ -13,8 +18,21 @@ html {
 
 body {
   font-size: 16px; /* body text min 16px (CLAUDE.md §5b) */
+  background: var(--paper);
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* Subtle diagonal shingle texture for atmosphere (CSS-only, no image cost). */
+.texture-shingle {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.035) 0px,
+    rgba(255, 255, 255, 0.035) 1px,
+    transparent 1px,
+    transparent 14px
+  );
 }
 
 /* Never let motion stand between a customer and the tap-to-call button (CLAUDE.md §5c). */

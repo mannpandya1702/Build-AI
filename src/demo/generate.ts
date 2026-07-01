@@ -26,12 +26,12 @@ const MAX_PHOTOS = 6;
 // Near-universal roofing categories (things essentially every roofer does), used only as a starting
 // menu. These are the KIND of work, not specific claims about this business, and the exact menu still
 // needs owner confirmation, which is surfaced to the operator via a [NEEDS] flag before any send.
-// Kept deliberately generic so the demo never asserts a service the business may not offer.
-const DEFAULT_ROOFER_SERVICES = [
-  "Roof Repair",
-  "Roof Replacement",
-  "Storm & Hail Damage",
-  "Roof Inspections",
+// Blurbs describe the work type generically; they never assert business-specific facts.
+const DEFAULT_ROOFER_SERVICES: { name: string; blurb: string }[] = [
+  { name: "Roof Repair", blurb: "Leaks, missing shingles, flashing. Fixed before small problems become big ones." },
+  { name: "Roof Replacement", blurb: "A full tear-off and a new roof, done once and done right." },
+  { name: "Storm & Hail Damage", blurb: "Damage checked and documented properly after the weather hits." },
+  { name: "Roof Inspections", blurb: "A straight answer on what your roof needs, with photos to prove it." },
 ];
 
 export interface DemoReview {
@@ -47,14 +47,17 @@ export interface DemoContent {
   state: string;
   phone: string | null;
   primaryService: string;
-  services: string[];
+  services: { name: string; blurb: string }[];
   reviews: DemoReview[];
   photos: { src: string; alt: string }[];
+  heroPhoto: string | null;
   address: string;
   mapQuery: string;
   rating: number | null;
   reviewCount: number | null;
   brandColor: string;
+  stormBand: boolean; // niche-need band (CLAUDE.md §5a): storm/insurance moment for roofers
+  faq: { q: string; a: string }[]; // fact-safe only: built from known data
   needs: string[]; // surfaced [NEEDS: ...] items for this demo
 }
 
@@ -140,22 +143,41 @@ async function buildContent(placeId: string): Promise<{ content: DemoContent; sl
   if (!lead.phone) needs.push("[NEEDS: phone] no phone number on the GBP; tap-to-call cannot be wired");
   needs.push("[NEEDS: confirm services & pricing] service menu is a standard roofer default, confirm with owner");
   needs.push("[NEEDS: license/insurance/years] add real trust facts once confirmed");
+  needs.push("[NEEDS: confirm storm/insurance work] storm band assumes they handle storm damage jobs; confirm with owner before send");
+
+  const city = lead.city || "your area";
+
+  // FAQ, fact-safe: answers use only data we actually have (city, phone, form). No invented
+  // pricing, timelines, warranties, or credentials (CLAUDE.md §5b).
+  const faq: { q: string; a: string }[] = [
+    { q: "What areas do you cover?", a: `${city} and the surrounding area.` },
+    {
+      q: "How do I get a quote?",
+      a: lead.phone
+        ? `Call ${lead.phone} or use the form above. It takes under a minute.`
+        : "Use the form above. It takes under a minute.",
+    },
+    { q: "What should I do after a storm?", a: "Get the roof inspected and the damage photographed before you file anything. Then you know exactly what you're dealing with." },
+  ];
 
   const content: DemoContent = {
     placeId,
     businessName: lead.business_name,
-    city: lead.city || "your area",
+    city,
     state: lead.state,
     phone: lead.phone,
     primaryService: "Roof Repair",
     services: DEFAULT_ROOFER_SERVICES,
     reviews,
     photos,
+    heroPhoto: photos[0]?.src ?? null,
     address: details.formattedAddress ?? "",
     mapQuery: [lead.business_name, details.formattedAddress].filter(Boolean).join(", "),
     rating: lead.rating,
     reviewCount: lead.review_count,
-    brandColor: "#b91c1c",
+    brandColor: "#b4380d",
+    stormBand: true, // roofers in a hail market: the #1 customer moment (flagged [NEEDS] above)
+    faq,
     needs,
   };
 

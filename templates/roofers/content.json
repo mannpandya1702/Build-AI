@@ -6,18 +6,24 @@
   "phone": null,
   "primaryService": "Roof Repair",
   "services": [
-    "Roof Repair",
-    "Roof Replacement",
-    "Storm & Hail Damage",
-    "Roof Inspections"
+    { "name": "Roof Repair", "blurb": "Leaks, missing shingles, flashing. Fixed before small problems become big ones." },
+    { "name": "Roof Replacement", "blurb": "A full tear-off and a new roof, done once and done right." },
+    { "name": "Storm & Hail Damage", "blurb": "Damage checked and documented properly after the weather hits." },
+    { "name": "Roof Inspections", "blurb": "A straight answer on what your roof needs, with photos to prove it." }
   ],
   "reviews": [],
   "photos": [],
+  "heroPhoto": null,
   "address": "",
   "mapQuery": "Sample Roofing Co., Dallas, TX",
   "rating": null,
   "reviewCount": null,
-  "brandColor": "#b91c1c",
+  "brandColor": "#b4380d",
+  "stormBand": true,
+  "faq": [
+    { "q": "What areas do you cover?", "a": "Dallas and the surrounding area." },
+    { "q": "How do I get a quote?", "a": "Use the form above. It takes under a minute." }
+  ],
   "needs": [
     "[NEEDS: real lead data] this is the template default; src/demo/generate.ts overwrites content.json per lead"
   ]

@@ -86,6 +86,8 @@ This is the move that wins. I do **not** send "I can build you a website." I sen
 1. **The 5-second whoa.** When the owner opens it, they feel "this looks better than anything I have and better than my competitor." This wins the reply. This is where tasteful motion and a hero moment live.
 2. **The conversion skeleton.** The site makes *their* customer call. This proves I understand their business and justifies the monthly fee. This is non-negotiable and it always wins ties against job 1.
 
+**Design to the business, not to a template.** Before building, answer one question: what is this business's customer's #1 moment of need, and what does that customer need to see to pick up the phone? A Dallas roofer's customer just took hail damage and is worried about insurance. A plumber's customer has water on the floor at 11pm. A med spa's customer is comparing before/afters and wants to book quietly online. The demo leads with THAT moment. Read the business's own reviews before building: what customers repeatedly praise (speed, honesty, cleanup, communication) is the business's real differentiator, and it goes in the hero subline and the stats, in their customers' own words. The template provides the bones; the lead's real data decides what gets emphasized.
+
 ### 5b. Conversion skeleton (build this FIRST, every single time)
 
 Grounded in what actually converts for local service businesses in 2026:
@@ -100,6 +102,26 @@ Grounded in what actually converts for local service businesses in 2026:
 - **Standard local structure:** Home (does the heavy lifting, treat as a landing page), Services, About (the humans, builds more trust than owners expect), Gallery / before-after proof, Reviews, Contact (phone, form, map, hours).
 - **Structured headings (H1/H2/H3) + schema markup** so it reads well to Google and to AI search (AI Overviews, ChatGPT, Perplexity now drive discovery).
 - **Accessibility:** proper contrast, alt text, keyboard-navigable. Helps usability, SEO, and legal exposure.
+
+**High-converting sections beyond the basics** (field data: click-to-call in the header lifts conversion 30 to 45%, visible trust signals lift quote requests ~40%, and the average contractor site converts ~2.8% while optimized ones hit 8 to 15%):
+
+- **Stats strip** right under the hero: review count, rating, city served, years in business. Real numbers only; a missing number is omitted, not invented.
+- **Niche-need band.** The section answering the customer's #1 moment (see 5a). Roofers in storm markets: storm/hail damage + "we work with your insurance claim" (gate this behind owner confirmation, it is a service claim). Plumbers/HVAC: 24/7 emergency. Med spa/dentist: before-afters + easy booking.
+- **Process steps (3, not 5):** inspect/diagnose → clear quote → the work, done. Kills the "what happens if I call" hesitation.
+- **Financing visibility** if the business offers it (never assume; `[NEEDS: financing?]`). Roofers report losing deals purely because financing was hard to find.
+- **FAQ, fact-safe:** 3 to 5 questions answered ONLY from known data (service area, how to get a quote, phone). No invented pricing, timelines, or warranties.
+- **Emergency/after-hours line** pinned in a top bar when the niche is emergency-driven.
+
+### 5b-bis. Anti-slop design system (the difference between "generated" and "designed")
+
+AI frontends converge on a recognizable "AI slop" look: Inter/system fonts, purple gradient on white, three uniform cards, timid evenly-spread color, shadows at 0.1 opacity. Prospects can't name it but they feel it. These rules are hard requirements per demo:
+
+- **Typography is the fastest premium signal.** Never Inter, Roboto, Arial, Open Sans, or system fonts. Pick ONE distinctive display face + one readable body face per niche template and use them decisively (roofing/trades: sturdy grotesques like Bricolage Grotesque, Archivo, Space Grotesk; med spa/law: editorial serifs like Fraunces, Playfair, Newsreader). Use weight extremes (200 vs 800, not 400 vs 600) and big size jumps (3x+ between hero and body, not 1.5x). Load via `next/font` (self-hosted, no render-blocking).
+- **Color: one dominant + one sharp accent,** committed via CSS variables. Warm off-whites over pure white. Deep inks over pure black. Never a purple-indigo gradient, never evenly-distributed timid palettes. Derive the accent from the trade (roofing: brick/terracotta/slate; plumbing: deep blues; landscaping: greens) or the business's own branding if they have one.
+- **Atmosphere over flatness.** Layered gradients, a subtle texture or geometric pattern, real photo with a color-graded overlay. A flat solid-color hero reads as template.
+- **Motion: one orchestrated moment.** A single staggered hero reveal on load + gentle scroll-reveals. Not five competing animations. `prefers-reduced-motion` always.
+- **Real photography is the design.** Their GBP photos, treated well (consistent crop, subtle overlay to unify color) beat any illustration. No stock, ever. If no photos exist, design confidently with type + color and flag `[NEEDS: photos]`.
+- **Copy is design too:** short, concrete, their city and their numbers in the words. A hero that says the thing beats a hero that decorates.
 
 ### 5c. The whoa layer (bolt onto the skeleton, with restraint)
 
