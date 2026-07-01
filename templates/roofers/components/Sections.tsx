@@ -131,10 +131,43 @@ export function Process() {
   );
 }
 
+/**
+ * With fewer than 3 real photos, the gallery becomes an honestly-labeled preview: designed
+ * placeholder tiles that pitch the OWNER on sending their job photos. Never stock, never fake
+ * (CLAUDE.md §0.1, §5b): the owner knows their own work on sight, and fake photos kill the pitch.
+ */
+function GalleryPreview() {
+  return (
+    <section id="work" className="bg-paper2 py-20 md:py-28">
+      <div className="mx-auto max-w-6xl px-5">
+        <SectionTitle kicker="Recent work" title={`Your jobs, front and center`} />
+        <p className="mt-4 max-w-xl text-ink/70">
+          This section fills with real photos of your work: before-and-afters, finished roofs, the
+          crew on site. Send them over and they are live the same day.
+        </p>
+        <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Reveal
+              key={i}
+              delay={i * 0.04}
+              className="texture-shingle relative flex aspect-square items-center justify-center rounded-xl bg-gradient-to-br from-ink/[0.07] to-ink/[0.16] ring-1 ring-ink/10"
+            >
+              <span aria-hidden className="font-display text-3xl font-extrabold text-ink/20">+</span>
+              <span className="absolute bottom-3 left-3 text-xs font-semibold uppercase tracking-wide text-ink/40">
+                Your photo
+              </span>
+            </Reveal>
+          ))}
+        </div>
+        <p className="mt-4 text-sm text-ink/50">Real job photos only. No stock, ever.</p>
+      </div>
+    </section>
+  );
+}
+
 export function Gallery() {
-  // Fewer than 3 photos reads as an empty section (and the hero already shows the best one):
-  // omit rather than pad or fake it (CLAUDE.md §0, §5b).
-  if (site.photos.length < 3) return null;
+  // Fewer than 3 real photos: show the honestly-labeled preview instead of padding or faking.
+  if (site.photos.length < 3) return <GalleryPreview />;
   return (
     <section id="work" className="bg-paper2 py-20 md:py-28">
       <div className="mx-auto max-w-6xl px-5">
