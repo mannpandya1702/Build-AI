@@ -52,8 +52,7 @@ function siteQualityScore(probe: Awaited<ReturnType<typeof probeSite>> | null): 
   if (!probe) return null;
   if (!probe.reachable) return 0;
   if (!probe.hasViewportMeta) return 30;
-  if (!probe.likelyResponsive) return 45;
-  return probe.loadMs != null && probe.loadMs < 3500 ? 90 : 65;
+  return probe.builder ? 85 : 70; // on a builder = polished; plain mobile site = decent
 }
 
 async function collectCandidates(cap: number): Promise<PlaceCandidate[]> {
@@ -82,10 +81,14 @@ async function processCandidate(c: PlaceCandidate, fetchReviews: boolean): Promi
   if (qualified && fetchReviews) await placeDetails(c.id, true);
 
   const photoCount = d.photos?.length ?? 0;
+  // Low-confidence gap: the business HAS a site per Google, but the probe could not reach it or found
+  // no mobile viewport. Could be a real gap or just bot-blocking / JS rendering. Verify by hand.
+  const lowConfidenceGap = Boolean(d.websiteUri) && probe != null && (!probe.reachable || !probe.hasViewportMeta);
   const notes = [
     `score ${result.score} (${Object.entries(result.breakdown).map(([k, v]) => `${k}:${v}`).join(", ")})`,
     result.disqualified ? `DISQUALIFIED: ${result.disqualifyReasons.join("; ")}` : "",
     probe ? `site: ${probe.notes}` : "no current website",
+    lowConfidenceGap ? "[VERIFY: probe flagged a gap; confirm on a real phone before building]" : "",
     photoCount === 0 ? "[NEEDS: photos] no GBP photos found" : `${photoCount} GBP photos available`,
   ]
     .filter(Boolean)

@@ -133,63 +133,74 @@ export async function fetchPhotoBytes(photoName: string, maxWidthPx = 1280): Pro
 
 export interface SiteProbe {
   reachable: boolean;
+  status: number | null;
   loadMs: number | null;
-  hasViewportMeta: boolean; // the single most reliable "built for mobile" signal, present in initial HTML
-  likelyResponsive: boolean; // viewport meta AND no gross horizontal overflow after layout settles
+  hasViewportMeta: boolean; // the most reliable "built for mobile" signal, present in the served HTML
+  builder: string | null; // a hosted site-builder platform detected in the HTML (Wix, Squarespace...)
   notes: string;
 }
 
+// Hosted site builders. A business on one of these already has a polished, mobile-ready site, which
+// per CLAUDE.md §4 means "nothing to sell". WordPress is intentionally NOT here: it is too variable
+// (a WP site can be great or terrible), so it is judged on other signals, not auto-disqualified.
+const BUILDER_SIGNATURES: [RegExp, string][] = [
+  [/wix\.com|wixstatic|X-Wix-/i, "Wix"],
+  [/squarespace/i, "Squarespace"],
+  [/webflow/i, "Webflow"],
+  [/cdn\.shopify|Shopify\./i, "Shopify"],
+  [/dudaone|dudamobile|irp\.cdn-website/i, "Duda"],
+  [/weebly/i, "Weebly"],
+  [/godaddy|websitebuilder\.godaddy/i, "GoDaddy Builder"],
+];
+
 /**
- * Load an existing site at a mobile viewport and report whether it renders, roughly how long it
- * took, and whether it looks mobile-ready. We wait for `load` (not domcontentloaded) and let layout
- * settle before measuring, because responsive CSS/JS has not applied at domcontentloaded, which would
- * make even good sites look broken. A missing/broken/old/slow site is a gap that qualifies
- * (CLAUDE.md §4). Puppeteer is imported lazily so cache-only re-runs do not need it.
+ * Probe an existing site with a plain HTTP fetch (mobile UA). Reports reachability, rough response
+ * time, whether the served HTML has a viewport meta (built for mobile), and whether it is on a hosted
+ * site builder. A fetch is used rather than a headless browser because it is faster, more reliable,
+ * and works in restricted/proxied networks where a browser cannot reach external sites. A
+ * missing/broken/no-viewport site is a gap that qualifies (CLAUDE.md §4).
  */
 export async function probeSite(url: string): Promise<SiteProbe> {
-  const puppeteer = (await import("puppeteer")).default;
-  const browser = await puppeteer.launch({ args: ["--no-sandbox", "--disable-setuid-sandbox"] });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  const t0 = Date.now();
   try {
-    const page = await browser.newPage();
-    await page.setViewport({ width: 390, height: 844, isMobile: true, deviceScaleFactor: 2 });
-
-    let reachable = true;
-    let loadMs: number | null = null;
+    const res = await fetch(url, {
+      redirect: "follow",
+      signal: controller.signal,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Safari/604.1",
+      },
+    });
+    let html = "";
     try {
-      const t0 = Date.now();
-      await page.goto(url, { waitUntil: "load", timeout: 20000 });
-      loadMs = Date.now() - t0;
+      html = await res.text();
     } catch {
-      // `load` can time out on heavy sites that still rendered; treat a DOM presence as reachable.
-      reachable = await page.evaluate(() => Boolean(document.body)).catch(() => false);
+      // ignore body read errors; status alone still tells us reachability
     }
-
-    let hasViewportMeta = false;
-    let likelyResponsive = false;
-    if (reachable) {
-      await new Promise((r) => setTimeout(r, 700)); // let responsive CSS/JS settle before measuring
-      const probe = await page
-        .evaluate(() => {
-          const hasViewport = Boolean(document.querySelector('meta[name="viewport"]'));
-          const docWidth = document.documentElement ? document.documentElement.scrollWidth : 0;
-          const grossOverflow = docWidth > window.innerWidth * 1.15;
-          return { hasViewport, grossOverflow };
-        })
-        .catch(() => ({ hasViewport: false, grossOverflow: true }));
-      hasViewportMeta = probe.hasViewport;
-      likelyResponsive = probe.hasViewport && !probe.grossOverflow;
-    }
-
+    const loadMs = Date.now() - t0;
+    const reachable = res.status >= 200 && res.status < 400;
+    const hasViewportMeta = /<meta[^>]+name=["']viewport["'][^>]*>/i.test(html);
+    const builder = BUILDER_SIGNATURES.find(([re]) => re.test(html))?.[1] ?? null;
     return {
       reachable,
+      status: res.status,
       loadMs,
       hasViewportMeta,
-      likelyResponsive,
-      notes: reachable
-        ? `loaded in ${loadMs ?? "?"}ms, viewport-meta=${hasViewportMeta}, responsive=${likelyResponsive}`
-        : "did not load / unreachable",
+      builder,
+      notes: `HTTP ${res.status} in ${loadMs}ms, viewport=${hasViewportMeta}${builder ? `, builder=${builder}` : ""}`,
+    };
+  } catch (err) {
+    return {
+      reachable: false,
+      status: null,
+      loadMs: null,
+      hasViewportMeta: false,
+      builder: null,
+      notes: `fetch failed: ${(err as Error).name}`,
     };
   } finally {
-    await browser.close();
+    clearTimeout(timer);
   }
 }

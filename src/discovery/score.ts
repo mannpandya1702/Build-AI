@@ -47,7 +47,7 @@ const CHAIN_MARKERS = [
   "aptive",
 ];
 
-const FAST_MODERN_MS = 3500; // a responsive site that loads this fast on mobile = nothing to sell
+const SLOW_MS = 8000; // a site whose HTML alone takes this long is genuinely broken/slow
 
 /** Score a lead against CLAUDE.md §4. `probe` is the mobile site-quality probe (null if no website). */
 export function scoreLead(d: PlaceDetails, probe?: SiteProbe | null): ScoreResult {
@@ -67,15 +67,19 @@ export function scoreLead(d: PlaceDetails, probe?: SiteProbe | null): ScoreResul
   // Rating 4.0+ = +15
   breakdown.rating = rating >= 4.0 ? 15 : 0;
 
-  // Website gap: no site at all, OR a site that is genuinely weak. We only claim "weak" on strong,
-  // reliable signals (unreachable, no viewport meta = old build, or very slow). A responsive site we
-  // simply could not confirm is NOT counted as a gap, to avoid over-flagging good sites. = +25
-  const siteIsWeak =
-    !hasWebsite ||
-    (probe
-      ? !probe.reachable || !probe.hasViewportMeta || (probe.loadMs ?? 0) > 5000
-      : false);
-  breakdown.websiteGap = siteIsWeak ? 25 : 0;
+  // Website gap, weighted by confidence. No site at all is the only DEFINITIVE gap (+25). A site
+  // that loads but has no mobile viewport, or is very slow, is a likely gap (+15). A site we could
+  // not fetch is ambiguous (could be broken, could just be blocking bots), so it gets a small nudge
+  // (+10) and is flagged to verify by hand. A working mobile site is not a gap.
+  let websiteGap = 0;
+  if (!hasWebsite) {
+    websiteGap = 25;
+  } else if (probe) {
+    if (probe.reachable && (!probe.hasViewportMeta || (probe.loadMs ?? 0) > SLOW_MS)) websiteGap = 15;
+    else if (!probe.reachable) websiteGap = 10;
+  }
+  breakdown.websiteGap = websiteGap;
+  const siteIsWeak = websiteGap > 0;
 
   // In a target niche = +15
   breakdown.niche = TARGET_NICHE_KEYWORDS.some((k) => name.includes(k)) ? 15 : 0;
@@ -95,8 +99,8 @@ export function scoreLead(d: PlaceDetails, probe?: SiteProbe | null): ScoreResul
   if (CHAIN_MARKERS.some((c) => name.includes(c))) {
     disqualifyReasons.push("looks like a national chain / franchise (no local decision-maker)");
   }
-  if (hasWebsite && probe && probe.reachable && probe.likelyResponsive && (probe.loadMs ?? Infinity) < FAST_MODERN_MS) {
-    disqualifyReasons.push("already on a fast, modern, mobile site (nothing to sell)");
+  if (hasWebsite && probe && probe.reachable && probe.builder) {
+    disqualifyReasons.push(`already on a modern site builder (${probe.builder}): nothing to sell`);
   }
   if (photoCount === 0 && reviews === 0) {
     disqualifyReasons.push("no photo and no reviews: nothing real to personalize with");
