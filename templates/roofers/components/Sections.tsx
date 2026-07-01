@@ -138,8 +138,9 @@ export function Process() {
 }
 
 export function Gallery() {
-  const hasPhotos = site.photos.length > 0;
-  if (!hasPhotos) return null; // no photos: omit rather than fake it (CLAUDE.md §0)
+  // Fewer than 3 photos reads as an empty section (and the hero already shows the best one):
+  // omit rather than pad or fake it (CLAUDE.md §0, §5b).
+  if (site.photos.length < 3) return null;
   return (
     <section id="work" className="bg-paper2 py-20 md:py-28">
       <div className="mx-auto max-w-6xl px-5">
