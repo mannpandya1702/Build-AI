@@ -3,7 +3,7 @@
 // action, so it REFUSES unless: the deploy config is filled, VERCEL_TOKEN is present, and the first
 // deploy is explicitly confirmed (SETUP.md §9, §13). Nothing goes live silently.
 
-import "dotenv/config";
+import "../env";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { mkdirSync } from "node:fs";

@@ -5,7 +5,7 @@
 // business-identity field is still [NEEDS: ...], it REFUSES to finalize the email and names the
 // missing field, because a CAN-SPAM footer with a fake address is not allowed (CLAUDE.md §0.3).
 
-import "dotenv/config";
+import "../env";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import {

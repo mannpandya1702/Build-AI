@@ -4,7 +4,7 @@
 // This chains the module entrypoints as child processes so each keeps its own guards (the first-run
 // cost check and the first-deploy confirmation both still apply).
 
-import "dotenv/config";
+import "../env";
 import { spawn } from "node:child_process";
 import { DEMO_SCORE_THRESHOLD } from "../../config";
 import { readLeads } from "../crm/leads";

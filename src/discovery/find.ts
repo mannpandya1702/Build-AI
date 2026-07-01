@@ -5,7 +5,7 @@
 // passed, this samples a single page (20 results), scores them, prints a cost estimate + the
 // qualified count, and STOPS. Re-run with --confirm-cost to scale to MAX_CANDIDATES_PER_RUN.
 
-import "dotenv/config";
+import "../env";
 import { existsSync, readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";

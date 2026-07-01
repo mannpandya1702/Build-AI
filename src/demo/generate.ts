@@ -6,7 +6,7 @@
 // invented (CLAUDE.md §0). The generated site is written to demos/<slug>/, then handed to qa.ts and
 // deploy.ts.
 
-import "dotenv/config";
+import "../env";
 import { cpSync, existsSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";

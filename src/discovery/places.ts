@@ -2,7 +2,7 @@
 // Photo bytes, and a mobile-viewport site-quality probe. Uses the built-in global fetch (Node 18+).
 // Legacy endpoints are NOT used; field names are the New-API names (SETUP.md §7).
 
-import "dotenv/config";
+import "../env";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
