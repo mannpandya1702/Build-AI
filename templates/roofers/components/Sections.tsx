@@ -52,16 +52,16 @@ export function StatsStrip() {
 
 export function Services() {
   return (
-    <section id="services" className="mx-auto max-w-6xl px-5 py-16 md:py-20">
+    <section id="services" className="mx-auto max-w-6xl px-5 py-20 md:py-28">
       <SectionTitle kicker="What we do" title="Roof work, done right" />
       <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {site.services.map((s, i) => (
           <Reveal
             key={s.name}
             delay={i * 0.05}
-            className="group rounded-2xl border border-ink/10 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+            className="group rounded-2xl bg-white p-6 shadow-card ring-1 ring-ink/5 transition-all hover:-translate-y-0.5 hover:shadow-cardhover"
           >
-            <span className="font-display text-sm font-extrabold text-brand">{String(i + 1).padStart(2, "0")}</span>
+            <span className="font-display text-sm font-extrabold text-ink/30">{String(i + 1).padStart(2, "0")}</span>
             <h3 className="mt-1 font-display text-xl font-extrabold text-ink">{s.name}</h3>
             <p className="mt-2 text-ink/70">{s.blurb}</p>
           </Reveal>
@@ -78,7 +78,7 @@ export function StormBand() {
   return (
     <section aria-label="Storm damage" className="bg-ink text-white">
       <div className="texture-shingle">
-        <div className="mx-auto max-w-6xl px-5 py-14 md:py-16">
+        <div className="mx-auto max-w-6xl px-5 py-20 md:py-24">
           <Reveal>
             <p className="font-display text-sm font-medium uppercase tracking-[0.2em] text-amber-400">
               After the storm
@@ -122,7 +122,7 @@ export function Process() {
     { t: "Done", d: "The work, finished and cleaned up. You see it before we leave." },
   ];
   return (
-    <section className="mx-auto max-w-6xl px-5 py-16 md:py-20">
+    <section className="mx-auto max-w-6xl px-5 py-20 md:py-28">
       <SectionTitle kicker="How it works" title="Three steps. That's it." />
       <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
         {steps.map((s, i) => (
@@ -141,7 +141,7 @@ export function Gallery() {
   const hasPhotos = site.photos.length > 0;
   if (!hasPhotos) return null; // no photos: omit rather than fake it (CLAUDE.md §0)
   return (
-    <section id="work" className="bg-paper2 py-16 md:py-20">
+    <section id="work" className="bg-paper2 py-20 md:py-28">
       <div className="mx-auto max-w-6xl px-5">
         <SectionTitle kicker="Recent work" title={`On roofs around ${site.city}`} />
         <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-3">
@@ -167,11 +167,12 @@ export function Gallery() {
 export function Reviews() {
   if (site.reviews.length === 0) return null; // omit rather than invent (CLAUDE.md §0)
   return (
-    <section id="reviews" className="mx-auto max-w-6xl px-5 py-16 md:py-20">
+    <section id="reviews" className="mx-auto max-w-6xl px-5 py-20 md:py-28">
       <SectionTitle kicker="Real reviews" title={`What ${site.city} says`} />
       <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
         {site.reviews.map((r, i) => (
-          <Reveal key={i} delay={i * 0.05} className="rounded-2xl border border-ink/10 bg-white p-6 shadow-sm">
+          <Reveal key={i} delay={i * 0.05} className="relative rounded-2xl bg-white p-6 pt-8 shadow-card ring-1 ring-ink/5">
+            <span aria-hidden className="absolute right-5 top-2 font-display text-6xl font-extrabold leading-none text-brand/10">&rdquo;</span>
             <p className="text-amber-500" aria-label={`${r.rating} out of 5 stars`}>
               {"★".repeat(Math.round(r.rating))}
             </p>
@@ -189,7 +190,7 @@ export function Reviews() {
 export function Faq() {
   if (site.faq.length === 0) return null;
   return (
-    <section className="bg-paper2 py-16 md:py-20">
+    <section className="bg-paper2 py-20 md:py-28">
       <div className="mx-auto max-w-3xl px-5">
         <SectionTitle kicker="Questions" title="Before you call" />
         <div className="mt-8 divide-y divide-ink/10">
@@ -207,7 +208,7 @@ export function Faq() {
 
 export function Contact() {
   return (
-    <section id="contact" className="mx-auto max-w-6xl px-5 py-16 md:py-20">
+    <section id="contact" className="mx-auto max-w-6xl px-5 py-20 md:py-28">
       <SectionTitle kicker="Find us" title={`${site.city}, ${site.state}`} />
       <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="space-y-2 text-ink/80">

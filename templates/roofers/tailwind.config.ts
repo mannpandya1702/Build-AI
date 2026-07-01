@@ -20,6 +20,12 @@ const config: Config = {
       minHeight: {
         tap: "44px", // buttons min 44px (CLAUDE.md §5b)
       },
+      boxShadow: {
+        // Layered two-part shadows read as physical depth; single flat shadows read as template.
+        card: "0 1px 2px rgb(var(--ink) / 0.05), 0 10px 28px -10px rgb(var(--ink) / 0.14)",
+        cardhover: "0 2px 4px rgb(var(--ink) / 0.06), 0 18px 40px -12px rgb(var(--ink) / 0.2)",
+        cta: "0 2px 6px rgb(var(--brand) / 0.35), 0 14px 32px -8px rgb(var(--brand) / 0.45)",
+      },
     },
   },
   plugins: [],

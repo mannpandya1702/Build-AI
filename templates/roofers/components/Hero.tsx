@@ -20,9 +20,9 @@ export default function Hero() {
 
   return (
     <header className="relative overflow-hidden bg-ink text-white">
-      {/* Top bar: the emergency/response line, always one tap from a call. */}
-      <div className="relative z-10 border-b border-white/10 bg-black/20">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-2 text-sm">
+      {/* Top bar: the emergency line, always one tap from a call. Selective glass (§5b-bis). */}
+      <div className="relative z-10 border-b border-white/10 bg-white/5 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-2.5 text-sm">
           <span className="font-semibold tracking-wide text-white/80">
             Serving {site.city}, {site.state}
           </span>
@@ -81,40 +81,45 @@ export default function Hero() {
           {site.reviewCount ? ` ${site.reviewCount} Google reviews and counting.` : ""}
         </motion.p>
 
+        {/* Two paths, two buyers (CLAUDE.md §5a): the emergency buyer gets the call button,
+            the planner gets the inspection path. */}
         <motion.div {...stagger(3)} className="mt-9 flex flex-col gap-3 sm:flex-row">
           {href ? (
             <a
               href={href}
-              className="flex min-h-tap items-center justify-center rounded-full bg-brand px-8 py-3 font-display text-lg font-extrabold text-brandink shadow-xl shadow-black/30 transition-transform active:scale-95"
+              className="flex min-h-tap items-center justify-center rounded-full bg-brand px-8 py-3.5 font-display text-lg font-extrabold text-brandink shadow-cta transition-all hover:-translate-y-0.5 active:scale-95"
             >
               Call {site.phone}
             </a>
           ) : (
             <a
               href="#quote"
-              className="flex min-h-tap items-center justify-center rounded-full bg-brand px-8 py-3 font-display text-lg font-extrabold text-brandink shadow-xl shadow-black/30"
+              className="flex min-h-tap items-center justify-center rounded-full bg-brand px-8 py-3.5 font-display text-lg font-extrabold text-brandink shadow-cta"
             >
               Get a free quote
             </a>
           )}
           <a
             href="#quote"
-            className="flex min-h-tap items-center justify-center rounded-full border-2 border-white/40 px-8 py-3 font-display text-lg font-semibold text-white transition-colors hover:border-white active:scale-95"
+            className="flex min-h-tap items-center justify-center rounded-full border-2 border-white/40 px-8 py-3.5 font-display text-lg font-semibold text-white transition-colors hover:border-white active:scale-95"
           >
-            Free inspection
+            Book a free inspection
           </a>
         </motion.div>
 
         {(site.rating != null || site.reviewCount != null) && (
-          <motion.div {...stagger(4)} className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/80">
-            {site.rating != null && (
-              <span className="flex items-center gap-1.5">
-                <span aria-hidden className="text-amber-400">{"★".repeat(Math.round(site.rating))}</span>
-                <span className="font-bold text-white">{site.rating.toFixed(1)}</span> on Google
-              </span>
-            )}
-            {site.reviewCount != null && <span>{site.reviewCount} reviews</span>}
-            <span>Local to {site.city}</span>
+          <motion.div {...stagger(4)} className="mt-8">
+            {/* Trust chip: glass pill so it floats over the photo without fighting it (§5b-bis). */}
+            <div className="inline-flex flex-wrap items-center gap-x-5 gap-y-2 rounded-full border border-white/15 bg-white/10 px-5 py-2.5 text-sm text-white/85 backdrop-blur-md">
+              {site.rating != null && (
+                <span className="flex items-center gap-1.5">
+                  <span aria-hidden className="text-amber-400">{"★".repeat(Math.round(site.rating))}</span>
+                  <span className="font-bold text-white">{site.rating.toFixed(1)}</span> on Google
+                </span>
+              )}
+              {site.reviewCount != null && <span>{site.reviewCount} reviews</span>}
+              <span>Local to {site.city}</span>
+            </div>
           </motion.div>
         )}
       </div>
