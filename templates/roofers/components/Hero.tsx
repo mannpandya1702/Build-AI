@@ -55,7 +55,7 @@ export default function Hero() {
             className="h-full w-full texture-shingle"
             style={{
               background:
-                "radial-gradient(90% 70% at 15% 0%, color-mix(in srgb, var(--brand) 45%, transparent) 0%, transparent 60%), radial-gradient(70% 60% at 100% 100%, rgba(255,255,255,0.06) 0%, transparent 55%)",
+                "radial-gradient(90% 70% at 15% 0%, rgb(var(--brand) / 0.45) 0%, transparent 60%), radial-gradient(70% 60% at 100% 100%, rgba(255,255,255,0.06) 0%, transparent 55%)",
             }}
           />
         )}

@@ -3,13 +3,15 @@
 @tailwind utilities;
 
 /* Anti-slop palette (CLAUDE.md §5b-bis): one dominant ink, warm paper, one sharp brand accent.
-   --brand is set per lead from content.json in layout.tsx. */
+   Colors are RGB channel triplets so Tailwind alpha modifiers (bg-ink/80 etc.) work; a hex value
+   here would make every /opacity class silently produce an invalid color. --brand is set per lead
+   from content.json in layout.tsx (converted from hex to channels there). */
 :root {
-  --brand: #b4380d; /* brick / terracotta: the trade's own color */
-  --brand-ink: #ffffff;
-  --ink: #10181f; /* deep slate, never pure black */
-  --paper: #faf7f2; /* warm off-white, never pure white */
-  --paper-2: #f1ebe2; /* deeper paper for alternating sections */
+  --brand: 180 56 13; /* brick / terracotta: the trade's own color */
+  --brand-ink: 255 255 255;
+  --ink: 16 24 31; /* deep slate, never pure black */
+  --paper: 250 247 242; /* warm off-white, never pure white */
+  --paper-2: 241 235 226; /* deeper paper for alternating sections */
 }
 
 html {
@@ -18,8 +20,8 @@ html {
 
 body {
   font-size: 16px; /* body text min 16px (CLAUDE.md §5b) */
-  background: var(--paper);
-  color: var(--ink);
+  background: rgb(var(--paper));
+  color: rgb(var(--ink));
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }

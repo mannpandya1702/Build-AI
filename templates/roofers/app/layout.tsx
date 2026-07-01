@@ -51,8 +51,17 @@ function localBusinessSchema() {
   return schema;
 }
 
+/** "#b4380d" -> "180 56 13" so the brand var matches the channel-triplet palette in globals.css. */
+function hexToChannels(hex: string): string {
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const n = parseInt(full, 16);
+  if (Number.isNaN(n) || full.length !== 6) return "180 56 13";
+  return `${(n >> 16) & 255} ${(n >> 8) & 255} ${n & 255}`;
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const brandStyle = { ["--brand" as string]: site.brandColor } as React.CSSProperties;
+  const brandStyle = { ["--brand" as string]: hexToChannels(site.brandColor) } as React.CSSProperties;
   return (
     <html lang="en" className={`${display.variable} ${body.variable}`}>
       <body style={brandStyle} className="font-body">

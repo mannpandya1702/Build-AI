@@ -5,11 +5,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        brand: "var(--brand)",
-        brandink: "var(--brand-ink)",
-        ink: "var(--ink)",
-        paper: "var(--paper)",
-        paper2: "var(--paper-2)",
+        // <alpha-value> wiring makes Tailwind opacity modifiers (bg-ink/80) work with the CSS vars.
+        brand: "rgb(var(--brand) / <alpha-value>)",
+        brandink: "rgb(var(--brand-ink) / <alpha-value>)",
+        ink: "rgb(var(--ink) / <alpha-value>)",
+        paper: "rgb(var(--paper) / <alpha-value>)",
+        paper2: "rgb(var(--paper-2) / <alpha-value>)",
       },
       fontFamily: {
         // Wired to next/font CSS variables in layout.tsx (CLAUDE.md §5b-bis: no system fonts).
