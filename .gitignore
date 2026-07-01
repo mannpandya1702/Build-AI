@@ -1,0 +1,15 @@
+# secrets: keys live here at runtime, never committed (SETUP.md §5, §13)
+.env.local
+.env
+
+# deps + build artifacts
+node_modules/
+demos/
+data/cache/
+.DS_Store
+*.log
+
+# generated demo template artifacts
+templates/*/node_modules/
+templates/*/.next/
+templates/*/out/

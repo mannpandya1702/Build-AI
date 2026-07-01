@@ -1,0 +1,26 @@
+{
+  "placeId": "TEMPLATE",
+  "businessName": "Sample Roofing Co.",
+  "city": "Dallas",
+  "state": "TX",
+  "phone": null,
+  "primaryService": "Roof Repair",
+  "services": [
+    "Roof Repair",
+    "Roof Replacement",
+    "Storm & Hail Damage",
+    "Roof Inspections",
+    "Gutter Work",
+    "Emergency Tarping"
+  ],
+  "reviews": [],
+  "photos": [],
+  "address": "",
+  "mapQuery": "Sample Roofing Co., Dallas, TX",
+  "rating": null,
+  "reviewCount": null,
+  "brandColor": "#b91c1c",
+  "needs": [
+    "[NEEDS: real lead data] this is the template default; src/demo/generate.ts overwrites content.json per lead"
+  ]
+}
