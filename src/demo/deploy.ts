@@ -34,12 +34,14 @@ export async function deployDemo(demoDir: string, slug: string, placeId: string)
   if (!process.env.VERCEL_TOKEN) {
     return { deployed: false, reason: "VERCEL_TOKEN is missing from .env.local. Not deploying." };
   }
-  const targetSubdomain = `${slug}.${DEMO_DOMAIN_BASE}.vercel.app`;
+  // Flat single-level alias, which the free .vercel.app domain allows (nested <a>.<b>.vercel.app
+  // does not work without a custom domain). e.g. myriad-roofing-buildai.vercel.app
+  const flatAlias = `${slug}-${DEMO_DOMAIN_BASE}.vercel.app`.toLowerCase();
   if (!confirmed()) {
     return {
       deployed: false,
       reason:
-        `first deploy needs a one-time go-ahead. Target: https://${targetSubdomain}\n` +
+        `first deploy needs a one-time go-ahead. Target: https://${flatAlias}\n` +
         `  Review demos/${slug}/ then run:  npm run build-demo ${placeId} -- --confirm-deploy`,
     };
   }
@@ -48,7 +50,7 @@ export async function deployDemo(demoDir: string, slug: string, placeId: string)
   // Pass the token through the child's env, not argv, so it never shows in process listings/logs.
   // The CLI reads VERCEL_TOKEN from the environment.
   const childEnv = { ...process.env, VERCEL_TOKEN: process.env.VERCEL_TOKEN ?? "" };
-  let url: string;
+  let deployUrl: string;
   try {
     const { stdout } = await exec(
       "vercel",
@@ -57,14 +59,19 @@ export async function deployDemo(demoDir: string, slug: string, placeId: string)
     );
     const match = stdout.match(/https:\/\/[^\s]+\.vercel\.app/);
     if (!match) return { deployed: false, reason: `deploy finished but no URL was parsed:\n${stdout}` };
-    url = match[0];
-    // Best-effort alias to the per-prospect subdomain; ignore alias failures (raw URL still works).
-    await exec("vercel", ["alias", "set", url, targetSubdomain, "--scope", VERCEL_SCOPE], { env: childEnv }).catch(() => undefined);
+    deployUrl = match[0];
   } catch (err) {
     return { deployed: false, reason: `vercel deploy failed: ${(err as Error).message}` };
   }
 
-  const liveUrl = `https://${targetSubdomain}`;
+  // Try the clean flat alias; if it fails (name taken/plan limit), fall back to the deployment URL
+  // that Vercel returned, so we always report a URL that actually works.
+  let liveUrl = deployUrl;
+  const aliased = await exec("vercel", ["alias", "set", deployUrl, flatAlias, "--scope", VERCEL_SCOPE], { env: childEnv })
+    .then(() => true)
+    .catch(() => false);
+  if (aliased) liveUrl = `https://${flatAlias}`;
+
   const screenshot = await screenshotHero(liveUrl, slug).catch(() => undefined);
   return { deployed: true, url: liveUrl, screenshot };
 }

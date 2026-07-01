@@ -15,8 +15,10 @@ export const STUDIO_US_PHONE = NEEDS("STUDIO_US_PHONE — US number (Google Voic
 export const FROM_EMAIL = NEEDS("FROM_EMAIL — the address outreach sends from");
 
 // --- Deploy (required before first deploy) ---
-export const VERCEL_SCOPE = NEEDS("VERCEL_SCOPE — your vercel team/username slug");
-export const DEMO_DOMAIN_BASE = NEEDS("DEMO_DOMAIN_BASE — e.g. mystudio, so demos land at joes-roofing.mystudio.vercel.app");
+export const VERCEL_SCOPE = "mann-pandyas-projects";
+// On the free .vercel.app domain, demos land at a flat URL: <slug>-<base>.vercel.app
+// (e.g. myriad-roofing-buildai.vercel.app). A custom domain would allow <slug>.<base>.com.
+export const DEMO_DOMAIN_BASE = "buildai";
 
 // --- Cost guardrails (safe defaults) ---
 export const MAX_CANDIDATES_PER_RUN = 60; // cap Places lookups per run to control spend
