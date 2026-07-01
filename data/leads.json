@@ -773,12 +773,12 @@
     "current_site_url": null,
     "site_quality_score": null,
     "score": 100,
-    "demo_url": null,
-    "demo_screenshot": null,
-    "outreach_status": "",
+    "demo_url": "https://myriad-roofing-construction-llc-buildai.vercel.app",
+    "demo_screenshot": "/home/user/Build-AI/demos/_screenshots/myriad-roofing-construction-llc.webp",
+    "outreach_status": "draft_blocked: missing STUDIO_NAME/STUDIO_ADDRESS/FROM_EMAIL",
     "last_touch_date": null,
     "reply": null,
-    "stage": "qualified",
+    "stage": "demo_built",
     "notes": "score 100 (reviews:30, rating:15, websiteGap:25, niche:15, photos:10, phone:5) | no current website | 1 GBP photos available"
   },
   {
