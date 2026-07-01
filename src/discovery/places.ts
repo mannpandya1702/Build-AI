@@ -134,14 +134,17 @@ export async function fetchPhotoBytes(photoName: string, maxWidthPx = 1280): Pro
 export interface SiteProbe {
   reachable: boolean;
   loadMs: number | null;
-  mobileResponsive: boolean;
+  hasViewportMeta: boolean; // the single most reliable "built for mobile" signal, present in initial HTML
+  likelyResponsive: boolean; // viewport meta AND no gross horizontal overflow after layout settles
   notes: string;
 }
 
 /**
  * Load an existing site at a mobile viewport and report whether it renders, roughly how long it
- * took, and whether it looks mobile-responsive. A broken/slow/non-responsive site is a gap that
- * still qualifies (CLAUDE.md §4). Puppeteer is imported lazily so cache-only re-runs do not need it.
+ * took, and whether it looks mobile-ready. We wait for `load` (not domcontentloaded) and let layout
+ * settle before measuring, because responsive CSS/JS has not applied at domcontentloaded, which would
+ * make even good sites look broken. A missing/broken/old/slow site is a gap that qualifies
+ * (CLAUDE.md §4). Puppeteer is imported lazily so cache-only re-runs do not need it.
  */
 export async function probeSite(url: string): Promise<SiteProbe> {
   const puppeteer = (await import("puppeteer")).default;
@@ -154,28 +157,36 @@ export async function probeSite(url: string): Promise<SiteProbe> {
     let loadMs: number | null = null;
     try {
       const t0 = Date.now();
-      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 15000 });
+      await page.goto(url, { waitUntil: "load", timeout: 20000 });
       loadMs = Date.now() - t0;
     } catch {
-      reachable = false;
+      // `load` can time out on heavy sites that still rendered; treat a DOM presence as reachable.
+      reachable = await page.evaluate(() => Boolean(document.body)).catch(() => false);
     }
 
-    let mobileResponsive = false;
+    let hasViewportMeta = false;
+    let likelyResponsive = false;
     if (reachable) {
-      mobileResponsive = await page.evaluate(() => {
-        const hasViewport = Boolean(document.querySelector('meta[name="viewport"]'));
-        const bodyWidth = document.body ? document.body.scrollWidth : 0;
-        const noHorizontalOverflow = bodyWidth <= window.innerWidth + 24;
-        return hasViewport && noHorizontalOverflow;
-      });
+      await new Promise((r) => setTimeout(r, 700)); // let responsive CSS/JS settle before measuring
+      const probe = await page
+        .evaluate(() => {
+          const hasViewport = Boolean(document.querySelector('meta[name="viewport"]'));
+          const docWidth = document.documentElement ? document.documentElement.scrollWidth : 0;
+          const grossOverflow = docWidth > window.innerWidth * 1.15;
+          return { hasViewport, grossOverflow };
+        })
+        .catch(() => ({ hasViewport: false, grossOverflow: true }));
+      hasViewportMeta = probe.hasViewport;
+      likelyResponsive = probe.hasViewport && !probe.grossOverflow;
     }
 
     return {
       reachable,
       loadMs,
-      mobileResponsive,
+      hasViewportMeta,
+      likelyResponsive,
       notes: reachable
-        ? `loaded in ${loadMs}ms, mobile-responsive=${mobileResponsive}`
+        ? `loaded in ${loadMs ?? "?"}ms, viewport-meta=${hasViewportMeta}, responsive=${likelyResponsive}`
         : "did not load / unreachable",
     };
   } finally {

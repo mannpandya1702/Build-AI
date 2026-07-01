@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import { NICHE, METRO, MAX_CANDIDATES_PER_RUN, DEMO_SCORE_THRESHOLD } from "../../config";
 import { textSearch, placeDetails, probeSite, type PlaceCandidate } from "./places";
 import { scoreLead } from "./score";
+import { cityFromAddress, stateFromAddress } from "./address";
 import { upsertLead, type Lead } from "../crm/leads";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -47,32 +48,12 @@ function isFirstRun(): boolean {
   return readdirSync(CACHE_DIR).filter((f) => f.endsWith(".json")).length === 0;
 }
 
-function stateFromAddress(addr?: string): string {
-  const m = (addr ?? "").match(/,\s*([A-Z]{2})\s*\d{5}/);
-  return m ? m[1] : "";
-}
-
-function cityFromAddress(addr?: string): string {
-  if (!addr) return "";
-  // Drop empties and a trailing country component, then anchor on the "STATE ZIP" part: the city is
-  // the token right before it. Handles both "123 Main St, Plano, TX 75023, USA" and the country-less
-  // "123 Main St, Plano, TX 75023" (a very common Places shape for US businesses).
-  const parts = addr
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .filter((p) => !/^(USA|United States)$/i.test(p));
-  const stateIdx = parts.findIndex((p) => /^[A-Z]{2}\s*\d{5}(-\d{4})?$/.test(p));
-  if (stateIdx > 0) return parts[stateIdx - 1];
-  if (parts.length >= 2) return parts[parts.length - 2];
-  return parts[0] ?? "";
-}
-
 function siteQualityScore(probe: Awaited<ReturnType<typeof probeSite>> | null): number | null {
   if (!probe) return null;
   if (!probe.reachable) return 0;
-  if (!probe.mobileResponsive) return 30;
-  return probe.loadMs != null && probe.loadMs < 2500 ? 90 : 60;
+  if (!probe.hasViewportMeta) return 30;
+  if (!probe.likelyResponsive) return 45;
+  return probe.loadMs != null && probe.loadMs < 3500 ? 90 : 65;
 }
 
 async function collectCandidates(cap: number): Promise<PlaceCandidate[]> {
@@ -130,18 +111,32 @@ async function processCandidate(c: PlaceCandidate, fetchReviews: boolean): Promi
 }
 
 async function main(): Promise<void> {
+  // --rescore: re-score everything already in the cache, with fresh site probes and NO API calls.
+  // Use it to iterate on scoring without spending. Normal runs hit the Places API.
+  const rescore = process.argv.includes("--rescore");
   const confirmed = process.argv.includes("--confirm-cost") || process.env.CONFIRM_COST === "1";
-  const firstRun = isFirstRun();
-  const cap = firstRun && !confirmed ? 20 : MAX_CANDIDATES_PER_RUN;
+  const firstRun = !rescore && isFirstRun();
 
-  console.log(`Searching "${NICHE}" in ${METRO} (${metroVariants(METRO).length} area variants), cap ${cap}.`);
-  const candidates = await collectCandidates(cap);
-  console.log(`Found ${candidates.length} unique candidates. Fetching details + scoring...`);
+  let candidates: PlaceCandidate[];
+  if (rescore) {
+    const ids = existsSync(CACHE_DIR)
+      ? readdirSync(CACHE_DIR)
+          .filter((f) => f.endsWith(".json"))
+          .map((f) => f.replace(/\.json$/, ""))
+      : [];
+    candidates = ids.map((id) => ({ id }));
+    console.log(`Re-scoring ${candidates.length} cached candidates (no API calls, fresh probes).`);
+  } else {
+    const cap = firstRun && !confirmed ? 20 : MAX_CANDIDATES_PER_RUN;
+    console.log(`Searching "${NICHE}" in ${METRO} (${metroVariants(METRO).length} area variants), cap ${cap}.`);
+    candidates = await collectCandidates(cap);
+    console.log(`Found ${candidates.length} unique candidates. Fetching details + scoring...`);
+  }
 
   const processed: Lead[] = [];
   for (const c of candidates) {
     try {
-      processed.push(await processCandidate(c, !firstRun || confirmed));
+      processed.push(await processCandidate(c, !rescore && (!firstRun || confirmed)));
     } catch (err) {
       console.warn(`  skipped ${c.displayName?.text ?? c.id}: ${(err as Error).message}`);
     }
@@ -150,8 +145,9 @@ async function main(): Promise<void> {
   const qualified = processed
     .filter((l) => l.stage === "qualified")
     .sort((a, b) => b.score - a.score);
+  const disqualified = processed.filter((l) => /DISQUALIFIED/.test(l.notes));
 
-  console.log(`\nProcessed ${processed.length}. ${qualified.length} qualified (>= ${DEMO_SCORE_THRESHOLD}).`);
+  console.log(`\nProcessed ${processed.length}. ${qualified.length} qualified (>= ${DEMO_SCORE_THRESHOLD}), ${disqualified.length} auto-disqualified.`);
   for (const l of qualified.slice(0, 15)) {
     const site = l.has_website ? l.current_site_url : "NO SITE";
     console.log(`  ${String(l.score).padStart(3)}  ${l.business_name}  (${l.review_count ?? 0} reviews, ${l.rating ?? "?"}star)  ${site}  [${l.place_id}]`);

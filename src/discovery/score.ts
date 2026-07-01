@@ -47,7 +47,7 @@ const CHAIN_MARKERS = [
   "aptive",
 ];
 
-const FAST_MODERN_MS = 2500; // a site that loads this fast on mobile and is responsive = nothing to sell
+const FAST_MODERN_MS = 3500; // a responsive site that loads this fast on mobile = nothing to sell
 
 /** Score a lead against CLAUDE.md §4. `probe` is the mobile site-quality probe (null if no website). */
 export function scoreLead(d: PlaceDetails, probe?: SiteProbe | null): ScoreResult {
@@ -67,10 +67,14 @@ export function scoreLead(d: PlaceDetails, probe?: SiteProbe | null): ScoreResul
   // Rating 4.0+ = +15
   breakdown.rating = rating >= 4.0 ? 15 : 0;
 
-  // Website gap: no site at all, OR a site that is broken / slow / not mobile-responsive = +25
+  // Website gap: no site at all, OR a site that is genuinely weak. We only claim "weak" on strong,
+  // reliable signals (unreachable, no viewport meta = old build, or very slow). A responsive site we
+  // simply could not confirm is NOT counted as a gap, to avoid over-flagging good sites. = +25
   const siteIsWeak =
     !hasWebsite ||
-    (probe ? !probe.reachable || !probe.mobileResponsive || (probe.loadMs ?? 0) > 4000 : false);
+    (probe
+      ? !probe.reachable || !probe.hasViewportMeta || (probe.loadMs ?? 0) > 5000
+      : false);
   breakdown.websiteGap = siteIsWeak ? 25 : 0;
 
   // In a target niche = +15
@@ -91,7 +95,7 @@ export function scoreLead(d: PlaceDetails, probe?: SiteProbe | null): ScoreResul
   if (CHAIN_MARKERS.some((c) => name.includes(c))) {
     disqualifyReasons.push("looks like a national chain / franchise (no local decision-maker)");
   }
-  if (hasWebsite && probe && probe.reachable && probe.mobileResponsive && (probe.loadMs ?? Infinity) < FAST_MODERN_MS) {
+  if (hasWebsite && probe && probe.reachable && probe.likelyResponsive && (probe.loadMs ?? Infinity) < FAST_MODERN_MS) {
     disqualifyReasons.push("already on a fast, modern, mobile site (nothing to sell)");
   }
   if (photoCount === 0 && reviews === 0) {
