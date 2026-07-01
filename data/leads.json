@@ -775,7 +775,7 @@
     "score": 100,
     "demo_url": "https://myriad-roofing-construction-llc-buildai.vercel.app",
     "demo_screenshot": "/home/user/Build-AI/demos/_screenshots/myriad-roofing-construction-llc.webp",
-    "outreach_status": "draft_blocked: missing STUDIO_NAME/STUDIO_ADDRESS/FROM_EMAIL",
+    "outreach_status": "draft_blocked: missing STUDIO_ADDRESS",
     "last_touch_date": null,
     "reply": null,
     "stage": "demo_built",

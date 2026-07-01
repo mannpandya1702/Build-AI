@@ -12,7 +12,7 @@ export const METRO = "Dallas, TX";
 export const STUDIO_NAME = "TradeCraft Sites";
 export const STUDIO_ADDRESS = NEEDS("STUDIO_ADDRESS — real physical mailing address, required by CAN-SPAM");
 export const STUDIO_US_PHONE = NEEDS("STUDIO_US_PHONE — US number (Google Voice/Twilio) for call CTAs + signatures");
-export const FROM_EMAIL = NEEDS("FROM_EMAIL — the address outreach sends from");
+export const FROM_EMAIL = "mann@tradecraftsites.com";
 
 // --- Deploy (required before first deploy) ---
 export const VERCEL_SCOPE = "mann-pandyas-projects";

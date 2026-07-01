@@ -3,7 +3,7 @@ place_id: ChIJVVUVVyUhTIYRYsA3gtFhiIU | 44 reviews | 5 stars | demo: https://myr
 
 ## Touch-1 email — NOT FINALIZED
 
-REFUSED to finalize: a CAN-SPAM footer needs real values. Missing: STUDIO_NAME, STUDIO_ADDRESS, FROM_EMAIL.
+REFUSED to finalize: a CAN-SPAM footer needs real values. Missing: STUDIO_ADDRESS.
 Fill these in config.ts, then re-run `npm run draft ChIJVVUVVyUhTIYRYsA3gtFhiIU`.
 
 Draft preview (do not send until the fields above are real):
@@ -17,9 +17,9 @@ So I built you a version. Here it is: https://myriad-roofing-construction-llc-bu
 It loads fast on phones and puts your number one tap away, so the people finding you at midnight actually call you instead of the next guy.
 If you like it, I can have it live on your domain this week. Want me to?
 
+TradeCraft
 
-
-[NEEDS: STUDIO_NAME]
+TradeCraft Sites
 [NEEDS: STUDIO_ADDRESS — real physical mailing address, required by CAN-SPAM]
 Not interested? Reply "unsubscribe" and I will not email you again.
 ```
@@ -30,7 +30,7 @@ CALL SCRIPT — Myriad Roofing & Construction LLC
 [NEEDS: STUDIO_US_PHONE] call from your US number, never the +91 number
 
 Opener:
-"Hey Myriad Roofing & Construction LLC, it's [your name]. I built Myriad Roofing & Construction LLC a new website and emailed you the link. Did you get a chance to click it?"
+"Hey Myriad Roofing & Construction LLC, it's TradeCraft. I built Myriad Roofing & Construction LLC a new website and emailed you the link. Did you get a chance to click it?"
 
 If not opened: walk them to it live on the call.
 Hook: "44 five-star reviews and your site doesn't show a single one. The new one puts them front and center."
