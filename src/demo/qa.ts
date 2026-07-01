@@ -24,7 +24,7 @@ const SECRET_PATTERNS: { name: string; re: RegExp }[] = [
   { name: "private key block", re: /-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----/ },
 ];
 
-const TEXT_EXT = /\.(t|j)sx?$|\.css$|\.json$|\.html$|\.mjs$|\.cjs$/;
+const TEXT_EXT = /\.(t|j)sx?$|\.css$|\.json$|\.html$|\.mjs$|\.cjs$|\.env(\.[\w-]+)?$/;
 const SKIP_DIR = /node_modules|\.next|[/\\]out$|[/\\]public[/\\]photos/;
 
 function walk(dir: string, files: string[] = []): string[] {
@@ -50,10 +50,9 @@ export async function runQa(demoDir: string): Promise<QaResult> {
   };
   const allSource = files.map(read).join("\n");
 
-  // 1. No leaked secrets in anything that could ship to the client.
+  // 1. No leaked secrets in anything that could ship (env files included, so a stray key is caught).
   const leaks: string[] = [];
   for (const f of files) {
-    if (/\.env/.test(f)) continue;
     const src = read(f);
     for (const p of SECRET_PATTERNS) {
       if (p.re.test(src)) leaks.push(`${p.name} in ${f.replace(demoDir, ".")}`);
@@ -63,6 +62,14 @@ export async function runQa(demoDir: string): Promise<QaResult> {
     name: "no secrets in bundle-bound source",
     ok: leaks.length === 0,
     detail: leaks.length ? leaks.join("; ") : "clean",
+  });
+
+  // 1b. No .env* files in the demo directory at all: they must never ship with a deploy.
+  const envFiles = files.filter((f) => /(^|[/\\])\.env(\.[\w-]+)?$/.test(f));
+  checks.push({
+    name: "no .env files in the demo",
+    ok: envFiles.length === 0,
+    detail: envFiles.length ? envFiles.map((f) => f.replace(demoDir, ".")).join("; ") : "none",
   });
 
   // 2. A real tap-to-call link exists (the single highest-ROI element, CLAUDE.md §5b).
@@ -82,7 +89,7 @@ export async function runQa(demoDir: string): Promise<QaResult> {
   }
   checks.push({
     name: "quote form is 3-5 fields",
-    ok: formFile ? inputCount > 0 && inputCount <= 6 : false,
+    ok: formFile ? inputCount >= 3 && inputCount <= 5 : false,
     detail: formFile ? `${inputCount} fields in ${formFile.replace(demoDir, ".")}` : "no form file found",
   });
 

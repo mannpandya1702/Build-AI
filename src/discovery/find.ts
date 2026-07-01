@@ -54,9 +54,18 @@ function stateFromAddress(addr?: string): string {
 
 function cityFromAddress(addr?: string): string {
   if (!addr) return "";
-  const parts = addr.split(",").map((s) => s.trim());
-  // "123 Main St, Plano, TX 75023, USA" -> city is 3rd from the end
-  return parts.length >= 3 ? parts[parts.length - 3] : parts[0] ?? "";
+  // Drop empties and a trailing country component, then anchor on the "STATE ZIP" part: the city is
+  // the token right before it. Handles both "123 Main St, Plano, TX 75023, USA" and the country-less
+  // "123 Main St, Plano, TX 75023" (a very common Places shape for US businesses).
+  const parts = addr
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .filter((p) => !/^(USA|United States)$/i.test(p));
+  const stateIdx = parts.findIndex((p) => /^[A-Z]{2}\s*\d{5}(-\d{4})?$/.test(p));
+  if (stateIdx > 0) return parts[stateIdx - 1];
+  if (parts.length >= 2) return parts[parts.length - 2];
+  return parts[0] ?? "";
 }
 
 function siteQualityScore(probe: Awaited<ReturnType<typeof probeSite>> | null): number | null {

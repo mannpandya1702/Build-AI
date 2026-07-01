@@ -45,19 +45,21 @@ export async function deployDemo(demoDir: string, slug: string, placeId: string)
   }
 
   // --- Real deploy via the Vercel CLI ---
-  const token = process.env.VERCEL_TOKEN as string;
+  // Pass the token through the child's env, not argv, so it never shows in process listings/logs.
+  // The CLI reads VERCEL_TOKEN from the environment.
+  const childEnv = { ...process.env, VERCEL_TOKEN: process.env.VERCEL_TOKEN ?? "" };
   let url: string;
   try {
     const { stdout } = await exec(
       "vercel",
-      ["deploy", "--prod", "--yes", "--token", token, "--scope", VERCEL_SCOPE, "--cwd", demoDir],
-      { maxBuffer: 1024 * 1024 * 32 },
+      ["deploy", "--prod", "--yes", "--scope", VERCEL_SCOPE, "--cwd", demoDir],
+      { maxBuffer: 1024 * 1024 * 32, env: childEnv },
     );
     const match = stdout.match(/https:\/\/[^\s]+\.vercel\.app/);
     if (!match) return { deployed: false, reason: `deploy finished but no URL was parsed:\n${stdout}` };
     url = match[0];
     // Best-effort alias to the per-prospect subdomain; ignore alias failures (raw URL still works).
-    await exec("vercel", ["alias", "set", url, targetSubdomain, "--token", token, "--scope", VERCEL_SCOPE]).catch(() => undefined);
+    await exec("vercel", ["alias", "set", url, targetSubdomain, "--scope", VERCEL_SCOPE], { env: childEnv }).catch(() => undefined);
   } catch (err) {
     return { deployed: false, reason: `vercel deploy failed: ${(err as Error).message}` };
   }

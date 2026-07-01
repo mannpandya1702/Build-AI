@@ -23,15 +23,15 @@ const DEMOS_DIR = resolve(ROOT, "demos");
 
 const MAX_PHOTOS = 6;
 
-// Standard category labels for a roofer. These are the KIND of work, not claims about the business.
-// The exact menu still needs owner confirmation, so it is flagged in `needs`.
+// Near-universal roofing categories (things essentially every roofer does), used only as a starting
+// menu. These are the KIND of work, not specific claims about this business, and the exact menu still
+// needs owner confirmation, which is surfaced to the operator via a [NEEDS] flag before any send.
+// Kept deliberately generic so the demo never asserts a service the business may not offer.
 const DEFAULT_ROOFER_SERVICES = [
   "Roof Repair",
   "Roof Replacement",
   "Storm & Hail Damage",
   "Roof Inspections",
-  "Gutter Work",
-  "Emergency Tarping",
 ];
 
 export interface DemoReview {
