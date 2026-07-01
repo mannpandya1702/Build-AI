@@ -9,7 +9,7 @@ export const NICHE = "roofers";
 export const METRO = "Dallas, TX";
 
 // --- Studio identity (required before first send / first deploy, for CAN-SPAM + honest NAP) ---
-export const STUDIO_NAME = NEEDS("STUDIO_NAME");
+export const STUDIO_NAME = "TradeCraft Sites";
 export const STUDIO_ADDRESS = NEEDS("STUDIO_ADDRESS — real physical mailing address, required by CAN-SPAM");
 export const STUDIO_US_PHONE = NEEDS("STUDIO_US_PHONE — US number (Google Voice/Twilio) for call CTAs + signatures");
 export const FROM_EMAIL = NEEDS("FROM_EMAIL — the address outreach sends from");
