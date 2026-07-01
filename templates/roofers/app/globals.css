@@ -37,6 +37,25 @@ body {
   );
 }
 
+/* Review marquee: CSS-driven infinite track (never <marquee>). The track holds the list twice;
+   -50% translate loops seamlessly. Pauses on hover so cards can be read (WCAG 2.2.2 pause intent). */
+@keyframes marquee-x {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  animation: marquee-x 45s linear infinite;
+  will-change: transform;
+}
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
 /* Never let motion stand between a customer and the tap-to-call button (CLAUDE.md §5c). */
 @media (prefers-reduced-motion: reduce) {
   *,

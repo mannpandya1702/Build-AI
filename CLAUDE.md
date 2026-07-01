@@ -118,6 +118,8 @@ Grounded in what actually converts for local service businesses in 2026:
 - **Financing visibility** if the business offers it (never assume; `[NEEDS: financing?]`). Roofers report losing deals purely because financing was hard to find.
 - **FAQ, fact-safe:** 3 to 5 questions answered ONLY from known data (service area, how to get a quote, phone). No invented pricing, timelines, or warranties.
 - **Emergency/after-hours line** pinned in a top bar when the niche is emergency-driven.
+- **Section order is a narrative, not a stack.** The validated sequence: hook (hero, with social proof visible in it) → instant trust (stats) → the problem (the niche-need moment, agitated honestly) → the solution (services) → how it works (process) → proof (gallery, reviews) → the offer (quote form) → objections (FAQ) → find us. Each section answers exactly one question, reduces exactly one risk, and moves toward one action. If a section doesn't do one of those, cut it.
+- **Proof in motion, carefully.** A slow horizontal review marquee (CSS track, list duplicated with `aria-hidden`, pause on hover/focus, static grid under `prefers-reduced-motion`) keeps the proof section alive without carousel controls. Never the deprecated marquee pattern, never auto-motion the user can't stop.
 
 ### 5b-bis. Anti-slop design system (the difference between "generated" and "designed")
 

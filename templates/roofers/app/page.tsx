@@ -3,16 +3,17 @@ import { StatsStrip, Services, StormBand, Process, Gallery, Reviews, Faq, Contac
 import QuoteForm from "../components/QuoteForm";
 import { site } from "../lib/content";
 
-// Home does the heavy lifting as a landing page (CLAUDE.md §5b): hero → proof → services →
-// the niche-need moment → process → gallery → reviews → quote → FAQ → contact. One primary
-// action throughout: call, or get a quote.
+// Home follows the validated narrative order (CLAUDE.md §5b): hook (hero with proof chips) →
+// instant trust (stats) → THE PROBLEM (storm band, the customer's #1 moment) → solution
+// (services) → how it works (process) → proof (gallery, reviews) → offer (quote) → objections
+// (FAQ) → find us. Each section answers one question and moves toward one action.
 export default function Page() {
   return (
     <main className="pb-24 md:pb-0">
       <Hero />
       <StatsStrip />
-      <Services />
       <StormBand />
+      <Services />
       <Process />
       <Gallery />
       <Reviews />

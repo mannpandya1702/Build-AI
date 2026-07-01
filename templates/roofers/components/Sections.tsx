@@ -164,24 +164,64 @@ export function Gallery() {
   );
 }
 
-export function Reviews() {
-  if (site.reviews.length === 0) return null; // omit rather than invent (CLAUDE.md §0)
+function ReviewCard({ r }: { r: (typeof site.reviews)[number] }) {
   return (
-    <section id="reviews" className="mx-auto max-w-6xl px-5 py-20 md:py-28">
-      <SectionTitle kicker="Real reviews" title={`What ${site.city} says`} />
-      <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
-        {site.reviews.map((r, i) => (
-          <Reveal key={i} delay={i * 0.05} className="relative rounded-2xl bg-white p-6 pt-8 shadow-card ring-1 ring-ink/5">
-            <span aria-hidden className="absolute right-5 top-2 font-display text-6xl font-extrabold leading-none text-brand/10">&rdquo;</span>
-            <p className="text-amber-500" aria-label={`${r.rating} out of 5 stars`}>
-              {"★".repeat(Math.round(r.rating))}
-            </p>
-            <p className="mt-3 text-ink/80">&ldquo;{r.text}&rdquo;</p>
-            <p className="mt-4 font-display font-extrabold text-ink">{r.author}</p>
-          </Reveal>
-        ))}
+    <figure className="relative w-[320px] shrink-0 rounded-2xl bg-white p-6 pt-8 shadow-card ring-1 ring-ink/5 md:w-[380px]">
+      <span aria-hidden className="absolute right-5 top-2 font-display text-6xl font-extrabold leading-none text-brand/10">
+        &rdquo;
+      </span>
+      <p className="text-amber-500" aria-label={`${r.rating} out of 5 stars`}>
+        {"★".repeat(Math.round(r.rating))}
+      </p>
+      <blockquote className="mt-3 text-ink/80">&ldquo;{r.text}&rdquo;</blockquote>
+      <figcaption className="mt-4 font-display font-extrabold text-ink">{r.author}</figcaption>
+    </figure>
+  );
+}
+
+/**
+ * Reviews as a slow horizontal marquee: the list rendered twice inside a CSS-animated track
+ * (translateX -50% loops seamlessly), pause on hover/focus, duplicate copy aria-hidden. Under
+ * prefers-reduced-motion it falls back to a static grid, per WCAG and CLAUDE.md §5c.
+ */
+export function Reviews() {
+  const reduce = useReducedMotion();
+  if (site.reviews.length === 0) return null; // omit rather than invent (CLAUDE.md §0)
+
+  return (
+    <section id="reviews" className="overflow-hidden py-20 md:py-28">
+      <div className="mx-auto max-w-6xl px-5">
+        <SectionTitle kicker="Real reviews" title={`What ${site.city} says`} />
       </div>
-      <p className="mt-4 text-sm text-ink/50">Pulled from real Google reviews.</p>
+
+      {reduce ? (
+        <div className="mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-4 px-5 md:grid-cols-2">
+          {site.reviews.map((r, i) => (
+            <ReviewCard key={i} r={r} />
+          ))}
+        </div>
+      ) : (
+        <div className="marquee relative mt-10">
+          {/* Edge fades so cards drift in and out instead of getting clipped. */}
+          <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-paper to-transparent" />
+          <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-paper to-transparent" />
+          {/* Two identical groups: translateX(-50%) shifts exactly one group width = seamless loop. */}
+          <div className="marquee-track flex w-max pb-2">
+            <div className="flex gap-4 pr-4">
+              {site.reviews.map((r, i) => (
+                <ReviewCard key={`a-${i}`} r={r} />
+              ))}
+            </div>
+            <div aria-hidden className="flex gap-4 pr-4">
+              {site.reviews.map((r, i) => (
+                <ReviewCard key={`b-${i}`} r={r} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <p className="mx-auto mt-5 max-w-6xl px-5 text-sm text-ink/50">Pulled from real Google reviews. Hover to pause.</p>
     </section>
   );
 }
