@@ -29,26 +29,8 @@ function SectionTitle({ kicker, title }: { kicker: string; title: string }) {
   );
 }
 
-/** Stats strip: real numbers only, straight from the GBP (CLAUDE.md §5b). Omits what it lacks. */
-export function StatsStrip() {
-  const stats: { value: string; label: string }[] = [];
-  if (site.rating != null) stats.push({ value: site.rating.toFixed(1), label: "Google rating" });
-  if (site.reviewCount != null) stats.push({ value: String(site.reviewCount), label: "Google reviews" });
-  stats.push({ value: site.city, label: "Local & nearby" });
-  if (stats.length < 2) return null;
-  return (
-    <section aria-label="Highlights" className="border-y border-ink/10 bg-paper2">
-      <div className="mx-auto grid max-w-6xl grid-cols-3 divide-x divide-ink/10 px-2 py-6 md:py-8">
-        {stats.slice(0, 3).map((s, i) => (
-          <Reveal key={s.label} delay={i * 0.06} className="px-3 text-center">
-            <p className="font-display text-3xl font-extrabold text-ink md:text-4xl">{s.value}</p>
-            <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-ink/60">{s.label}</p>
-          </Reveal>
-        ))}
-      </div>
-    </section>
-  );
-}
+// Stats now live inside the hero as a glass strip (see Hero.tsx): trust joins the first
+// impression instead of sitting as a thin light sliver between two dark bands.
 
 export function Services() {
   return (
@@ -71,15 +53,25 @@ export function Services() {
   );
 }
 
-/** The niche-need band (CLAUDE.md §5a/§5b): the Dallas storm/insurance moment. Flag-gated. */
+/**
+ * The niche-need band (CLAUDE.md §5a/§5b): the Dallas storm/insurance moment. Flag-gated.
+ * An inset floating card in a warm near-black (a storm material, distinct from the hero's slate),
+ * framed by paper on all sides so there is no dark-on-dark seam (section rhythm, §5b-bis).
+ */
 export function StormBand() {
   if (!site.stormBand) return null;
   const href = telHref(site.phone);
   return (
-    <section aria-label="Storm damage" className="bg-ink text-white">
-      <div className="texture-shingle">
-        <div className="mx-auto max-w-6xl px-5 py-20 md:py-24">
-          <Reveal>
+    <section aria-label="Storm damage" className="px-4 pt-14 md:px-6 md:pt-20">
+      <Reveal className="mx-auto max-w-6xl">
+        <div
+          className="texture-shingle relative overflow-hidden rounded-3xl text-white ring-1 ring-white/10"
+          style={{
+            background:
+              "radial-gradient(110% 130% at 90% -10%, rgb(var(--brand) / 0.5) 0%, transparent 55%), linear-gradient(150deg, rgb(26 14 9) 0%, rgb(15 9 6) 100%)",
+          }}
+        >
+          <div className="px-6 py-12 md:px-14 md:py-16">
             <p className="font-display text-sm font-medium uppercase tracking-[0.2em] text-amber-400">
               After the storm
             </p>
@@ -94,22 +86,22 @@ export function StormBand() {
               {href ? (
                 <a
                   href={href}
-                  className="inline-flex min-h-tap items-center justify-center rounded-full bg-brand px-8 py-3 font-display text-lg font-extrabold text-brandink shadow-lg active:scale-95"
+                  className="inline-flex min-h-tap items-center justify-center rounded-full bg-brand px-8 py-3 font-display text-lg font-extrabold text-brandink shadow-cta transition-transform hover:-translate-y-0.5 active:scale-95"
                 >
                   Get an inspection first
                 </a>
               ) : (
                 <a
                   href="#quote"
-                  className="inline-flex min-h-tap items-center justify-center rounded-full bg-brand px-8 py-3 font-display text-lg font-extrabold text-brandink shadow-lg"
+                  className="inline-flex min-h-tap items-center justify-center rounded-full bg-brand px-8 py-3 font-display text-lg font-extrabold text-brandink shadow-cta"
                 >
                   Get an inspection first
                 </a>
               )}
             </div>
-          </Reveal>
+          </div>
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }
@@ -122,16 +114,18 @@ export function Process() {
     { t: "Done", d: "The work, finished and cleaned up. You see it before we leave." },
   ];
   return (
-    <section className="mx-auto max-w-6xl px-5 py-20 md:py-28">
-      <SectionTitle kicker="How it works" title="Three steps. That's it." />
-      <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
-        {steps.map((s, i) => (
-          <Reveal key={s.t} delay={i * 0.08} className="relative rounded-2xl bg-paper2 p-6">
-            <span className="font-display text-5xl font-extrabold leading-none text-brand/25">{i + 1}</span>
-            <h3 className="mt-3 font-display text-2xl font-extrabold text-ink">{s.t}</h3>
-            <p className="mt-2 text-ink/70">{s.d}</p>
-          </Reveal>
-        ))}
+    <section className="bg-paper2 py-20 md:py-28">
+      <div className="mx-auto max-w-6xl px-5">
+        <SectionTitle kicker="How it works" title="Three steps. That's it." />
+        <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
+          {steps.map((s, i) => (
+            <Reveal key={s.t} delay={i * 0.08} className="relative rounded-2xl bg-white p-6 shadow-card ring-1 ring-ink/5">
+              <span className="font-display text-5xl font-extrabold leading-none text-brand/25">{i + 1}</span>
+              <h3 className="mt-3 font-display text-2xl font-extrabold text-ink">{s.t}</h3>
+              <p className="mt-2 text-ink/70">{s.d}</p>
+            </Reveal>
+          ))}
+        </div>
       </div>
     </section>
   );

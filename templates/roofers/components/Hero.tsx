@@ -107,22 +107,35 @@ export default function Hero() {
           </a>
         </motion.div>
 
-        {(site.rating != null || site.reviewCount != null) && (
-          <motion.div {...stagger(4)} className="mt-8">
-            {/* Trust chip: glass pill so it floats over the photo without fighting it (§5b-bis). */}
-            <div className="inline-flex flex-wrap items-center gap-x-5 gap-y-2 rounded-full border border-white/15 bg-white/10 px-5 py-2.5 text-sm text-white/85 backdrop-blur-md">
-              {site.rating != null && (
-                <span className="flex items-center gap-1.5">
-                  <span aria-hidden className="text-amber-400">{"★".repeat(Math.round(site.rating))}</span>
-                  <span className="font-bold text-white">{site.rating.toFixed(1)}</span> on Google
-                </span>
-              )}
-              {site.reviewCount != null && <span>{site.reviewCount} reviews</span>}
-              <span>Local to {site.city}</span>
-            </div>
-          </motion.div>
-        )}
       </div>
+
+      {/* Stats live at the hero's base as a glass strip: trust is part of the first impression,
+          not a sliver squeezed between two dark bands (section color rhythm, §5b-bis). */}
+      {(site.rating != null || site.reviewCount != null) && (
+        <motion.div {...stagger(4)} className="relative z-10 border-t border-white/10 bg-white/5 backdrop-blur-md">
+          <div className="mx-auto grid max-w-6xl grid-cols-3 divide-x divide-white/10 px-2 py-5 md:py-6">
+            {site.rating != null && (
+              <div className="px-3 text-center">
+                <p className="font-display text-2xl font-extrabold text-white md:text-4xl">
+                  <span aria-hidden className="mr-1 text-lg text-amber-400 md:text-2xl">★</span>
+                  {site.rating.toFixed(1)}
+                </p>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-white/50 md:text-sm">Google rating</p>
+              </div>
+            )}
+            {site.reviewCount != null && (
+              <div className="px-3 text-center">
+                <p className="font-display text-2xl font-extrabold text-white md:text-4xl">{site.reviewCount}</p>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-white/50 md:text-sm">Google reviews</p>
+              </div>
+            )}
+            <div className="px-3 text-center">
+              <p className="font-display text-2xl font-extrabold text-white md:text-4xl">{site.city}</p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-white/50 md:text-sm">Local &amp; nearby</p>
+            </div>
+          </div>
+        </motion.div>
+      )}
     </header>
   );
 }
