@@ -69,6 +69,21 @@ export function writeLeads(leads: Lead[]): void {
   writeFileSync(LEADS_PATH, JSON.stringify(leads, null, 2) + "\n", "utf8");
 }
 
+/** Pipeline position of a stage; higher = further along (CLAUDE.md §2). */
+export function stageRank(stage: Stage): number {
+  return STAGES.indexOf(stage);
+}
+
+/**
+ * Advance a lead's stage, never regress it. A demo rebuild must not move a lead
+ * that is already contacted/replied/negotiating back to demo_built.
+ */
+export function advanceStage(place_id: string, to: Stage): Lead {
+  const current = getLead(place_id);
+  if (current && stageRank(current.stage) >= stageRank(to)) return current;
+  return upsertLead({ place_id, stage: to });
+}
+
 export function getLead(place_id: string): Lead | undefined {
   return readLeads().find((l) => l.place_id === place_id);
 }

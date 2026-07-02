@@ -11,7 +11,7 @@ import { cpSync, existsSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { NICHE } from "../../config";
-import { getLead, upsertLead } from "../crm/leads";
+import { getLead, upsertLead, advanceStage } from "../crm/leads";
 import { placeDetails, fetchPhotoBytes } from "../discovery/places";
 import { runQa } from "./qa";
 import { deployDemo } from "./deploy";
@@ -224,7 +224,8 @@ async function main(): Promise<void> {
   // Deploy gate (SETUP.md §9): refuses on the first deploy or if identity/deploy config is unset.
   const deploy = await deployDemo(destDir, slug, content.placeId);
   if (deploy.deployed && deploy.url) {
-    upsertLead({ place_id: content.placeId, demo_url: deploy.url, demo_screenshot: deploy.screenshot ?? null, stage: "demo_built" });
+    upsertLead({ place_id: content.placeId, demo_url: deploy.url, demo_screenshot: deploy.screenshot ?? null });
+    advanceStage(content.placeId, "demo_built"); // never regresses a contacted/replied lead
     console.log(`\nLive: ${deploy.url}`);
   } else {
     console.log(`\nNot deployed: ${deploy.reason}`);
