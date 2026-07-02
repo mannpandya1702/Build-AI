@@ -1,28 +1,29 @@
 # Outreach draft — Myriad Roofing & Construction LLC
 place_id: ChIJVVUVVyUhTIYRYsA3gtFhiIU | 44 reviews | 5 stars | demo: https://myriad-roofing-construction-llc-buildai.vercel.app
 
-## Touch-1 email — NOT FINALIZED
+## Touch-1 email
+> voice check: clean
 
-REFUSED to finalize: a CAN-SPAM footer needs real values. Missing: STUDIO_ADDRESS.
-Fill these in config.ts, then re-run `npm run draft ChIJVVUVVyUhTIYRYsA3gtFhiIU`.
-
-Draft preview (do not send until the fields above are real):
 ```
-Subject: Built Myriad Roofing & Construction LLC a new site (2 min look?)
+From: mann@tradecraftsites.com
+Subject: Built Myriad Roofing a new site (2 min look?)
 
-Hey Myriad Roofing & Construction LLC,
+Hey Myriad Roofing team,
 
 You have 44 Google reviews and no website showing them off.
 So I built you a version. Here it is: https://myriad-roofing-construction-llc-buildai.vercel.app
 It loads fast on phones and puts your number one tap away, so the people finding you at midnight actually call you instead of the next guy.
 If you like it, I can have it live on your domain this week. Want me to?
 
-TradeCraft
+Mann
 
 TradeCraft Sites
-[NEEDS: STUDIO_ADDRESS — real physical mailing address, required by CAN-SPAM]
+14th Main Road, Sector 7, HSR Layout, Bengaluru, Karnataka 560102, India
 Not interested? Reply "unsubscribe" and I will not email you again.
 ```
+
+> Attach: inline hero screenshot (/home/user/Build-AI/demos/_screenshots/myriad-roofing-construction-llc.webp).
+> [NEEDS: owner first name] check their GBP/Facebook before sending; a real first name in the greeting beats "team".
 
 ## Touch-2 call script
 ```
@@ -30,7 +31,7 @@ CALL SCRIPT — Myriad Roofing & Construction LLC
 [NEEDS: STUDIO_US_PHONE] call from your US number, never the +91 number
 
 Opener:
-"Hey Myriad Roofing & Construction LLC, it's TradeCraft. I built Myriad Roofing & Construction LLC a new website and emailed you the link. Did you get a chance to click it?"
+"Hey there, it's Mann from TradeCraft Sites. I built Myriad Roofing a new website and emailed you the link. Did you get a chance to click it?"
 
 If not opened: walk them to it live on the call.
 Hook: "44 five-star reviews and your site doesn't show a single one. The new one puts them front and center."

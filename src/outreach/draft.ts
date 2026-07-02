@@ -15,6 +15,15 @@ import {
   FROM_EMAIL,
   isPlaceholder,
 } from "../../config";
+
+// The human who signs the email and opens the call: derived from FROM_EMAIL ("mann@..." -> "Mann").
+function senderName(): string {
+  if (!isPlaceholder(FROM_EMAIL) && FROM_EMAIL.includes("@")) {
+    const local = FROM_EMAIL.split("@")[0].split(/[._+-]/)[0];
+    if (local) return local.charAt(0).toUpperCase() + local.slice(1);
+  }
+  return isPlaceholder(STUDIO_NAME) ? "[your name]" : STUDIO_NAME.split(" ")[0];
+}
 import { getLead, upsertLead, type Lead } from "../crm/leads";
 
 // Voice guards (CLAUDE.md §3). Used to self-check generated copy before writing it.
@@ -35,10 +44,30 @@ const BANNED = [
   "reach out",
 ];
 
-function firstName(business: string): string {
-  // "Joe's Roofing" -> "Joe". Fallback to the business name.
+// "Joe's Roofing" -> "Joe". Null when there is no personal name to extract.
+function ownerFirstName(business: string): string | null {
   const m = business.match(/^([A-Z][a-z]+)'s\b/);
-  return m ? m[1] : business;
+  return m ? m[1] : null;
+}
+
+// Conversational business name: "Myriad Roofing & Construction LLC" -> "Myriad Roofing".
+// Strips legal suffixes, "& ..." tails, and a trailing city token. How a human says the name.
+function shortBusinessName(business: string, city?: string): string {
+  let s = business
+    .replace(/[,\s]+(LLC|L\.L\.C\.|Inc\.?|Corp\.?|Co\.?|Ltd\.?|LLP)\.?$/i, "")
+    .replace(/\s*&\s+[A-Za-z].*$/, "")
+    .trim();
+  if (city) {
+    const re = new RegExp(`\\s+${city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i");
+    s = s.replace(re, "").trim();
+  }
+  return s || business;
+}
+
+// Greeting line: a real first name beats everything; otherwise address the crew like a human would.
+function greeting(lead: Lead): string {
+  const first = ownerFirstName(lead.business_name);
+  return first ? `Hey ${first},` : `Hey ${shortBusinessName(lead.business_name, lead.city)} team,`;
 }
 
 function realObservation(lead: Lead): string {
@@ -65,18 +94,18 @@ function canSpamFooter(): string {
 }
 
 function buildEmail(lead: Lead): { subject: string; body: string } {
-  const name = firstName(lead.business_name);
+  const short = shortBusinessName(lead.business_name, lead.city);
   const link = lead.demo_url ?? "[NEEDS: demo_url] deploy the demo first, then paste the live link here";
-  const subject = `Built ${lead.business_name} a new site (2 min look?)`;
+  const subject = `Built ${short} a new site (2 min look?)`;
   const body = [
-    `Hey ${name},`,
+    greeting(lead),
     ``,
     realObservation(lead),
     `So I built you a version. Here it is: ${link}`,
     `It loads fast on phones and puts your number one tap away, so the people finding you at midnight actually call you instead of the next guy.`,
     `If you like it, I can have it live on your domain this week. Want me to?`,
     ``,
-    `${STUDIO_NAME.startsWith("[NEEDS") ? "" : STUDIO_NAME.split(" ")[0]}`.trim(),
+    senderName(),
     canSpamFooter(),
   ]
     .filter((l) => l !== undefined)
@@ -85,7 +114,8 @@ function buildEmail(lead: Lead): { subject: string; body: string } {
 }
 
 function buildCallScript(lead: Lead): string {
-  const name = firstName(lead.business_name);
+  const short = shortBusinessName(lead.business_name, lead.city);
+  const owner = ownerFirstName(lead.business_name);
   const reviews = lead.review_count ?? 0;
   const phoneLine = isPlaceholder(STUDIO_US_PHONE)
     ? "[NEEDS: STUDIO_US_PHONE] call from your US number, never the +91 number"
@@ -95,7 +125,7 @@ function buildCallScript(lead: Lead): string {
     phoneLine,
     ``,
     `Opener:`,
-    `"Hey ${name}, it's ${isPlaceholder(STUDIO_NAME) ? "[your name]" : STUDIO_NAME.split(" ")[0]}. I built ${lead.business_name} a new website and emailed you the link. Did you get a chance to click it?"`,
+    `"Hey ${owner ?? "there"}, it's ${senderName()} from ${isPlaceholder(STUDIO_NAME) ? "[studio]" : STUDIO_NAME}. I built ${short} a new website and emailed you the link. Did you get a chance to click it?"`,
     ``,
     `If not opened: walk them to it live on the call.`,
     reviews >= 40 ? `Hook: "${reviews} five-star reviews and your site doesn't show a single one. The new one puts them front and center."` : `Hook: lead with their gap (buried number / not mobile-friendly).`,
@@ -172,6 +202,7 @@ async function main(): Promise<void> {
       "```",
       lead.demo_url ? "" : `> [NEEDS: demo_url] deploy the demo first so the link is real.`,
       `> Attach: inline hero screenshot (${lead.demo_screenshot ?? "[NEEDS: demo_screenshot]"}).`,
+      ownerFirstName(lead.business_name) ? "" : `> [NEEDS: owner first name] check their GBP/Facebook before sending; a real first name in the greeting beats "team".`,
     ].join("\n");
     outreachStatus = "touch1_drafted";
   }

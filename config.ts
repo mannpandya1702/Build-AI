@@ -10,7 +10,7 @@ export const METRO = "Dallas, TX";
 
 // --- Studio identity (required before first send / first deploy, for CAN-SPAM + honest NAP) ---
 export const STUDIO_NAME = "TradeCraft Sites";
-export const STUDIO_ADDRESS = NEEDS("STUDIO_ADDRESS — real physical mailing address, required by CAN-SPAM");
+export const STUDIO_ADDRESS = "14th Main Road, Sector 7, HSR Layout, Bengaluru, Karnataka 560102, India";
 export const STUDIO_US_PHONE = NEEDS("STUDIO_US_PHONE — US number (Google Voice/Twilio) for call CTAs + signatures");
 export const FROM_EMAIL = "mann@tradecraftsites.com";
 
