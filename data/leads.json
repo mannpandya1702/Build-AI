@@ -589,15 +589,15 @@
     "rating": 5,
     "has_website": true,
     "current_site_url": "https://wbroofing.com/",
-    "site_quality_score": 30,
-    "score": 90,
+    "site_quality_score": 70,
+    "score": 75,
     "demo_url": null,
     "demo_screenshot": null,
     "outreach_status": "",
     "last_touch_date": null,
     "reply": null,
     "stage": "qualified",
-    "notes": "score 90 (reviews:30, rating:15, websiteGap:15, niche:15, photos:10, phone:5) | site: HTTP 202 in 1028ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available"
+    "notes": "score 90 (reviews:30, rating:15, websiteGap:15, niche:15, photos:10, phone:5) | site: HTTP 202 in 1028ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available | VERIFIED 2026-07-02: wbroofing.com is a real working WordPress/Elementor site with mobile viewport. False-positive gap. Weak cold angle; deprioritize."
   },
   {
     "place_id": "ChIJjU6PswWcToYRAIG5tS84QUg",
@@ -1413,7 +1413,7 @@
     "last_touch_date": null,
     "reply": null,
     "stage": "qualified",
-    "notes": "score 90 (reviews:30, rating:15, websiteGap:15, niche:15, photos:10, phone:5) | site: HTTP 202 in 162ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available"
+    "notes": "score 90 (reviews:30, rating:15, websiteGap:15, niche:15, photos:10, phone:5) | site: HTTP 202 in 162ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available | VERIFIED 2026-07-02: bridgewoodroofing.com answers HTTP 202 with a 169-byte empty body. No working site. Gap CONFIRMED. Note: 800-number (toll-free), check for franchise signals during owner hunt."
   },
   {
     "place_id": "ChIJ-5ut3V8zTIYR6_MvyEyVg3I",
