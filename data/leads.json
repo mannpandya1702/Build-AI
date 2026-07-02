@@ -325,15 +325,15 @@
     "rating": 4.9,
     "has_website": true,
     "current_site_url": "https://resultsroofing.com/?utm_source=google&utm_medium=organic&utm_campaign=gmb&utm_content=carrollton",
-    "site_quality_score": 30,
-    "score": 90,
+    "site_quality_score": 70,
+    "score": 75,
     "demo_url": null,
     "demo_screenshot": null,
     "outreach_status": "",
     "last_touch_date": null,
     "reply": null,
     "stage": "qualified",
-    "notes": "score 90 (reviews:30, rating:15, websiteGap:15, niche:15, photos:10, phone:5) | site: HTTP 202 in 342ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available"
+    "notes": "score 90 (reviews:30, rating:15, websiteGap:15, niche:15, photos:10, phone:5) | site: HTTP 202 in 342ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available | VERIFIED 2026-07-02: resultsroofing.com is a real working WP/Elementor site. False positive. Weak angle; deprioritize (big operator, 1715rv)."
   },
   {
     "place_id": "ChIJQ08FtXOfToYRwjU_ZJEfXW0",
@@ -614,14 +614,14 @@
     "has_website": true,
     "current_site_url": "http://www.roofinggiant.com/",
     "site_quality_score": 0,
-    "score": 85,
+    "score": 90,
     "demo_url": null,
     "demo_screenshot": null,
     "outreach_status": "",
     "last_touch_date": null,
     "reply": null,
     "stage": "qualified",
-    "notes": "score 85 (reviews:30, rating:15, websiteGap:10, niche:15, photos:10, phone:5) | site: HTTP 404 in 3151ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available"
+    "notes": "score 85 (reviews:30, rating:15, websiteGap:10, niche:15, photos:10, phone:5) | site: HTTP 404 in 3151ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available | VERIFIED 2026-07-02: roofinggiant.com homepage returns 404 on ALL variants (http/https/www). Google-listing website button leads to a 404. GAP CONFIRMED, strong lead."
   },
   {
     "place_id": "ChIJs9Kb80KZToYRMs-a4Wpptoc",
@@ -901,15 +901,15 @@
     "rating": 5,
     "has_website": true,
     "current_site_url": "https://www.metalroofingdallas.net/",
-    "site_quality_score": 30,
-    "score": 90,
+    "site_quality_score": 70,
+    "score": 75,
     "demo_url": null,
     "demo_screenshot": null,
     "outreach_status": "",
     "last_touch_date": null,
     "reply": null,
     "stage": "qualified",
-    "notes": "score 90 (reviews:30, rating:15, websiteGap:15, niche:15, photos:10, phone:5) | site: HTTP 202 in 1409ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available"
+    "notes": "score 90 (reviews:30, rating:15, websiteGap:15, niche:15, photos:10, phone:5) | site: HTTP 202 in 1409ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available | VERIFIED 2026-07-02: metalroofingdallas.net is a real working WP/Elementor site. False positive. Weak angle."
   },
   {
     "place_id": "ChIJDRhhDeydToYRiqnhGIcMWmc",
@@ -1093,7 +1093,7 @@
     "rating": 5,
     "has_website": true,
     "current_site_url": "https://stormroofingheroes.com/",
-    "site_quality_score": 30,
+    "site_quality_score": 0,
     "score": 90,
     "demo_url": null,
     "demo_screenshot": null,
@@ -1101,7 +1101,7 @@
     "last_touch_date": null,
     "reply": null,
     "stage": "qualified",
-    "notes": "score 90 (reviews:30, rating:15, websiteGap:15, niche:15, photos:10, phone:5) | site: HTTP 200 in 1171ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available"
+    "notes": "score 90 (reviews:30, rating:15, websiteGap:15, niche:15, photos:10, phone:5) | site: HTTP 200 in 1171ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available | VERIFIED 2026-07-02: stormroofingheroes.com is a PARKED domain (/lander ad redirect, same as Gallery Built). GAP CONFIRMED, strong lead."
   },
   {
     "place_id": "ChIJC3kqspqZToYRUMFuM4kmLMY",
