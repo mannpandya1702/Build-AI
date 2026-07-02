@@ -8,9 +8,9 @@ place_id: ChIJVVUVVyUhTIYRYsA3gtFhiIU | 44 reviews | 5 stars | demo: https://myr
 From: mann@tradecraftsites.com
 Subject: Built Myriad Roofing a new site (2 min look?)
 
-Hey Myriad Roofing team,
+Hey Jimmy,
 
-You have 44 Google reviews and no website showing them off.
+Your Google listing has 44 five-star-level reviews and no website on it, so the people who find you there hit a dead end.
 So I built you a version. Here it is: https://myriad-roofing-construction-llc-buildai.vercel.app
 It loads fast on phones and puts your number one tap away, so the people finding you at midnight actually call you instead of the next guy.
 If you like it, I can have it live on your domain this week. Want me to?
@@ -23,7 +23,7 @@ Not interested? Reply "unsubscribe" and I will not email you again.
 ```
 
 > Attach: inline hero screenshot (/home/user/Build-AI/demos/_screenshots/myriad-roofing-construction-llc.webp).
-> [NEEDS: owner first name] check their GBP/Facebook before sending; a real first name in the greeting beats "team".
+
 
 ## Touch-2 call script
 ```
@@ -31,7 +31,7 @@ CALL SCRIPT — Myriad Roofing & Construction LLC
 [NEEDS: STUDIO_US_PHONE] call from your US number, never the +91 number
 
 Opener:
-"Hey there, it's Mann from TradeCraft Sites. I built Myriad Roofing a new website and emailed you the link. Did you get a chance to click it?"
+"Hey Jimmy, it's Mann from TradeCraft Sites. I built Myriad Roofing a new website and emailed you the link. Did you get a chance to click it?"
 
 If not opened: walk them to it live on the call.
 Hook: "44 five-star reviews and your site doesn't show a single one. The new one puts them front and center."

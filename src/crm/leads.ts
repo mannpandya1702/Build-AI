@@ -28,6 +28,7 @@ export type Stage = z.infer<typeof StageEnum>;
 export const LeadSchema = z.object({
   place_id: z.string().min(1),
   business_name: z.string().default(""),
+  owner_name: z.string().nullable().default(null),
   niche: z.string().default(""),
   city: z.string().default(""),
   state: z.string().default(""),

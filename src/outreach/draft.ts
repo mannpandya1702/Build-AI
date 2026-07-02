@@ -44,9 +44,11 @@ const BANNED = [
   "reach out",
 ];
 
-// "Joe's Roofing" -> "Joe". Null when there is no personal name to extract.
-function ownerFirstName(business: string): string | null {
-  const m = business.match(/^([A-Z][a-z]+)'s\b/);
+// Owner's first name: prefer the CRM's owner_name (found via directories/FB), else parse
+// possessive business names ("Joe's Roofing" -> "Joe"). Null when unknown.
+function ownerFirstName(lead: Lead): string | null {
+  if (lead.owner_name) return lead.owner_name.trim().split(/\s+/)[0];
+  const m = lead.business_name.match(/^([A-Z][a-z]+)'s\b/);
   return m ? m[1] : null;
 }
 
@@ -66,14 +68,15 @@ function shortBusinessName(business: string, city?: string): string {
 
 // Greeting line: a real first name beats everything; otherwise address the crew like a human would.
 function greeting(lead: Lead): string {
-  const first = ownerFirstName(lead.business_name);
+  const first = ownerFirstName(lead);
   return first ? `Hey ${first},` : `Hey ${shortBusinessName(lead.business_name, lead.city)} team,`;
 }
 
 function realObservation(lead: Lead): string {
   const reviews = lead.review_count ?? 0;
   if (!lead.has_website && reviews >= 20) {
-    return `You have ${reviews} Google reviews and no website showing them off.`;
+    // Anchored on the Google listing: verifiably true even if a site exists somewhere unlinked.
+    return `Your Google listing has ${reviews} five-star-level reviews and no website on it, so the people who find you there hit a dead end.`;
   }
   if (lead.has_website && (lead.site_quality_score ?? 100) < 60) {
     return `Your site is not loading great on phones and your number is buried, which is where most of your customers are.`;
@@ -115,7 +118,7 @@ function buildEmail(lead: Lead): { subject: string; body: string } {
 
 function buildCallScript(lead: Lead): string {
   const short = shortBusinessName(lead.business_name, lead.city);
-  const owner = ownerFirstName(lead.business_name);
+  const owner = ownerFirstName(lead);
   const reviews = lead.review_count ?? 0;
   const phoneLine = isPlaceholder(STUDIO_US_PHONE)
     ? "[NEEDS: STUDIO_US_PHONE] call from your US number, never the +91 number"
@@ -202,7 +205,7 @@ async function main(): Promise<void> {
       "```",
       lead.demo_url ? "" : `> [NEEDS: demo_url] deploy the demo first so the link is real.`,
       `> Attach: inline hero screenshot (${lead.demo_screenshot ?? "[NEEDS: demo_screenshot]"}).`,
-      ownerFirstName(lead.business_name) ? "" : `> [NEEDS: owner first name] check their GBP/Facebook before sending; a real first name in the greeting beats "team".`,
+      ownerFirstName(lead) ? "" : `> [NEEDS: owner first name] check their GBP/Facebook before sending; a real first name in the greeting beats "team".`,
     ].join("\n");
     outreachStatus = "touch1_drafted";
   }
