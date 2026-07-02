@@ -19,6 +19,12 @@
   "rating": null,
   "reviewCount": null,
   "brandColor": "#b4380d",
+  "theme": {
+    "id": "brick-classic",
+    "palette": { "brand": "180 56 13", "brandInk": "255 255 255", "ink": "16 24 31", "paper": "250 247 242", "paper2": "241 235 226" },
+    "fontPair": "bricolage",
+    "heroVariant": "photo"
+  },
   "stormBand": true,
   "faq": [
     { "q": "What areas do you cover?", "a": "Dallas and the surrounding area." },

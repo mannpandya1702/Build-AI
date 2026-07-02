@@ -1,23 +1,24 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Source_Sans_3 } from "next/font/google";
+import { Bricolage_Grotesque, Source_Sans_3, Archivo, IBM_Plex_Sans, Space_Grotesk, Work_Sans } from "next/font/google";
 import "./globals.css";
 import { site } from "../lib/content";
 import StickyCallBar from "../components/StickyCallBar";
 
-// Distinctive type pairing per CLAUDE.md §5b-bis: sturdy grotesque display + readable body.
-// next/font self-hosts, so there is no render-blocking request and no layout shift.
-const display = Bricolage_Grotesque({
-  subsets: ["latin"],
-  weight: ["300", "500", "800"],
-  variable: "--font-display",
-  display: "swap",
-});
-const body = Source_Sans_3({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  variable: "--font-body",
-  display: "swap",
-});
+// Three distinctive pairings (CLAUDE.md §5b-bis: never system fonts). All are declared statically
+// (next/font requires it) with preload off; only the pair the theme references is ever downloaded,
+// because unused font-families are never used by any CSS rule.
+const bricolageDisplay = Bricolage_Grotesque({ subsets: ["latin"], weight: ["300", "500", "800"], variable: "--f-bricolage", display: "swap", preload: false });
+const bricolageBody = Source_Sans_3({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--f-sourcesans", display: "swap", preload: false });
+const archivoDisplay = Archivo({ subsets: ["latin"], weight: ["300", "500", "800", "900"], variable: "--f-archivo", display: "swap", preload: false });
+const archivoBody = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--f-plex", display: "swap", preload: false });
+const groteskDisplay = Space_Grotesk({ subsets: ["latin"], weight: ["300", "500", "700"], variable: "--f-grotesk", display: "swap", preload: false });
+const groteskBody = Work_Sans({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--f-work", display: "swap", preload: false });
+
+const FONT_PAIRS: Record<string, { display: string; body: string }> = {
+  bricolage: { display: "var(--f-bricolage)", body: "var(--f-sourcesans)" },
+  archivo: { display: "var(--f-archivo)", body: "var(--f-plex)" },
+  grotesk: { display: "var(--f-grotesk)", body: "var(--f-work)" },
+};
 
 export const metadata: Metadata = {
   title: `${site.businessName} — ${site.primaryService} in ${site.city}, ${site.state}`,
@@ -51,20 +52,24 @@ function localBusinessSchema() {
   return schema;
 }
 
-/** "#b4380d" -> "180 56 13" so the brand var matches the channel-triplet palette in globals.css. */
-function hexToChannels(hex: string): string {
-  const h = hex.replace("#", "");
-  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
-  const n = parseInt(full, 16);
-  if (Number.isNaN(n) || full.length !== 6) return "180 56 13";
-  return `${(n >> 16) & 255} ${(n >> 8) & 255} ${n & 255}`;
-}
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const brandStyle = { ["--brand" as string]: hexToChannels(site.brandColor) } as React.CSSProperties;
+  const t = site.theme;
+  const pair = FONT_PAIRS[t.fontPair] ?? FONT_PAIRS.bricolage;
+  // The whole look flows from these variables: palette channels + font pair (CLAUDE.md §5d).
+  const themeStyle = {
+    ["--brand" as string]: t.palette.brand,
+    ["--brand-ink" as string]: t.palette.brandInk,
+    ["--ink" as string]: t.palette.ink,
+    ["--paper" as string]: t.palette.paper,
+    ["--paper-2" as string]: t.palette.paper2,
+    ["--font-display" as string]: pair.display,
+    ["--font-body" as string]: pair.body,
+  } as React.CSSProperties;
+  const fontVars = `${bricolageDisplay.variable} ${bricolageBody.variable} ${archivoDisplay.variable} ${archivoBody.variable} ${groteskDisplay.variable} ${groteskBody.variable}`;
+
   return (
-    <html lang="en" className={`${display.variable} ${body.variable}`}>
-      <body style={brandStyle} className="font-body">
+    <html lang="en" className={fontVars}>
+      <body style={themeStyle} className="font-body">
         {/* JSON-LD structured data. Serialized from our own schema object; no user input. */}
         <script
           type="application/ld+json"

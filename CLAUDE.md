@@ -159,6 +159,7 @@ Current best-in-class stack (2026), used with intent, never as decoration:
 - **Content:** auto-fill copy from their GBP data (services, city, reviews, hours) with AI, in my plain voice, no corporate filler. Real photos pulled from their profile.
 - **"Attach the demo" = the honest version:** I cannot literally attach a website to an email. So the deliverable is: **(1)** the live Vercel URL, **(2)** a screenshot or short GIF of the hero for the email body (so it renders even before they click), and optionally **(3)** a 60-second screen-recording walkthrough link. That combination is what "attached" means here. Never claim a file attachment that does not exist.
 - **Reusable templates per niche** so demo #10 takes minutes, not hours. One strong roofer template, one HVAC template, and so on. The founder economics depend on this.
+- **Same bones, different skin.** No two prospects ever receive the same-looking demo. The template carries a set of curated "looks" (palette + type pairing + hero layout variant), assigned per lead and stored in the CRM so rebuilds never reshuffle a look, and a look already used by an active demo is not reused while free looks remain. Owners talk to each other (two of our first five Dallas leads share one office suite); identical demos with swapped names would kill both deals and the studio's credibility. A demo that has been SENT is locked: its look never changes afterward.
 
 ### 5e. QA + security pass (do not skip this because the code was fast to write)
 

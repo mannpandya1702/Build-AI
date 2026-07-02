@@ -14,6 +14,14 @@ export interface DemoFaq {
   a: string;
 }
 
+export interface DemoTheme {
+  id: string;
+  // RGB channel triplets ("r g b") so Tailwind alpha modifiers work (see globals.css).
+  palette: { brand: string; brandInk: string; ink: string; paper: string; paper2: string };
+  fontPair: "bricolage" | "archivo" | "grotesk";
+  heroVariant: "photo" | "split" | "bold";
+}
+
 export interface DemoContent {
   placeId: string;
   businessName: string;
@@ -30,6 +38,7 @@ export interface DemoContent {
   rating: number | null;
   reviewCount: number | null;
   brandColor: string;
+  theme: DemoTheme;
   // Niche-need band (CLAUDE.md §5b): shown only when flagged on. For roofers this is the
   // storm-damage/insurance moment. The claim itself stays [NEEDS]-flagged for owner confirmation.
   stormBand: boolean;

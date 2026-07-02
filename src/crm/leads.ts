@@ -43,6 +43,7 @@ export const LeadSchema = z.object({
   score: z.number().default(0),
   demo_url: z.string().nullable().default(null),
   demo_screenshot: z.string().nullable().default(null),
+  demo_theme: z.string().nullable().default(null), // assigned look (palette/type/hero); stable across rebuilds
   outreach_status: z.string().default(""),
   last_touch_date: z.string().nullable().default(null),
   reply: z.string().nullable().default(null),
