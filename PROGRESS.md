@@ -8,7 +8,7 @@ Build log per `AGENCY_AUTOPILOT_SPEC.md` §13. Updated at the end of every work 
 |---|---|---|
 | 0. Foundation | ✅ complete (2026-07-02) | acceptance evidence below |
 | 1. Pipeline skeleton (mock) | ✅ complete (2026-07-02) | evidence below |
-| 2. Real discovery | pending | |
+| 2. Real discovery | in progress (2026-07-02) | code complete; acceptance run in flight |
 | 3. Analysis + solution | pending | |
 | 4. Design, build, QA | pending | |
 | 5. Outreach + booking | pending | |
@@ -68,6 +68,33 @@ Build log per `AGENCY_AUTOPILOT_SPEC.md` §13. Updated at the end of every work 
   outreach_ready"). Exactly the designed behavior.
 - Hardening note for Phase 7: singletonSeconds=30 allows stub re-runs inside a status window
   (6 qa_reports rows). Real agents get per-(lead,step) idempotency keys per spec 4.4.
+
+## Phase 2 work log (2026-07-02)
+
+- config/icp.yaml (contract rubric encoded exactly, cities, verticals, chain markers) +
+  config/caps.yaml (hard limits incl. places_calls_per_day, crawl politeness).
+- @autopilot/adapters: anthropic (model map Haiku/Sonnet, per-call cost into agent_events,
+  daily budget guard, mock), places (search+details, cap-metered, mock), crawl (fetch-based,
+  honest UA, robots.txt, 1req/2s per domain, mock), dns (DoH MX check), pagespeed (real, key
+  verified), config loader with /settings overrides.
+- Real agents: research (ICP queries, dedupe on place_id + domain + suppression, cap-aware
+  pause + operator notification), scrape/enrich (details w/ verbatim reviews + photo refs, site
+  crawl, Haiku contact extraction verified against page text, MX check, no_contact_path DQ),
+  qualify (deterministic rubric, chain DQ, nothing-to-personalize DQ, threshold routing).
+- Worker: real-vs-mock handler selection; real mode PAUSES at unimplemented stages instead of
+  running fixtures against real leads. Operator research requests ride the event stream.
+- Dashboard: Discover-leads button, /settings page (outreach mode + ICP overrides editor).
+- Legacy import: 60/60 Web Studio CRM leads imported (source='legacy', stage mapping in
+  import-legacy.ts). Dedupe verified: discovery skipped all known place_ids.
+- ENV ADAPTATIONS (spec allows, logged per §15): crawl uses Node fetch instead of Playwright
+  (headless browsers cannot reach external sites in this container; screenshots in Phase 3 will
+  reuse the legacy request-interception technique). Qualifier weak-site judgment is a
+  deterministic probe until Phase 3 screenshots exist. GBP photo download to Supabase Storage
+  deferred until real Supabase exists; photo resource names stored on the lead meanwhile.
+- INCIDENT during acceptance: the Phase 1 mock worker was still running alongside the real
+  worker and fixture-advanced 2 real leads. Stopped it, purged fixture artifacts, reset both
+  leads to qualified, logged lead.repaired events. Hardening note: worker should take a
+  pg advisory lock so only one instance runs per database (Phase 7).
 
 ## Blockers (spec §14 — operator to provide; build continues elsewhere)
 

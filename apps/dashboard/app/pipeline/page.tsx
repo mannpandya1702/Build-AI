@@ -74,6 +74,19 @@ export default function PipelinePage() {
     setBusy(false);
   }
 
+  async function discover() {
+    setBusy(true);
+    const count = parseInt(prompt("How many leads to discover?", "50") ?? "0", 10);
+    if (count > 0) {
+      await fetch("/api/dev/discover", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ count }),
+      });
+    }
+    setBusy(false);
+  }
+
   const byStatus = new Map<string, LeadCard[]>();
   for (const l of leads) {
     const arr = byStatus.get(l.status) ?? [];
@@ -89,13 +102,22 @@ export default function PipelinePage() {
           <h1 className="text-xl font-bold">Pipeline</h1>
           <p className="mt-1 text-sm text-zinc-500">{leads.length} leads. Columns appear as leads reach them.</p>
         </div>
+        <div className="flex gap-2">
+        <button
+          onClick={discover}
+          disabled={busy}
+          className="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50"
+        >
+          Discover leads
+        </button>
         <button
           onClick={runMockLead}
           disabled={busy}
           className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
         >
-          {busy ? "Creating..." : "Run mock lead"}
+          {busy ? "Working..." : "Run mock lead"}
         </button>
+        </div>
       </div>
 
       <div className="mt-6 flex gap-3 overflow-x-auto pb-4">

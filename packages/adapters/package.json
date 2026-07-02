@@ -1,0 +1,14 @@
+{
+  "name": "@autopilot/adapters",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "typecheck": "tsc --noEmit", "test": "echo 'adapter tests with vitest land in Phase 7 hardening'" },
+  "dependencies": {
+    "@autopilot/core": "workspace:*",
+    "yaml": "^2.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": { "@types/node": "^20.14.0", "typescript": "^5.5.0" }
+}

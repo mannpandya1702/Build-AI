@@ -1,0 +1,33 @@
+# ICP (spec §2.3): expansion is a config change, never a code rewrite.
+# Contract niche discipline: ONE active vertical at a time.
+country: US
+active_vertical: roofing
+verticals:
+  roofing:
+    keywords: ["roofers", "roofing contractor"]
+  hvac:
+    keywords: ["hvac", "air conditioning repair"]
+  plumbing:
+    keywords: ["plumbers"]
+cities:
+  - "Dallas, TX"
+  - "Plano, TX"
+  - "Irving, TX"
+  - "Garland, TX"
+  - "Arlington, TX"
+  - "Frisco, TX"
+  - "McKinney, TX"
+  - "Mesquite, TX"
+  - "Richardson, TX"
+qualify_threshold: 60   # contract §4 bar
+# scoring rubric (contract §4, encoded exactly)
+rubric:
+  reviews_40_plus: 30
+  reviews_20_plus: 15
+  rating_4_plus: 15
+  website_gap: 25
+  target_niche: 15
+  photos_available: 10
+  phone_present: 5
+disqualify:
+  chain_markers: ["roto-rooter", "mr. rooter", "one hour heating", "aire serv", "benjamin franklin", "home depot", "lowe's", "sears", "terminix", "orkin", "aptive"]

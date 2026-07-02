@@ -6,7 +6,7 @@
 
 import PgBoss from "pg-boss";
 import { emitEvent, getPool, type LeadStatus } from "@autopilot/core";
-import { AGENTS, AGENT_BY_TRIGGER, STUB_HANDLERS } from "@autopilot/agents";
+import { AGENTS, AGENT_BY_TRIGGER, STUB_HANDLERS, research, realScrape, realQualify } from "@autopilot/agents";
 
 const MOCK = process.env.MOCK_MODE !== "false";
 
@@ -19,11 +19,20 @@ async function main(): Promise<void> {
   boss.on("error", (err) => console.error("[pg-boss]", err.message));
   await boss.start();
 
+  // Handler selection (spec §2.6 mock adapters): MOCK_MODE uses stubs end to end; real mode uses
+  // real agents where implemented (Phase 2: scrape, qualify) and PAUSES at un-implemented stages
+  // rather than running fixture stubs against real leads.
+  const REAL_HANDLERS: Record<string, (leadId: string) => Promise<void>> = {
+    scrape: realScrape,
+    qualify: realQualify,
+  };
+  const handlers = MOCK ? STUB_HANDLERS : REAL_HANDLERS;
+
   // one consumer per agent queue
   for (const agent of AGENTS) {
     await boss.work<{ leadId: string }>(agent.queue, { teamSize: 2 }, async (job) => {
-      const handler = STUB_HANDLERS[agent.name];
-      if (!handler) return; // research/monitor have no status-triggered stub yet
+      const handler = handlers[agent.name];
+      if (!handler) return; // not yet implemented for this mode: lead waits, nothing fabricated
       try {
         await handler(job.data.leadId);
       } catch (err) {
@@ -60,6 +69,26 @@ async function main(): Promise<void> {
       console.error("[scheduler]", (err as Error).message);
     }
   }, 2000);
+
+  // operator-triggered research requests ride the event stream (research.requested -> started)
+  await boss.work<{ requestId: string; count: number }>("agent:research-run", { teamSize: 1 }, async (job) => {
+    await research(job.data.requestId, job.data.count);
+  });
+  setInterval(async () => {
+    try {
+      const r = await pool.query<{ id: string; payload: { count?: number } }>(
+        `select e.id, e.payload from agent_events e
+         where e.type = 'research.requested'
+           and not exists (select 1 from agent_events s where s.type = 'research.started' and s.payload->>'request_id' = e.id::text)
+         limit 5`,
+      );
+      for (const req of r.rows) {
+        await boss.send("agent:research-run", { requestId: req.id, count: req.payload?.count ?? 50 }, { singletonKey: req.id, retryLimit: 2 });
+      }
+    } catch (err) {
+      console.error("[research-poll]", (err as Error).message);
+    }
+  }, 3000);
 
   await emitEvent({ agent: "worker", type: "worker.started", message: `worker online (mock=${MOCK})` });
   setInterval(() => {

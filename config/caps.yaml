@@ -1,0 +1,10 @@
+# Hard limits (spec §4.5). Hitting a cap pauses that resource and notifies; never silently drops.
+places_calls_per_day: 200
+mailbox_daily_send_cap: 25
+total_daily_sends: 50
+concurrent_demo_builds: 2
+anthropic_usd_per_lead_demo_phase: 3
+anthropic_usd_per_day: 15
+crawl:
+  per_domain_min_interval_ms: 2000   # 1 req / 2s (spec §4.6)
+  max_pages_per_site: 6
