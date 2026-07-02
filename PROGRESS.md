@@ -7,7 +7,7 @@ Build log per `AGENCY_AUTOPILOT_SPEC.md` §13. Updated at the end of every work 
 | Phase | Status | Notes |
 |---|---|---|
 | 0. Foundation | ✅ complete (2026-07-02) | acceptance evidence below |
-| 1. Pipeline skeleton (mock) | pending | |
+| 1. Pipeline skeleton (mock) | ✅ complete (2026-07-02) | evidence below |
 | 2. Real discovery | pending | |
 | 3. Analysis + solution | pending | |
 | 4. Design, build, QA | pending | |
@@ -53,6 +53,21 @@ Build log per `AGENCY_AUTOPILOT_SPEC.md` §13. Updated at the end of every work 
   events as JSON (verified live on :3100).
 - CLAUDE.md: original contract intact, `## System rules` appended.
 - `git status` during restructure showed R (rename) records, zero deletions.
+
+## Phase 1 acceptance evidence
+
+- "Run mock lead" (POST /api/dev/run-mock-lead, button on /pipeline) carried a fixture lead
+  discovered -> delivered through all 18 stages in ~60s, driven by pg-boss agent queues + the
+  2s scheduler (singleton keys per lead+status).
+- Artifacts written by stubs along the way: 1 audit, 1 solution, 1 design, 2 builds (demo+final),
+  qa_reports, 3 emails (outreach awaiting_approval -> sent, inbound reply, delivery), 1 classified
+  reply, 2 operator notifications, 44 agent_events.
+- Kanban (/pipeline) + lead timeline (/leads/[id]) + notification bell render live from polls.
+- Illegal transition rejected ORGANICALLY in traffic: a duplicate QA job fired post-advance and
+  advanceLead threw + emitted an error event ("illegal lead transition delivered ->
+  outreach_ready"). Exactly the designed behavior.
+- Hardening note for Phase 7: singletonSeconds=30 allows stub re-runs inside a status window
+  (6 qa_reports rows). Real agents get per-(lead,step) idempotency keys per spec 4.4.
 
 ## Blockers (spec §14 — operator to provide; build continues elsewhere)
 
