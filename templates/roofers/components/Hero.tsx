@@ -69,7 +69,7 @@ function Ctas({ center = false }: { center?: boolean }) {
 function StatsStrip({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
   if (site.rating == null && site.reviewCount == null) return null;
   return (
-    <motion.div {...stagger(4)} className="relative z-10 border-t border-white/10 bg-white/5 backdrop-blur-md">
+    <motion.div {...stagger(4)} className="relative z-10 border-t border-white/10 bg-ink/60 backdrop-blur-md">
       <div className="mx-auto grid max-w-6xl grid-cols-3 divide-x divide-white/10 px-2 py-5 md:py-6">
         {site.rating != null && (
           <div className="px-3 text-center">
