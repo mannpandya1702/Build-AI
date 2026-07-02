@@ -10,7 +10,8 @@
     "build-demo": "tsx src/demo/generate.ts",
     "draft": "tsx src/outreach/draft.ts",
     "run-niche": "tsx src/pipeline/run-niche.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "scout": "tsx src/discovery/scout.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

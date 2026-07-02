@@ -27,6 +27,11 @@ export interface PlaceCandidate {
   formattedAddress?: string;
   types?: string[];
   businessStatus?: string;
+  // present only when requested via a scout field mask
+  rating?: number;
+  userRatingCount?: number;
+  websiteUri?: string;
+  nationalPhoneNumber?: string;
 }
 
 export interface PlaceReview {
@@ -57,11 +62,16 @@ export interface PlaceDetails {
   businessStatus?: string;
 }
 
-/** Text Search (New). Minimal field mask to control cost; paginates via nextPageToken. */
+/**
+ * Text Search (New). Default minimal field mask to control cost; paginates via nextPageToken.
+ * Pass a custom fieldMask (e.g. including rating/userRatingCount/websiteUri) for one-page market
+ * scouting, where a single richer request replaces twenty Details calls.
+ */
 export async function textSearch(
   textQuery: string,
   maxResultCount = 20,
   pageToken?: string,
+  fieldMask?: string,
 ): Promise<{ candidates: PlaceCandidate[]; nextPageToken?: string }> {
   const res = await fetch(`${BASE}/places:searchText`, {
     method: "POST",
@@ -69,6 +79,7 @@ export async function textSearch(
       "Content-Type": "application/json",
       "X-Goog-Api-Key": apiKey(),
       "X-Goog-FieldMask":
+        fieldMask ??
         "places.id,places.displayName,places.formattedAddress,places.types,places.businessStatus,nextPageToken",
     },
     body: JSON.stringify({
