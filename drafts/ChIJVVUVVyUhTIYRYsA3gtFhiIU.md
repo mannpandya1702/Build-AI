@@ -10,10 +10,13 @@ Subject: Built Myriad Roofing a new site (2 min look?)
 
 Hey Jimmy,
 
-Your Google listing has 44 five-star-level reviews and no website on it, so the people who find you there hit a dead end.
-So I built you a version. Here it is: https://myriad-roofing-construction-llc-buildai.vercel.app
-It loads fast on phones and puts your number one tap away, so the people finding you at midnight actually call you instead of the next guy.
-If you like it, I can have it live on your domain this week. Want me to?
+Your Google listing has 44 five-star reviews but no website link, so the people who find you there hit a dead end.
+
+So I built you one. It's already live: https://myriad-roofing-construction-llc-buildai.vercel.app
+
+Fast on phones, your number one tap away, your real reviews front and center.
+
+Want me to put it on your domain this week?
 
 Mann
 
@@ -22,7 +25,7 @@ TradeCraft Sites
 Not interested? Reply "unsubscribe" and I will not email you again.
 ```
 
-> Attach: inline hero screenshot (/home/user/Build-AI/demos/_screenshots/myriad-roofing-construction-llc.webp).
+> Touch 1 sends PLAIN TEXT, no image (deliverability on a fresh domain + 2026 data: plain beats attachment-heavy). Save the hero screenshot (/home/user/Build-AI/demos/_screenshots/myriad-roofing-construction-llc.webp) for the follow-up nudge.
 
 
 ## Touch-2 call script

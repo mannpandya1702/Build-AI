@@ -76,7 +76,7 @@ function realObservation(lead: Lead): string {
   const reviews = lead.review_count ?? 0;
   if (!lead.has_website && reviews >= 20) {
     // Anchored on the Google listing: verifiably true even if a site exists somewhere unlinked.
-    return `Your Google listing has ${reviews} five-star-level reviews and no website on it, so the people who find you there hit a dead end.`;
+    return `Your Google listing has ${reviews} five-star reviews but no website link, so the people who find you there hit a dead end.`;
   }
   if (lead.has_website && (lead.site_quality_score ?? 100) < 60) {
     return `Your site is not loading great on phones and your number is buried, which is where most of your customers are.`;
@@ -100,13 +100,18 @@ function buildEmail(lead: Lead): { subject: string; body: string } {
   const short = shortBusinessName(lead.business_name, lead.city);
   const link = lead.demo_url ?? "[NEEDS: demo_url] deploy the demo first, then paste the live link here";
   const subject = `Built ${short} a new site (2 min look?)`;
+  // Field-tested shape (2026 cold-email data): under 80 words, problem-first, one link,
+  // a single binary close. No attachments on touch 1 (plain text delivers better on a new domain).
   const body = [
     greeting(lead),
     ``,
     realObservation(lead),
-    `So I built you a version. Here it is: ${link}`,
-    `It loads fast on phones and puts your number one tap away, so the people finding you at midnight actually call you instead of the next guy.`,
-    `If you like it, I can have it live on your domain this week. Want me to?`,
+    ``,
+    `So I built you one. It's already live: ${link}`,
+    ``,
+    `Fast on phones, your number one tap away, your real reviews front and center.`,
+    ``,
+    `Want me to put it on your domain this week?`,
     ``,
     senderName(),
     canSpamFooter(),
@@ -204,7 +209,7 @@ async function main(): Promise<void> {
       body,
       "```",
       lead.demo_url ? "" : `> [NEEDS: demo_url] deploy the demo first so the link is real.`,
-      `> Attach: inline hero screenshot (${lead.demo_screenshot ?? "[NEEDS: demo_screenshot]"}).`,
+      `> Touch 1 sends PLAIN TEXT, no image (deliverability on a fresh domain + 2026 data: plain beats attachment-heavy). Save the hero screenshot (${lead.demo_screenshot ?? "[NEEDS: demo_screenshot]"}) for the follow-up nudge.`,
       ownerFirstName(lead) ? "" : `> [NEEDS: owner first name] check their GBP/Facebook before sending; a real first name in the greeting beats "team".`,
     ].join("\n");
     outreachStatus = "touch1_drafted";
