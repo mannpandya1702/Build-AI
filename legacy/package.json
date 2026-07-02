@@ -1,0 +1,27 @@
+{
+  "name": "web-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "One-person web studio pipeline: find -> qualify -> build demo -> draft outreach. Runs on CLAUDE.md.",
+  "scripts": {
+    "find": "tsx src/discovery/find.ts",
+    "rescore": "tsx src/discovery/find.ts --rescore",
+    "build-demo": "tsx src/demo/generate.ts",
+    "draft": "tsx src/outreach/draft.ts",
+    "run-niche": "tsx src/pipeline/run-niche.ts",
+    "typecheck": "tsc --noEmit",
+    "scout": "tsx src/discovery/scout.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "puppeteer": "^22.12.0",
+    "sharp": "^0.33.4",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.0"
+  }
+}

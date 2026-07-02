@@ -1,0 +1,77 @@
+# Agency Autopilot — PROGRESS
+
+Build log per `AGENCY_AUTOPILOT_SPEC.md` §13. Updated at the end of every work session and phase.
+
+## Phase status
+
+| Phase | Status | Notes |
+|---|---|---|
+| 0. Foundation | ✅ complete (2026-07-02) | acceptance evidence below |
+| 1. Pipeline skeleton (mock) | pending | |
+| 2. Real discovery | pending | |
+| 3. Analysis + solution | pending | |
+| 4. Design, build, QA | pending | |
+| 5. Outreach + booking | pending | |
+| 6. Monitoring + reports | pending | |
+| 7. Hardening + docs | pending | |
+
+## Phase 0 work log (2026-07-02)
+
+- Spec committed to repo root as `AGENCY_AUTOPILOT_SPEC.md`.
+- Repo restructured in place per §3: existing Web Studio pipeline moved (git renames, nothing
+  deleted) to `/legacy` and kept runnable (`pnpm legacy <script>`; its env loader now also reads
+  the repo-root `.env.local`). `drafts/` and `data/` stay at root: they are live operator
+  artifacts (sent outreach, CRM snapshot, research). `legacy/templates/roofers` is the source
+  material for the Phase 4 block library. `legacy/data` import into `leads` (source='legacy')
+  lands with Phase 2.
+- Monorepo: pnpm workspaces + Turborepo. Layout per §3.
+- **Local Postgres 16 stands in for Supabase Postgres in dev** (same engine; DATABASE_URL swap
+  moves to real Supabase with zero code change). Supabase Auth + Realtime are production
+  concerns: dashboard uses direct pg + 2s polling locally, with a single documented seam
+  (`apps/dashboard/lib/db.ts`, `/api/events`) to swap to supabase-js channels.
+- Full §5 schema as `supabase/migrations/00001_init.sql` (all tables, enums, updated_at
+  triggers, suppression constraints, event indexes). File-based migration runner in
+  `@autopilot/core` (`pnpm migrate`).
+- `@autopilot/core`: lead status enum + explicit transition map, `advanceLead()` (transactional,
+  row-locked, idempotent no-op on same-state, illegal transitions throw + emit error events),
+  event bus (`emitEvent`, `notifyOperator`), zod schemas for agent seams, vitest suite.
+- `@autopilot/worker`: pg-boss boot + 60s heartbeat events + seed-event script.
+- `@autopilot/dashboard`: Next.js 14 skeleton, dark operator UI, nav for all §8 pages,
+  `/activity` live tail working against agent_events.
+- `.env.example`: every §10 key documented. `MOCK_MODE=true` default posture.
+- CLAUDE.md: spec §4 merged as `## System rules`; original contract content untouched above it.
+
+## Phase 0 acceptance evidence
+
+- `pnpm migrate`: `apply 00001_init.sql ... migrations up to date` against local Postgres 16.
+- `pnpm --filter @autopilot/core test`: 8/8 state machine tests pass (happy path
+  discovered->delivered, auto-mode skip, QA fail loops, illegal transitions rejected,
+  suppression reachability, terminal states, nurture revival).
+- Worker boot: pg-boss starts, `worker.started` event lands in agent_events, 60s heartbeat wired.
+- Seed event: `pnpm seed-event` writes + reads back `system.seed`.
+- Dashboard: `next build` clean; `/activity` renders; `/api/events` returns the seeded + worker
+  events as JSON (verified live on :3100).
+- CLAUDE.md: original contract intact, `## System rules` appended.
+- `git status` during restructure showed R (rename) records, zero deletions.
+
+## Blockers (spec §14 — operator to provide; build continues elsewhere)
+
+- **Before Phase 2:** PAGESPEED_API_KEY (PageSpeed Insights). GOOGLE_PLACES_API_KEY exists from
+  the legacy pipeline (operator: ROTATE it, it was shared in chat). Confirm launch ICP cities
+  (current: Dallas, TX + suburbs; vertical: roofing).
+- **Before Phase 4:** VERCEL_TEAM_ID (VERCEL_TOKEN exists; operator: ROTATE), AGENCY_DOMAIN
+  (tradecraftsites.com owned), DEMO_BASE_DOMAIN decision (demo.tradecraftsites.com needs the
+  domain added to Vercel), agency facts for `config/agency-facts.yaml` (name: TradeCraft Sites;
+  need: logo?, years?, offer numbers).
+- **Before Phase 5:** outreach domain purchase (e.g. gettradecraftsites.com) + 2-3 Google
+  Workspace mailboxes + warmup dates; RESEND_API_KEY; GMAIL_OAUTH_* credentials; CALCOM_API_KEY +
+  webhook secret + event type; US phone number for Touch-2 call tasks; offer numbers (setup fee
+  range + monthly retainer) for agency-facts; TELEGRAM_BOT_TOKEN/CHAT_ID (optional).
+
+## Conventions
+
+- TypeScript everywhere, ESM, zod at every seam. Prompts live in versioned files under
+  `/packages/agents/*/prompts/`.
+- Events: `agent.verb` types (`lead.status_changed`, `build.deployed`, `email.sent`).
+- Local dev DB: `postgres://autopilot:autopilot_local_dev@localhost:5432/agency_autopilot`
+  (dev-only credentials, documented here intentionally).

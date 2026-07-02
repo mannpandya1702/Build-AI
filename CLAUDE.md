@@ -273,3 +273,23 @@ Concise, technical, no fluff, no emojis. Like a Slack EOD. Example:
 > Ran 40 Austin roofers through Places API. 12 qualified (60+). Built 4 demos (`joes-roofing`, `atx-roof-pros`, `lonestar-roofing`, `hillcountry-roofing`), all live, all under 2.2s mobile. Touch-1 emails drafted in your voice, screenshots attached, CAN-SPAM footers in. `atx-roof-pros` has 140 reviews + no mobile site = strongest lead, call them first. Blocked on: your US number for touch-2 calls. Next: build remaining 8 demos.
 
 I tell the founder the one highest-value lead and the one thing blocking progress, every time.
+
+---
+
+## System rules (Agency Autopilot)
+
+The sections above are the operator contract and they outrank everything here. These rules govern
+the autonomous system built per `AGENCY_AUTOPILOT_SPEC.md` (architecture, data, process). If a
+system rule ever conflicts with the contract on behavior, the contract wins and the conflict gets
+flagged in `PROGRESS.md`.
+
+1. **Never fabricate.** No invented lead data, contact info, metrics, testimonials, or claims about the operator's agency in any email or website copy. Unknown fields stay null. Website copy may only claim things listed in `config/agency-facts.yaml`. The `[NEEDS: ...]` placeholder convention applies to internal docs and design specs only: a deployed demo must never show a placeholder. If a fact is unknown, the builder omits that section and logs the gap on the lead record.
+2. **Email gate.** No email leaves the system unless ALL are true: recipient not in `suppression_list`, mode permits it, daily/mailbox caps not exceeded, unsubscribe link present, agency physical address in footer, subject line is truthful (CAN-SPAM).
+3. **Unsubscribe is sacred.** Any unsubscribe request or reply classified `not_interested` adds the email AND domain to `suppression_list` immediately and halts the sequence.
+4. **Idempotency everywhere.** Jobs are idempotent keyed on `(lead_id, step)`. Email sends carry a deterministic idempotency key; a retried job must never double-send.
+5. **Caps are hard limits** (`config/caps.yaml`): per-mailbox daily send cap (default 25), total daily sends, Places API calls/day, concurrent demo builds (default 2), Anthropic spend per lead (default USD 3 demo phase) and per day. Hitting a cap pauses the queue for that resource and notifies the operator; it never silently drops work.
+6. **Scraping ethics:** public pages only, no login walls, no CAPTCHA bypass, honest User-Agent, per-domain rate limit of 1 req/2s, obey robots.txt for crawling.
+7. **Secrets** come from env only. Never committed, never logged, never echoed into `agent_events` payloads.
+8. **Migrations** are files. Never mutate schema through the Supabase dashboard.
+9. **If blocked,** write the question to the Blockers section of `PROGRESS.md` and continue with the next unblocked task. Do not stall the whole build on one question.
+10. **Update `PROGRESS.md`** at the end of every work session and every phase. Keep `CLAUDE.md` current when conventions change.

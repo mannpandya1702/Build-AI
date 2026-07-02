@@ -13,3 +13,10 @@ data/cache/
 templates/*/node_modules/
 templates/*/.next/
 templates/*/out/
+
+# monorepo
+**/node_modules/
+.turbo/
+**/.next/
+**/dist/
+/tmp-outbox/

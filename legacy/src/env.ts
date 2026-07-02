@@ -8,5 +8,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const repoRoot = resolve(root, ".."); // legacy/ lives one level under the monorepo root
 config({ path: resolve(root, ".env.local") });
-config({ path: resolve(root, ".env") });
+config({ path: resolve(repoRoot, ".env.local") });
+config({ path: resolve(repoRoot, ".env") });
