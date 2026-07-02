@@ -48,25 +48,28 @@ async function main(): Promise<void> {
     });
   }
 
-  // scheduler: enqueue the owning agent for any lead sitting in a trigger status
-  const TRIGGERS = [...AGENT_BY_TRIGGER.keys()];
+  // Scheduler: enqueue the owning agent for any lead sitting in a trigger status.
+  // FAIRNESS: query per status (oldest-updated first, bounded) so a crowd in one status can
+  // never starve another (a flat LIMIT across all statuses did exactly that; PROGRESS.md).
+  // Only statuses whose agent has a handler in this mode are scheduled: no no-op job churn.
+  const handledTriggers = [...AGENT_BY_TRIGGER.entries()].filter(([, a]) => Boolean(handlers[a.name]));
   setInterval(async () => {
-    try {
-      const r = await pool.query<{ id: string; status: LeadStatus }>(
-        `select id, status from leads where status = any($1::lead_status[]) limit 50`,
-        [TRIGGERS],
-      );
-      for (const lead of r.rows) {
-        const agent = AGENT_BY_TRIGGER.get(lead.status);
-        if (!agent) continue;
-        await boss.send(
-          agent.queue,
-          { leadId: lead.id },
-          { singletonKey: `${lead.id}:${lead.status}`, singletonSeconds: 30, retryLimit: 3, retryBackoff: true },
+    for (const [status, agent] of handledTriggers) {
+      try {
+        const r = await pool.query<{ id: string }>(
+          `select id from leads where status = $1::lead_status order by updated_at asc limit 10`,
+          [status],
         );
+        for (const lead of r.rows) {
+          await boss.send(
+            agent.queue,
+            { leadId: lead.id },
+            { singletonKey: `${lead.id}:${status}`, singletonSeconds: 30, retryLimit: 3, retryBackoff: true },
+          );
+        }
+      } catch (err) {
+        console.error("[scheduler]", (err as Error).message);
       }
-    } catch (err) {
-      console.error("[scheduler]", (err as Error).message);
     }
   }, 2000);
 
