@@ -621,7 +621,7 @@
     "last_touch_date": null,
     "reply": null,
     "stage": "qualified",
-    "notes": "score 85 (reviews:30, rating:15, websiteGap:10, niche:15, photos:10, phone:5) | site: HTTP 404 in 3151ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available | VERIFIED 2026-07-02: roofinggiant.com homepage returns 404 on ALL variants (http/https/www). Google-listing website button leads to a 404. GAP CONFIRMED, strong lead."
+    "notes": "score 85 (reviews:30, rating:15, websiteGap:10, niche:15, photos:10, phone:5) | site: HTTP 404 in 3151ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available | VERIFIED 2026-07-02: roofinggiant.com homepage returns 404 on ALL variants (http/https/www). Google-listing website button leads to a 404. GAP CONFIRMED, strong lead. | RE-VERIFIED: inner pages (contact-us.html, freeroofinspection.html) ALSO 404. Entire site dead. | intel: 2730 N Stemmons Fwy #415, phone (469) 498-6772, parent Construction Giant Inc, 88 Yelp photos, BBB + FB + LinkedIn present | no email found: channel = Yelp/BBB/FB message"
   },
   {
     "place_id": "ChIJs9Kb80KZToYRMs-a4Wpptoc",
@@ -1082,7 +1082,7 @@
   {
     "place_id": "ChIJzaRYrsOjToYRbg2Od1QMMQ4",
     "business_name": "Storm Roofing Heroes Dallas",
-    "owner_name": null,
+    "owner_name": "Antonio Lopez",
     "niche": "roofers",
     "city": "Dallas",
     "state": "TX",
@@ -1101,7 +1101,7 @@
     "last_touch_date": null,
     "reply": null,
     "stage": "qualified",
-    "notes": "score 90 (reviews:30, rating:15, websiteGap:15, niche:15, photos:10, phone:5) | site: HTTP 200 in 1171ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available | VERIFIED 2026-07-02: stormroofingheroes.com is a PARKED domain (/lander ad redirect, same as Gallery Built). GAP CONFIRMED, strong lead."
+    "notes": "score 90 (reviews:30, rating:15, websiteGap:15, niche:15, photos:10, phone:5) | site: HTTP 200 in 1171ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available | VERIFIED 2026-07-02: stormroofingheroes.com is a PARKED domain (/lander ad redirect, same as Gallery Built). GAP CONFIRMED, strong lead. | RE-VERIFIED: ALL paths serve the GoDaddy parking lander; NS=domaincontrol.com. Whole domain parked, Google index is stale (site died recently, owner may not know). | owner: Antonio Lopez, phone (214) 809-8078, 7112 Radcliff Dr, 140 Yelp photos, Thumbtack + BBB present | no email found: channel = Yelp/Thumbtack/BBB message"
   },
   {
     "place_id": "ChIJC3kqspqZToYRUMFuM4kmLMY",
