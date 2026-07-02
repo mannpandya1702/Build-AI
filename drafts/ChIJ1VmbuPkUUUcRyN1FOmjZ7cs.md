@@ -79,3 +79,22 @@ TradeCraft Sites
 14th Main Road, Sector 7, HSR Layout, Bengaluru, Karnataka 560102, India
 Not interested? Reply "unsubscribe" and I will not email you again.
 ```
+
+## SENT 2026-07-02 to info@bridgewoodroofing.com
+
+## Touch-3 nudge (send 2026-07-05 or 06 if no reply, on the same thread)
+```
+Subject: Re: Built Bridgewood Roofing a new site (2 min look?)
+
+Hey Bridgewood team, in case the link got buried, here is what it looks like on
+a phone (screenshot attached). The broken website button on your Google listing
+is still live too. Happy to fix both this week. Want me to?
+
+Mann
+TradeCraft Sites
+14th Main Road, Sector 7, HSR Layout, Bengaluru, Karnataka 560102, India
+Not interested? Reply "unsubscribe" and I will not email you again.
+```
+> ATTACH: demos/_screenshots/bridgewood-roofing.webp
+> If still silent: one final one-liner day 8-10, then stage=nurture.
+> If they reply: answer within hours; pricing anchor $300-500 setup + $99/mo; backup contact office@bridgewoodr.com.

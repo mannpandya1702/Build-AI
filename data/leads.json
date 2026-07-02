@@ -1409,10 +1409,10 @@
     "score": 85,
     "demo_url": "https://bridgewood-roofing-buildai.vercel.app",
     "demo_screenshot": "/home/user/Build-AI/demos/_screenshots/bridgewood-roofing.webp",
-    "outreach_status": "touch1_drafted",
-    "last_touch_date": null,
+    "outreach_status": "touch1_sent (email to info@bridgewoodroofing.com, plain text, broken-GBP-link angle)",
+    "last_touch_date": "2026-07-02",
     "reply": null,
-    "stage": "demo_built",
+    "stage": "contacted",
     "notes": "score 90 (reviews:30, rating:15, websiteGap:15, niche:15, photos:10, phone:5) | site: HTTP 202 in 162ms, viewport=false | [VERIFY: probe flagged a gap; confirm on a real phone before building] | 10 GBP photos available | VERIFIED 2026-07-02: bridgewoodroofing.com answers HTTP 202 with a 169-byte empty body. No working site. Gap CONFIRMED. Note: 800-number (toll-free), check for franchise signals during owner hunt. | RE-VERIFIED: https version of site works (WordPress/Elementor, viewport ok). The GBP website button links the HTTP url which serves a broken 202 empty page (no redirect), and the site has NO tel: links. Angle = broken Google-listing link + no tap-to-call, NOT no-website. Emails on their site: info@bridgewoodroofing.com (MX ok), office@bridgewoodr.com."
   },
   {
