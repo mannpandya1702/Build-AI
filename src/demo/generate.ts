@@ -124,15 +124,26 @@ async function buildContent(placeId: string): Promise<{ content: DemoContent; sl
 
   const needs: string[] = [];
 
+  // The demo shows the business at its best: REAL reviews only, curated to positive (4+ stars).
+  // Google's "most relevant" set can include 1-star complaints, and a sales demo must never
+  // showcase the owner's own complaints back at them. Curation is not fabrication: every review
+  // shown is real and attributed. Shorter reviews read better on cards, so prefer them; hard-trim
+  // extreme lengths at a word boundary (the card also line-clamps visually).
   const reviews: DemoReview[] = (details.reviews ?? [])
-    .slice(0, 5)
     .map((r) => ({
       author: r.authorAttribution?.displayName ?? "Google reviewer",
       rating: r.rating ?? 5,
       text: (r.text?.text ?? "").trim(),
     }))
-    .filter((r) => r.text.length > 0);
-  if (reviews.length === 0) needs.push("[NEEDS: reviews] no review text available from GBP");
+    .filter((r) => r.text.length > 0 && r.rating >= 4)
+    .sort((a, b) => b.rating - a.rating || a.text.length - b.text.length)
+    .slice(0, 4)
+    .map((r) =>
+      r.text.length > 420
+        ? { ...r, text: r.text.slice(0, 400).replace(/\s+\S*$/, "").trimEnd() + "..." }
+        : r,
+    );
+  if (reviews.length === 0) needs.push("[NEEDS: reviews] no positive review text available from GBP");
 
   const photoNames = (details.photos ?? []).map((p) => p.name);
   const { photos, needs: photoNeeds } = await savePhotos(placeId, photoNames, destDir).catch((err) => {

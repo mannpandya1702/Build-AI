@@ -192,17 +192,21 @@ export function Gallery() {
   );
 }
 
-function ReviewCard({ r }: { r: (typeof site.reviews)[number] }) {
+function ReviewCard({ r, fixed = true }: { r: (typeof site.reviews)[number]; fixed?: boolean }) {
+  // Uniform card size: fixed height + line-clamp so a long review never stretches its card and
+  // makes neighbors look empty. The clamp is visible truncation, not a rewrite.
   return (
-    <figure className="relative w-[320px] shrink-0 rounded-2xl bg-white p-6 pt-8 shadow-card ring-1 ring-ink/5 md:w-[380px]">
+    <figure
+      className={`relative flex ${fixed ? "h-[280px] w-[320px] md:w-[380px]" : "min-h-[240px] w-full"} shrink-0 flex-col rounded-2xl bg-white p-6 pt-8 shadow-card ring-1 ring-ink/5`}
+    >
       <span aria-hidden className="absolute right-5 top-2 font-display text-6xl font-extrabold leading-none text-brand/10">
         &rdquo;
       </span>
       <p className="text-amber-500" aria-label={`${r.rating} out of 5 stars`}>
         {"★".repeat(Math.round(r.rating))}
       </p>
-      <blockquote className="mt-3 text-ink/80">&ldquo;{r.text}&rdquo;</blockquote>
-      <figcaption className="mt-4 font-display font-extrabold text-ink">{r.author}</figcaption>
+      <blockquote className="mt-3 line-clamp-6 text-ink/80">&ldquo;{r.text}&rdquo;</blockquote>
+      <figcaption className="mt-auto pt-4 font-display font-extrabold text-ink">{r.author}</figcaption>
     </figure>
   );
 }
@@ -225,7 +229,7 @@ export function Reviews() {
       {reduce ? (
         <div className="mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-4 px-5 md:grid-cols-2">
           {site.reviews.map((r, i) => (
-            <ReviewCard key={i} r={r} />
+            <ReviewCard key={i} r={r} fixed={false} />
           ))}
         </div>
       ) : (

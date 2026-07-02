@@ -105,6 +105,7 @@ Grounded in what actually converts for local service businesses in 2026:
 - **Location-specific hero headline:** primary service + city. "Emergency Roof Repair in Austin, TX." City in the first line of copy.
 - **One clear primary action per page.** Call, or get a quote. Not five competing buttons.
 - **Real trust signals:** their actual Google reviews (3 to 5, pulled from GBP), real photos of their work/team (never stock, users spot stock and it kills trust), license/insurance/years-in-business, embedded Google Map, and NAP (name, address, phone) consistent with their GBP.
+- **Review curation, not fabrication:** the demo shows real reviews only, curated to 4+ stars. Google's "most relevant" set can include 1-star complaints, and a sales demo must never showcase the owner's own complaints back at them. Prefer shorter reviews (they read better on cards), clamp card heights so one long review never distorts the layout, and hard-trim extreme lengths at a word boundary with a visible ellipsis. Never edit review words.
 - **Short quote form: 3 to 5 fields max.** Name, phone, service, preferred timing. Every extra field drops conversion.
 - **Standard local structure:** Home (does the heavy lifting, treat as a landing page), Services, About (the humans, builds more trust than owners expect), Gallery / before-after proof, Reviews, Contact (phone, form, map, hours).
 - **Structured headings (H1/H2/H3) + schema markup** so it reads well to Google and to AI search (AI Overviews, ChatGPT, Perplexity now drive discovery).
