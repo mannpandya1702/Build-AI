@@ -50,3 +50,26 @@ Close: ask for the next step. Point it at their domain this week.
 ```
 
 Reminder: no cold SMS. SMS only if they reply or give a number (CLAUDE.md §0.4).
+
+## Touch-3 nudge (send 2026-07-05 or 06 if no reply)
+```
+Subject: Re: Built Myriad Roofing a new site (2 min look?)
+
+Hey Jimmy, in case the link got buried, here is what it looks like on a phone
+(screenshot attached). Still happy to get this live on your domain this week.
+Want me to?
+
+Mann
+TradeCraft Sites
+14th Main Road, Sector 7, HSR Layout, Bengaluru, Karnataka 560102, India
+Not interested? Reply "unsubscribe" and I will not email you again.
+```
+> ATTACH the hero screenshot this time: demos/_screenshots/myriad-roofing-construction-llc.webp
+> Reply as a thread on the first email (keeps context, reads human).
+> If still silent after this: ONE more one-liner around day 8-10, then stage=nurture. Never pester.
+
+## If Jimmy replies
+- Answer within hours, not days. Speed is the whole game with contractors.
+- "How much?" -> Setup $300 to $500 for him (first client pricing), then $99/mo hosting + updates. "You pay nothing until it is live and you are happy."
+- Get a yes -> ask for his domain registrar access or offer to buy myriadroofing domain variant he prefers -> point the site at it -> invoice.
+- Log every touch here and set stage=negotiating.

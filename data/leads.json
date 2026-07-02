@@ -458,11 +458,11 @@
   {
     "place_id": "ChIJVVUljQ2fToYRhXvaTK_XwQM",
     "business_name": "Gallery Built Roofing",
-    "owner_name": null,
+    "owner_name": "James A. Vann",
     "niche": "roofers",
     "city": "Dallas",
     "state": "TX",
-    "phone": null,
+    "phone": "(817) 988-9509",
     "email": null,
     "gbp_url": "https://maps.google.com/?cid=270734600527575941&g_mp=CiVnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLkdldFBsYWNlEAIYBCAA",
     "review_count": 186,
@@ -471,13 +471,13 @@
     "current_site_url": null,
     "site_quality_score": null,
     "score": 95,
-    "demo_url": null,
-    "demo_screenshot": null,
+    "demo_url": "https://gallery-built-roofing-buildai.vercel.app",
+    "demo_screenshot": "/home/user/Build-AI/demos/_screenshots/gallery-built-roofing.webp",
     "outreach_status": "",
     "last_touch_date": null,
     "reply": null,
-    "stage": "qualified",
-    "notes": "score 95 (reviews:30, rating:15, websiteGap:25, niche:15, photos:10, phone:0) | no current website | 6 GBP photos available"
+    "stage": "demo_built",
+    "notes": "score 95 (reviews:30, rating:15, websiteGap:25, niche:15, photos:10, phone:0) | no current website | 6 GBP photos available | owner: James A. Vann (Managing Member), pres: Chris Barry | phones (817) 988-9509 + (737) 210-9353 (from Yelp/BBB, GBP had none) | owns gallerybuiltroofing.com but it serves a ~114-byte EMPTY page, no MX (no email on domain), not linked on GBP | no email found yet: contact via Yelp message / BBB form / FB | 16 photos on Yelp | same suite address as Myriad (6060 N Central Expy Ste 500 = shared/virtual office)"
   },
   {
     "place_id": "ChIJ3R02rNmZToYRquMYlFffu4Y",
@@ -809,10 +809,10 @@
     "score": 100,
     "demo_url": "https://myriad-roofing-construction-llc-buildai.vercel.app",
     "demo_screenshot": "/home/user/Build-AI/demos/_screenshots/myriad-roofing-construction-llc.webp",
-    "outreach_status": "touch1_drafted",
-    "last_touch_date": null,
+    "outreach_status": "touch1_sent (email to jimmy@myriadroofing.com, plain text, no image)",
+    "last_touch_date": "2026-07-02",
     "reply": null,
-    "stage": "demo_built",
+    "stage": "contacted",
     "notes": "score 100 (reviews:30, rating:15, websiteGap:25, niche:15, photos:10, phone:5) | no current website | 1 GBP photos available | owner: Jimmy Porch (President), email jimmy@myriadroofing.com (MX verified; directory typo said myraid), alt phone (972) 784-0110, BBB A+ since 2018, GAF commercial profile | domain myriadroofing.com exists (Cloudflare-blocked to bots): [VERIFY in a browser before send whether a site is live; GBP links none]"
   },
   {
