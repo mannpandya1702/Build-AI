@@ -10,7 +10,7 @@ Build log per `AGENCY_AUTOPILOT_SPEC.md` §13. Updated at the end of every work 
 | 1. Pipeline skeleton (mock) | ✅ complete (2026-07-02) | evidence below |
 | 2. Real discovery | ✅ complete (2026-07-03) | cap enforcement demonstrated live; evidence below |
 | 3. Analysis + solution | ✅ complete (2026-07-03) | vision audits + resilient no-empty-audit guarantee; evidence below |
-| 4. Design, build, QA | in progress (2026-07-03) | builder wraps the legacy demo engine |
+| 4. Design, build, QA | ✅ complete (2026-07-03) | block library + uiux/builder/qa; real Vercel demo live; evidence below |
 | 5. Outreach + booking | pending | |
 | 6. Monitoring + reports | pending | |
 | 7. Hardening + docs | pending | |
@@ -157,6 +157,51 @@ ENV NOTE (spec §15): some prospect sites sit behind Cloudflare/bot gates, so th
 interception screenshot captures the challenge page. The analyzer reports that honestly as a
 finding (a slow security gate IS real signal); demo-quality screenshots that need the real render
 are a Phase 4 concern, not an audit blocker.
+
+## Phase 4 work log + acceptance (2026-07-03)
+
+Design -> build -> QA, wrapping the proven legacy roofing demo engine rather than rebuilding it
+(spec §2.7: existing demos are the block library's source material; CLAUDE.md §5 is the
+authoritative build spec).
+
+- **`@autopilot/blocks`** — typed block library: 14 blocks in the validated CLAUDE.md §5b narrative
+  order (each declaring persona, the customer question it answers, the real facts it needs so a
+  block is omitted not faked, and its §5 ref), a looks registry (the 4 proven roofing looks ported
+  verbatim + curated plumbing/hvac/dental looks, all anti-slop), and 4 vertical presets (roofing
+  live; the rest declared + look-ready to activate). 7/7 tests. `looks` table seeded (10 looks).
+- **uiux agent** (solution_ready -> design_ready): assigns a look (contract §5d: no two prospects in
+  the same preset+metro share a look while free looks remain; stored on the design, locked once
+  sent), Sonnet writes hero copy + section intent from VERIFIED facts only. Writes designs.brand/
+  sitemap/page_specs.
+- **builder agent** (design_ready/closed_won -> demo_qa/final_qa): composes the demo by filling the
+  legacy roofing template with the lead's real reviews (verbatim, curated 4+) + GBP photos + the
+  assigned look, adds the watermark bar + noindex for demos, deploys via the Vercel adapter. Atomic
+  in-flight-build claim closes the self-trigger race; per-lead demo-phase budget enforced;
+  concurrent-build cap + score-desc ordering in the scheduler (spec §9).
+- **qa agent** (demo_qa/final_qa -> outreach_ready/delivery_approval): mechanizes the CLAUDE.md §8
+  Definition of Done. Fix loop back to the builder, max 2 iterations then hold + notify. SEO is
+  advisory on demos (a noindexed demo cannot clear Lighthouse SEO 90 by design) and critical on
+  finals.
+- **Template**: additive watermark + noindex gated by content flags (legacy/final behavior
+  unchanged). Vercel deploy + cap-metered photo-fetch adapters.
+
+Acceptance (spec §13 Phase 4):
+- One command (`build-demo.ts`) took `James Kate Roofing & Restoration` (solution_ready) to a LIVE
+  demo through uiux -> builder -> qa. Live at
+  `https://james-kate-roofing-restoration-demo-tradecraft.vercel.app`: HTTP 200, Lighthouse mobile
+  **perf 97**, watermark + noindex + tap-to-call all present in the served HTML, all 7 critical QA
+  checks green, Sonnet vision review clean. Look `ember-storm`, all copy/reviews from real GBP data.
+- Broken-build fix loop: `build-demo.ts <lead> --break` injected a placeholder into build #1;
+  QA caught it (`no placeholder copy` failed, 1 issue), looped to demo_building, the builder rebuilt
+  clean (#2), QA passed with 0 issues -> outreach_ready. Caught and fixed within 2 iterations.
+- Look distinctness held: James Kate got `ember-storm`, Results Roofing got `moss-craft` (both
+  roofing, no reuse while free looks remained).
+- Full flow also verified in MOCK mode (local deploy, zero spend) for the state-machine traversal.
+
+ENV NOTE (spec §15): the Places daily cap was spent during the run, so real GBP photos could not be
+downloaded for the live demo; the template rendered its honest empty-gallery state (never a stock
+placeholder, CLAUDE.md §0.1) and QA did not fail on it (photos are not a critical check). Photos
+fill on the next day's budget.
 
 ## Resolved by operator (2026-07-03)
 
