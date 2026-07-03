@@ -14,7 +14,8 @@
     "@autopilot/core": "workspace:*",
     "zod": "^3.23.8",
     "@autopilot/adapters": "workspace:*",
-    "yaml": "^2.4.5"
+    "yaml": "^2.4.5",
+    "@autopilot/blocks": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
