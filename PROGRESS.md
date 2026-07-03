@@ -110,6 +110,13 @@ Build log per `AGENCY_AUTOPILOT_SPEC.md` §13. Updated at the end of every work 
   webhook secret + event type; US phone number for Touch-2 call tasks; offer numbers (setup fee
   range + monthly retainer) for agency-facts; TELEGRAM_BOT_TOKEN/CHAT_ID (optional).
 
+## Product note (2026-07-03, operator decision)
+
+Offer expanded: websites + workflow automation as expansion revenue (CLAUDE.md §1). Autopilot
+impact: Phase 3 solutions agent gains an `automation_opportunities` field on the call sheet
+(observed leaks -> matching package); Phase 5 delivery email mentions the day-30 automation
+review. Cold outreach is UNCHANGED (demo-first, one move).
+
 ## Conventions
 
 - TypeScript everywhere, ESM, zod at every seam. Prompts live in versioned files under
