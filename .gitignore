@@ -9,6 +9,10 @@ data/cache/
 .DS_Store
 *.log
 
+# audit screenshots: regenerable binary artifacts of prospect sites, never committed (repo bloat)
+data/screenshots/
+**/data/screenshots/
+
 # generated demo template artifacts
 templates/*/node_modules/
 templates/*/.next/

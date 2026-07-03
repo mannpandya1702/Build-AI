@@ -71,7 +71,10 @@ async function main(): Promise<void> {
           await boss.send(
             agent.queue,
             { leadId: lead.id },
-            { singletonKey: `${lead.id}:${status}`, singletonSeconds: 30, retryLimit: 3, retryBackoff: true },
+            // singletonSeconds must EXCEED the slowest job (analyzer: PageSpeed up to ~90s +
+            // screenshots + Sonnet vision). A shorter window re-enqueues a lead that is still
+            // being processed, piling up thousands of duplicate jobs (PROGRESS.md incident).
+            { singletonKey: `${lead.id}:${status}`, singletonSeconds: 300, retryLimit: 3, retryBackoff: true },
           );
         }
       } catch (err) {

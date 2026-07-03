@@ -12,8 +12,15 @@ const PROMPT = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "pr
 export async function solution(leadId: string): Promise<void> {
   const pool = getPool();
   const lead = (await pool.query("select * from leads where id = $1", [leadId])).rows[0];
-  const audit = (await pool.query("select * from audits where lead_id = $1 order by created_at desc limit 1", [leadId])).rows[0];
   if (!lead) throw new Error(`lead ${leadId} missing`);
+
+  // Idempotency guard (spec §4.4): skip if a duplicate job fires after the lead already advanced.
+  if (lead.status !== "analyzed") {
+    await emitEvent({ agent: "solution", leadId, level: "debug", type: "solution.skipped", message: `lead already at ${lead.status}` });
+    return;
+  }
+
+  const audit = (await pool.query("select * from audits where lead_id = $1 order by created_at desc limit 1", [leadId])).rows[0];
   const findings = audit?.findings ?? [];
 
   const raw = await llm({
