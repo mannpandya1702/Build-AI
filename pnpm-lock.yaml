@@ -104,6 +104,9 @@ importers:
       '@autopilot/core':
         specifier: workspace:*
         version: link:../core
+      yaml:
+        specifier: ^2.4.5
+        version: 2.9.0
       zod:
         specifier: ^3.23.8
         version: 3.25.76

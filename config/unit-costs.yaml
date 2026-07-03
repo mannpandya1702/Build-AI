@@ -1,0 +1,24 @@
+# Unit economics inputs for the finance agent. Two kinds of numbers, never mixed silently:
+# MEASURED costs come from agent_events (llm cost_usd, metered API calls priced below).
+# ALLOCATED/ESTIMATED costs are explicit assumptions here; change them as reality teaches.
+api_prices_usd:
+  places_search: 0.032        # Text Search (enterprise-tier fields)
+  places_details: 0.02        # Place Details with reviews
+  pagespeed: 0.0              # free API
+infra_monthly_usd:
+  vercel_pro_allocated_per_client: 2.0    # $20/mo Pro plan spread over ~10 client sites
+  mailbox_allocated_per_client: 1.5       # 3 x $7 Workspace mailboxes over ~14 active clients
+  domain_amortized_per_client: 1.0
+automation_usage_usd:
+  twilio_sms_each: 0.0079
+  est_sms_per_client_month: 150           # missed-call text-back + review requests, typical trade
+  email_per_client_month: 0.5
+operator:
+  hourly_rate_usd: 25          # what the operator's hour must earn to be worth it
+  est_hours_demo: 0.5          # per-demo operator review time (machine does the build)
+  est_hours_close: 2.0         # calls + emails per closed deal
+  est_hours_maintenance_month: 0.75
+targets:
+  gross_margin: 0.80           # price floors are computed to keep at least this margin
+  funnel_reply_rate: 0.04      # contract §9 benchmark, replaced by measured rate when n >= 100
+  funnel_close_rate: 0.33      # of real conversations, contract §9

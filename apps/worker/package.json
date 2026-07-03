@@ -8,7 +8,8 @@
     "seed-event": "tsx src/seed-event.ts",
     "typecheck": "tsc --noEmit",
     "test": "echo 'no worker tests yet'",
-    "import-legacy": "tsx src/import-legacy.ts"
+    "import-legacy": "tsx src/import-legacy.ts",
+    "finance": "tsx src/finance-report.ts"
   },
   "dependencies": {
     "@autopilot/core": "workspace:*",
