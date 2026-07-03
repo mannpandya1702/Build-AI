@@ -1,20 +1,48 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Source_Sans_3, Archivo, IBM_Plex_Sans, Space_Grotesk, Work_Sans } from "next/font/google";
+import {
+  Bricolage_Grotesque, Source_Sans_3, Archivo, IBM_Plex_Sans, Space_Grotesk, Work_Sans,
+  Anton, Bebas_Neue, Outfit, Sora, Hanken_Grotesk, Chivo, Rubik, Manrope,
+} from "next/font/google";
 import "./globals.css";
 import { site, isDemo, watermarkText, isNoindex } from "../lib/content";
 import StickyCallBar from "../components/StickyCallBar";
 import Watermark from "../components/Watermark";
 
-// Three distinctive pairings (CLAUDE.md §5b-bis: never system fonts). All are declared statically
-// (next/font requires it) with preload off; only the pair the theme references is ever downloaded,
-// because unused font-families are never used by any CSS rule.
-const bricolageDisplay = Bricolage_Grotesque({ subsets: ["latin"], weight: ["300", "500", "800"], variable: "--f-bricolage", display: "swap", preload: false });
-const bricolageBody = Source_Sans_3({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--f-sourcesans", display: "swap", preload: false });
-const archivoDisplay = Archivo({ subsets: ["latin"], weight: ["300", "500", "800", "900"], variable: "--f-archivo", display: "swap", preload: false });
-const archivoBody = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--f-plex", display: "swap", preload: false });
-const groteskDisplay = Space_Grotesk({ subsets: ["latin"], weight: ["300", "500", "700"], variable: "--f-grotesk", display: "swap", preload: false });
-const groteskBody = Work_Sans({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--f-work", display: "swap", preload: false });
+// Distinctive font families (CLAUDE.md §5b-bis: never system fonts). All are declared statically
+// (next/font requires it) with preload off; only the families the assigned look references are ever
+// downloaded, because unused font variables are never applied by any CSS rule. The name-based
+// registry below lets the skill-grounded looks registry (@autopilot/blocks) pick ANY declared
+// display+body pairing per lead, not just one of a fixed three.
+const bricolage = Bricolage_Grotesque({ subsets: ["latin"], weight: ["300", "500", "800"], variable: "--f-bricolage", display: "swap", preload: false });
+const sourcesans = Source_Sans_3({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--f-sourcesans", display: "swap", preload: false });
+const archivo = Archivo({ subsets: ["latin"], weight: ["300", "500", "800", "900"], variable: "--f-archivo", display: "swap", preload: false });
+const plex = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--f-plex", display: "swap", preload: false });
+const grotesk = Space_Grotesk({ subsets: ["latin"], weight: ["300", "500", "700"], variable: "--f-grotesk", display: "swap", preload: false });
+const work = Work_Sans({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--f-work", display: "swap", preload: false });
+const anton = Anton({ subsets: ["latin"], weight: "400", variable: "--f-anton", display: "swap", preload: false });
+const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400", variable: "--f-bebas", display: "swap", preload: false });
+const outfit = Outfit({ subsets: ["latin"], weight: ["300", "500", "800"], variable: "--f-outfit", display: "swap", preload: false });
+const sora = Sora({ subsets: ["latin"], weight: ["300", "600", "800"], variable: "--f-sora", display: "swap", preload: false });
+const hanken = Hanken_Grotesk({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--f-hanken", display: "swap", preload: false });
+const chivo = Chivo({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--f-chivo", display: "swap", preload: false });
+const rubik = Rubik({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--f-rubik", display: "swap", preload: false });
+const manrope = Manrope({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--f-manrope", display: "swap", preload: false });
 
+const ALL_FONTS = [bricolage, sourcesans, archivo, plex, grotesk, work, anton, bebas, outfit, sora, hanken, chivo, rubik, manrope];
+
+// Font NAME (as stored in the looks registry) -> its CSS variable. A look carries its own display
+// and body font names; whatever it names resolves here.
+const FONT_VARS: Record<string, string> = {
+  "Bricolage Grotesque": "var(--f-bricolage)", "Source Sans 3": "var(--f-sourcesans)",
+  "Archivo": "var(--f-archivo)", "IBM Plex Sans": "var(--f-plex)",
+  "Space Grotesk": "var(--f-grotesk)", "Work Sans": "var(--f-work)",
+  "Anton": "var(--f-anton)", "Bebas Neue": "var(--f-bebas)", "Outfit": "var(--f-outfit)",
+  "Sora": "var(--f-sora)", "Hanken Grotesk": "var(--f-hanken)", "Chivo": "var(--f-chivo)",
+  "Rubik": "var(--f-rubik)", "Manrope": "var(--f-manrope)",
+};
+
+// Legacy fallback: the original three fontPair keys, for content.json written before displayFont/
+// bodyFont existed.
 const FONT_PAIRS: Record<string, { display: string; body: string }> = {
   bricolage: { display: "var(--f-bricolage)", body: "var(--f-sourcesans)" },
   archivo: { display: "var(--f-archivo)", body: "var(--f-plex)" },
@@ -56,7 +84,11 @@ function localBusinessSchema() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const t = site.theme;
-  const pair = FONT_PAIRS[t.fontPair] ?? FONT_PAIRS.bricolage;
+  // Resolve fonts by the look's own display/body NAMES (skill-grounded looks); fall back to the
+  // legacy three-pair mapping for older content.json (CLAUDE.md §5d).
+  const legacy = FONT_PAIRS[t.fontPair] ?? FONT_PAIRS.bricolage;
+  const displayVar = (t.displayFont && FONT_VARS[t.displayFont]) || legacy.display;
+  const bodyVar = (t.bodyFont && FONT_VARS[t.bodyFont]) || legacy.body;
   // The whole look flows from these variables: palette channels + font pair (CLAUDE.md §5d).
   const themeStyle = {
     ["--brand" as string]: t.palette.brand,
@@ -64,10 +96,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     ["--ink" as string]: t.palette.ink,
     ["--paper" as string]: t.palette.paper,
     ["--paper-2" as string]: t.palette.paper2,
-    ["--font-display" as string]: pair.display,
-    ["--font-body" as string]: pair.body,
+    ["--font-display" as string]: displayVar,
+    ["--font-body" as string]: bodyVar,
   } as React.CSSProperties;
-  const fontVars = `${bricolageDisplay.variable} ${bricolageBody.variable} ${archivoDisplay.variable} ${archivoBody.variable} ${groteskDisplay.variable} ${groteskBody.variable}`;
+  const fontVars = ALL_FONTS.map((f) => f.variable).join(" ");
 
   return (
     <html lang="en" className={fontVars}>

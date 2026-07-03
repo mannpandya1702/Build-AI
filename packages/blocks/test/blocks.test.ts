@@ -14,11 +14,27 @@ describe("block library (spec §6.7 acceptance: ≥12 blocks, 4 presets)", () =>
     }
   });
 
-  it("has 4 presets, roofing live with 4 looks", () => {
+  it("has 4 presets, roofing live with enough looks for the §5d no-reuse rule", () => {
     expect(PRESETS.length).toBe(4);
     const roofing = PRESETS.find((p) => p.id === "roofing")!;
     expect(roofing.live).toBe(true);
-    expect(roofing.looks.length).toBe(4);
+    // roofing (the live vertical) carries the 4 proven looks + skill-grounded additions
+    expect(roofing.looks.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it("every look's fonts are declared in the roofing template's name-based font registry", () => {
+    // Fonts the roofing template (legacy/templates/roofers) loads via next/font. A live-preset look
+    // must render faithfully; guard against adding a look whose font the template can't load.
+    const RENDERABLE = new Set([
+      "Bricolage Grotesque", "Source Sans 3", "Archivo", "IBM Plex Sans", "Space Grotesk", "Work Sans",
+      "Anton", "Bebas Neue", "Outfit", "Sora", "Hanken Grotesk", "Chivo", "Rubik", "Manrope",
+    ]);
+    for (const p of PRESETS.filter((p) => p.live)) {
+      for (const l of p.looks) {
+        expect(RENDERABLE.has(l.typePairing.display), `${l.name} display ${l.typePairing.display}`).toBe(true);
+        expect(RENDERABLE.has(l.typePairing.body), `${l.name} body ${l.typePairing.body}`).toBe(true);
+      }
+    }
   });
 
   it("every preset's block sequence references real blocks", () => {

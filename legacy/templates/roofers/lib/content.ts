@@ -19,6 +19,10 @@ export interface DemoTheme {
   // RGB channel triplets ("r g b") so Tailwind alpha modifiers work (see globals.css).
   palette: { brand: string; brandInk: string; ink: string; paper: string; paper2: string };
   fontPair: "bricolage" | "archivo" | "grotesk";
+  // Skill-grounded looks name their exact fonts; layout resolves these by name and only falls back
+  // to fontPair when absent (older content.json).
+  displayFont?: string;
+  bodyFont?: string;
   heroVariant: "photo" | "split" | "bold";
 }
 

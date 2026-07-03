@@ -7,3 +7,4 @@ export * from "./dns.js";
 export * from "./pagespeed.js";
 export * from "./screenshots.js";
 export * from "./vercel.js";
+export * from "./uiuxskill.js";

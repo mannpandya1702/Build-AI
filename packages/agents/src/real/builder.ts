@@ -149,7 +149,11 @@ export async function builder(leadId: string): Promise<void> {
   const theme = {
     id: `${preset.id}-${heroVariant}`,
     palette,
+    // fontPair is the legacy fallback; displayFont/bodyFont drive the name-based font registry so the
+    // look's exact skill-grounded pairing renders (CLAUDE.md §9).
     fontPair: fontPairKey(look.fonts?.display ?? "Bricolage Grotesque"),
+    displayFont: look.fonts?.display ?? undefined,
+    bodyFont: look.fonts?.body ?? undefined,
     heroVariant,
   };
 

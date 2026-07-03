@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { advanceLead, emitEvent, getPool, notifyOperator } from "@autopilot/core";
-import { llm, MOCK } from "@autopilot/adapters";
+import { llm, MOCK, designGuidance } from "@autopilot/adapters";
 import { presetForIndustry, BLOCK_BY_ID, blockDataSatisfied, type Preset } from "@autopilot/blocks";
 
 const PROMPT = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "prompts/uiux.md"), "utf8");
@@ -90,6 +90,13 @@ export async function uiux(leadId: string): Promise<void> {
 
   const look = await assignLook(leadId, preset, lead.city);
 
+  // Ground the design in the ui-ux-pro-max skill (CLAUDE.md §9): product reasoning, the landing
+  // conversion pattern, and UX guidelines for this niche. The skill INFORMS the copy + section
+  // intent; the assigned look + the anti-slop contract still GOVERN the visuals. Advisory: empty
+  // guidance (skill miss) just means no extra grounding, never a failure.
+  const guidance = await designGuidance(preset.label, lead.city);
+  const skillGrounded = Boolean(guidance.product || guidance.landing || guidance.ux);
+
   // Facts the copy may use, all verified. review_signal is the real praise pattern the solution found.
   const reviewSignal = solution?.differentiators?.[0] ?? (lead.review_count ? `${lead.review_count} Google reviews at ${lead.rating ?? "?"}` : null);
   const facts = {
@@ -110,7 +117,12 @@ export async function uiux(leadId: string): Promise<void> {
     leadId,
     maxTokens: 700,
     system: PROMPT,
-    prompt: `Verified facts:\n${JSON.stringify(facts, null, 2)}\n\nAudit summary: ${audit?.summary ?? "n/a"}\nPitch: ${solution?.pitch_angle ?? "n/a"}\n\nWrite the copy JSON.`,
+    prompt: `Verified facts:\n${JSON.stringify(facts, null, 2)}\n\nAudit summary: ${audit?.summary ?? "n/a"}\nPitch: ${solution?.pitch_angle ?? "n/a"}\n\n` +
+      (skillGrounded
+        ? `Design intelligence for this niche (ui-ux-pro-max skill; use it to inform section intent + copy emphasis, but it does NOT override the verified facts or the assigned visual look):\n` +
+          `${[guidance.product, guidance.landing, guidance.ux].filter(Boolean).join("\n\n").slice(0, 2200)}\n\n`
+        : "") +
+      `Write the copy JSON.`,
     mockResponse: JSON.stringify({
       tone: "direct, local, no-nonsense",
       hero: { headline: `${facts.primary_service} in ${lead.city ?? "your area"}`, subhead: reviewSignal ? `${reviewSignal}. One tap to call.` : "Fast, honest work. One tap to call." },
@@ -155,6 +167,8 @@ export async function uiux(leadId: string): Promise<void> {
     cta: { primary: copy.cta_primary ?? "Get a quote", secondary: copy.cta_secondary ?? "Get a free quote" },
     preset: preset.id,
     preset_live: preset.live,
+    // provenance: whether this design was grounded in the ui-ux-pro-max skill (CLAUDE.md §9).
+    skill_grounded: skillGrounded,
   };
   const sitemap = ["Home", "Services", "About", "Contact"];
 
@@ -163,7 +177,7 @@ export async function uiux(leadId: string): Promise<void> {
      values ($1,$2,$3,$4,$5,false)`,
     [leadId, JSON.stringify(brand), JSON.stringify(sitemap), JSON.stringify([{ page: "Home", blocks }]), look.id],
   );
-  await emitEvent({ agent: "uiux", leadId, type: "design.ready", message: `look '${look.name}' + ${blocks.length} blocks${MOCK() ? " (mock)" : ""}`, payload: { look: look.name, preset: preset.id } });
+  await emitEvent({ agent: "uiux", leadId, type: "design.ready", message: `look '${look.name}' + ${blocks.length} blocks${skillGrounded ? " (skill-grounded)" : ""}${MOCK() ? " (mock)" : ""}`, payload: { look: look.name, preset: preset.id, skill_grounded: skillGrounded } });
   await advanceLead(leadId, "design_ready", { agent: "uiux" });
 }
 
