@@ -11,8 +11,8 @@ Build log per `AGENCY_AUTOPILOT_SPEC.md` §13. Updated at the end of every work 
 | 2. Real discovery | ✅ complete (2026-07-03) | cap enforcement demonstrated live; evidence below |
 | 3. Analysis + solution | ✅ complete (2026-07-03) | vision audits + resilient no-empty-audit guarantee; evidence below |
 | 4. Design, build, QA | ✅ complete (2026-07-03) | block library + uiux/builder/qa; real Vercel demo live; evidence below |
-| 5. Outreach + booking | pending | |
-| 6. Monitoring + reports | pending | |
+| 5. Outreach + booking | mock ✅ (2026-07-03) | full sequence/gate/reply/booking pass on mock; LIVE gated on operator mailboxes |
+| 6. Monitoring + reports | partial | /reports page live (funnel + spend + unit economics); cron anomaly checks pending |
 | 7. Hardening + docs | pending | |
 
 ## Phase 0 work log (2026-07-02)
@@ -202,6 +202,35 @@ ENV NOTE (spec §15): the Places daily cap was spent during the run, so real GBP
 downloaded for the live demo; the template rendered its honest empty-gallery state (never a stock
 placeholder, CLAUDE.md §0.1) and QA did not fail on it (photos are not a critical check). Photos
 fill on the next day's budget.
+
+## Phase 5 work log + mock acceptance (2026-07-03)
+
+Outreach engine built and passing on mock adapters (email -> /tmp/outbox, Haiku classify -> mock).
+LIVE sending stays gated on operator setup (outreach domain + warmed mailboxes + Resend DNS).
+
+- Email adapter (`@autopilot/adapters/email`): `sendEmail` (MOCK -> /tmp/outbox .eml; REAL -> Resend
+  with Idempotency-Key), the CAN-SPAM/suppression/caps **gate** (`emailGate`), `voiceLint` (§3
+  banned phrases + em dashes), `canSpamFooter` (real address or refuse), suppression helpers.
+- Sales agent (`@autopilot/agents/real/sales`): outreach_ready -> Touch-1 demo drop (deterministic
+  §3-clean shape, the audit's top finding as the real opener, the live demo link, binary close) ->
+  awaiting_approval (review) or auto-send. `approveAndSend` (gate + idempotent send + advance to
+  contacted + Touch-2 call task), `ingestReply` (Haiku classify -> suppress+halt on opt-out, else
+  notify + advance to replied), `ingestBooking` (meeting + meeting_booked + notify), `deliverFinal`.
+- Worker: `sales` in REAL_HANDLERS; DB-driven operator-action polls (approved emails -> send;
+  dev.reply_requested / dev.booking_requested -> handlers) so the dashboard stays dependency-light.
+- Dashboard: /outbox rebuilt into the approval queue (approve/reject wired, voice-lint inline, body
+  preview) modeled on the 21st.dev "Email Client Card" pattern, + calls-due + replies + sent + a
+  mock dev panel (simulate reply/booking). API: /api/outbox/{approve,reject}, /api/dev/simulate-*.
+
+Acceptance (spec §13 Phase 5, mock — 12/12 pass): full sequence with approval; CAN-SPAM footer
+(unsubscribe + physical address) present; approve -> sent -> contacted; **exactly one** .eml written
+and a duplicate approve does NOT double-send (idempotency); interested reply -> replied + sequence
+halted + operator notified; booking -> meeting_booked + meeting row; unsubscribe -> address+domain
+suppressed; the gate then blocks any further send to that suppressed recipient. Ran on throwaway
+.example test leads (no real prospect data touched), cleaned up after.
+
+LIVE smoke test (send/reply/booking round-trip against a real inbox) + DNS startup checks remain,
+gated on the operator's outreach domain + mailboxes (blockers below).
 
 ## Resolved by operator (2026-07-03)
 

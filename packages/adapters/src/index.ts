@@ -8,3 +8,4 @@ export * from "./pagespeed.js";
 export * from "./screenshots.js";
 export * from "./vercel.js";
 export * from "./uiuxskill.js";
+export * from "./email.js";

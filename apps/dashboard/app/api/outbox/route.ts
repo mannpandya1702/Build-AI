@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const rows = async (where: string) =>
     (await db().query(
-      `select e.id, e.direction, e.kind, e.subject, e.status, e.sent_at, e.created_at, l.company_name, l.id as lead_id
+      `select e.id, e.direction, e.kind, e.subject, e.body_text, e.status, e.sent_at, e.created_at,
+              l.company_name, l.id as lead_id, l.contact_email
        from emails e join leads l on l.id = e.lead_id where ${where} order by e.created_at desc limit 100`,
     )).rows;
 

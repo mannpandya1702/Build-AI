@@ -6,7 +6,7 @@
 
 import PgBoss from "pg-boss";
 import { emitEvent, getPool, type LeadStatus } from "@autopilot/core";
-import { AGENTS, AGENT_BY_TRIGGER, STUB_HANDLERS, research, realScrape, realQualify, realAnalyzer, realSolution, realUiux, realBuilder, realQa } from "@autopilot/agents";
+import { AGENTS, AGENT_BY_TRIGGER, STUB_HANDLERS, research, realScrape, realQualify, realAnalyzer, realSolution, realUiux, realBuilder, realQa, realSales, approveAndSend, ingestReply, ingestBooking } from "@autopilot/agents";
 import { usedToday, loadCaps } from "@autopilot/adapters";
 
 const MOCK = process.env.MOCK_MODE !== "false";
@@ -31,6 +31,7 @@ async function main(): Promise<void> {
     uiux: realUiux,
     builder: realBuilder,
     qa: realQa,
+    sales: realSales,
   };
   const handlers = MOCK ? STUB_HANDLERS : REAL_HANDLERS;
 
@@ -116,6 +117,35 @@ async function main(): Promise<void> {
       }
     } catch (err) {
       console.error("[research-poll]", (err as Error).message);
+    }
+  }, 3000);
+
+  // Phase 5 operator actions ride the DB (dashboard stays dependency-light; the worker executes the
+  // agent logic that owns the deps). Approvals: the operator flips an email to 'approved' in the
+  // Outbox; the worker gate-checks + sends. Simulated reply/booking arrive as dev events.
+  setInterval(async () => {
+    try {
+      const approved = await pool.query<{ idempotency_key: string }>(
+        "select idempotency_key from emails where status='approved' and idempotency_key is not null limit 5");
+      for (const e of approved.rows) await approveAndSend(e.idempotency_key).catch((err) => console.error("[approve]", (err as Error).message));
+
+      const replies = await pool.query<{ id: string; payload: { leadId: string; text?: string; classification?: string } }>(
+        `select id, payload from agent_events e where e.type='dev.reply_requested'
+           and not exists (select 1 from agent_events s where s.type='dev.reply_processed' and s.payload->>'request_id'=e.id::text) limit 5`);
+      for (const req of replies.rows) {
+        await ingestReply(req.payload.leadId, req.payload.text ?? "interested, tell me more", req.payload.classification).catch((err) => console.error("[reply]", (err as Error).message));
+        await emitEvent({ agent: "sales", type: "dev.reply_processed", level: "debug", payload: { request_id: req.id } });
+      }
+
+      const bookings = await pool.query<{ id: string; payload: { leadId: string } }>(
+        `select id, payload from agent_events e where e.type='dev.booking_requested'
+           and not exists (select 1 from agent_events s where s.type='dev.booking_processed' and s.payload->>'request_id'=e.id::text) limit 5`);
+      for (const req of bookings.rows) {
+        await ingestBooking(req.payload.leadId, {}).catch((err) => console.error("[booking]", (err as Error).message));
+        await emitEvent({ agent: "sales", type: "dev.booking_processed", level: "debug", payload: { request_id: req.id } });
+      }
+    } catch (err) {
+      console.error("[outbox-poll]", (err as Error).message);
     }
   }, 3000);
 
