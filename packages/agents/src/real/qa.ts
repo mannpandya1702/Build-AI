@@ -110,8 +110,15 @@ export async function qa(leadId: string): Promise<void> {
     try {
       const psi = await pagespeed(url, "mobile");
       const perfBar = kind === "final" ? 90 : 85;
-      push("mobile performance", psi.performance >= perfBar, `Lighthouse perf ${psi.performance} (bar ${perfBar})`, false);
-      push("seo", psi.seo >= 90, `Lighthouse SEO ${psi.seo} (bar 90)`, false);
+      // Perf is a real quality gate, but a rebuild of the same template won't change the score, so
+      // only a CATASTROPHIC perf regression fails the demo (else transient PageSpeed variance would
+      // pointlessly fix-loop). The template reliably scores 90+.
+      push("mobile performance", psi.performance >= perfBar, `Lighthouse perf ${psi.performance} (bar ${perfBar})`, kind === "final" ? true : psi.performance < 50);
+      // SEO: a DEMO is intentionally noindexed (spec §6.7), and Lighthouse docks SEO hard for a
+      // noindex page. So SEO < 90 on a demo is EXPECTED, not a defect. The final (indexable) build
+      // must clear 90. We surface the demo SEO score for the operator but never fail the demo on it.
+      if (kind === "final") push("seo", psi.seo >= 90, `Lighthouse SEO ${psi.seo} (bar 90)`, true);
+      else push("seo (demo, noindex-capped)", true, `Lighthouse SEO ${psi.seo}; expected low because the demo is noindexed`, false);
     } catch (err) {
       push("pagespeed", false, `pagespeed failed: ${(err as Error).message}`, false);
     }
