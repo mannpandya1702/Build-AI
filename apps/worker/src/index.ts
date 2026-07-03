@@ -6,7 +6,7 @@
 
 import PgBoss from "pg-boss";
 import { emitEvent, getPool, type LeadStatus } from "@autopilot/core";
-import { AGENTS, AGENT_BY_TRIGGER, STUB_HANDLERS, research, realScrape, realQualify } from "@autopilot/agents";
+import { AGENTS, AGENT_BY_TRIGGER, STUB_HANDLERS, research, realScrape, realQualify, realAnalyzer, realSolution } from "@autopilot/agents";
 
 const MOCK = process.env.MOCK_MODE !== "false";
 
@@ -25,6 +25,8 @@ async function main(): Promise<void> {
   const REAL_HANDLERS: Record<string, (leadId: string) => Promise<void>> = {
     scrape: realScrape,
     qualify: realQualify,
+    analyzer: realAnalyzer,
+    solution: realSolution,
   };
   const handlers = MOCK ? STUB_HANDLERS : REAL_HANDLERS;
 
