@@ -15,7 +15,8 @@
     "@autopilot/core": "workspace:*",
     "pg-boss": "^9.0.3",
     "tsx": "^4.16.0",
-    "@autopilot/agents": "workspace:*"
+    "@autopilot/agents": "workspace:*",
+    "@autopilot/adapters": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

@@ -7,6 +7,7 @@
 import PgBoss from "pg-boss";
 import { emitEvent, getPool, type LeadStatus } from "@autopilot/core";
 import { AGENTS, AGENT_BY_TRIGGER, STUB_HANDLERS, research, realScrape, realQualify, realAnalyzer, realSolution } from "@autopilot/agents";
+import { usedToday, loadCaps } from "@autopilot/adapters";
 
 const MOCK = process.env.MOCK_MODE !== "false";
 
@@ -55,8 +56,12 @@ async function main(): Promise<void> {
   // never starve another (a flat LIMIT across all statuses did exactly that; PROGRESS.md).
   // Only statuses whose agent has a handler in this mode are scheduled: no no-op job churn.
   const handledTriggers = [...AGENT_BY_TRIGGER.entries()].filter(([, a]) => Boolean(handlers[a.name]));
+  const placesCap = loadCaps().places_calls_per_day;
   setInterval(async () => {
+    // skip scrape scheduling once the Places budget is spent for the day (no retry churn)
+    const placesSpent = await usedToday("places.call").catch(() => 0);
     for (const [status, agent] of handledTriggers) {
+      if (agent.name === "scrape" && placesSpent >= placesCap) continue;
       try {
         const r = await pool.query<{ id: string }>(
           `select id from leads where status = $1::lead_status order by updated_at asc limit 10`,

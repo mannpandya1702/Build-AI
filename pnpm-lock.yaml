@@ -57,6 +57,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@autopilot/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
       '@autopilot/agents':
         specifier: workspace:*
         version: link:../../packages/agents

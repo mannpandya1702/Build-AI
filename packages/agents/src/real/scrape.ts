@@ -2,7 +2,7 @@
 // Haiku contact extraction (never guessed: regex-verified against page text), MX-check.
 // Rule: no findable email AND no contact form -> disqualified(no_contact_path).
 import { advanceLead, emitEvent, getPool } from "@autopilot/core";
-import { placeDetails, crawlSite, hasMx, llm } from "@autopilot/adapters";
+import { placeDetails, crawlSite, hasMx, llm, CapExceededError } from "@autopilot/adapters";
 
 const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 
@@ -16,8 +16,19 @@ export async function scrape(leadId: string): Promise<void> {
   const lead = r.rows[0];
   if (!lead) throw new Error(`lead ${leadId} missing`);
 
-  // 1. Place Details: reviews verbatim, photo references, authoritative fields
-  const d = await placeDetails(lead.google_place_id ?? leadId);
+  // 1. Place Details: reviews verbatim, photo references, authoritative fields.
+  // A hard Places cap is not a transient failure: leave the lead in `discovered` for the next
+  // day's budget, emit one info event, and return without throwing (no retry storm).
+  let d;
+  try {
+    d = await placeDetails(lead.google_place_id ?? leadId);
+  } catch (err) {
+    if (err instanceof CapExceededError) {
+      await emitEvent({ agent: "scrape", leadId, level: "info", type: "scrape.deferred", message: "places cap reached; lead waits for next day's budget" });
+      return;
+    }
+    throw err;
+  }
   const reviews = (d.reviews ?? [])
     .filter((x) => (x.text?.text ?? "").trim())
     .slice(0, 5)
