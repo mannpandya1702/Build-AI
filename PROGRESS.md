@@ -8,9 +8,9 @@ Build log per `AGENCY_AUTOPILOT_SPEC.md` §13. Updated at the end of every work 
 |---|---|---|
 | 0. Foundation | ✅ complete (2026-07-02) | acceptance evidence below |
 | 1. Pipeline skeleton (mock) | ✅ complete (2026-07-02) | evidence below |
-| 2. Real discovery | in progress (2026-07-02) | code complete; acceptance run in flight |
-| 3. Analysis + solution | pending | |
-| 4. Design, build, QA | pending | |
+| 2. Real discovery | ✅ complete (2026-07-03) | cap enforcement demonstrated live; evidence below |
+| 3. Analysis + solution | ✅ complete (2026-07-03) | vision audits + resilient no-empty-audit guarantee; evidence below |
+| 4. Design, build, QA | in progress (2026-07-03) | builder wraps the legacy demo engine |
 | 5. Outreach + booking | pending | |
 | 6. Monitoring + reports | pending | |
 | 7. Hardening + docs | pending | |
@@ -95,6 +95,68 @@ Build log per `AGENCY_AUTOPILOT_SPEC.md` §13. Updated at the end of every work 
   worker and fixture-advanced 2 real leads. Stopped it, purged fixture artifacts, reset both
   leads to qualified, logged lead.repaired events. Hardening note: worker should take a
   pg advisory lock so only one instance runs per database (Phase 7).
+
+## Phase 2 close-out (2026-07-03)
+
+Cap enforcement was demonstrated LIVE, not just coded: during the Phase 3 run the Places daily
+cap (200/day) fired organically. Two hardening fixes that surfaced there are now in:
+
+- **Scrape defers, never retry-storms.** On `CapExceededError` the scrape agent emits
+  `scrape.deferred` and returns (job completes) instead of throwing; the scheduler skips scrape
+  scheduling entirely once `usedToday('places.call') >= cap`. Before the fix, thrown cap errors
+  became pg-boss retries and the scheduler kept re-enqueueing, piling up ~10k dead jobs.
+- **Singleton window > slowest job.** The scheduler enqueued with `singletonSeconds:30`, shorter
+  than an analyzer job (PageSpeed up to 90s), so a lead still being processed got re-enqueued
+  every 30s. Raised to 300s. This is the general root cause of queue backlog buildup.
+
+Acceptance evidence:
+- Discovery + dedupe: 60/60 legacy leads imported (`source='legacy'`); discovery skipped all
+  known `place_id`s. Real Places search + details produced new qualified Dallas roofers.
+- Qualifier applies the §4 rubric deterministically (chain DQ, nothing-to-personalize DQ,
+  threshold routing); scores visible on `/pipeline` cards.
+- Cap hit → `cap.hit` event + operator notification + queue pause for that resource, no silent
+  drop (spec §4.5). Verified in `agent_events`.
+
+## Phase 3 work log + acceptance (2026-07-03)
+
+Analyzer (real): PageSpeed (mobile) + 3-viewport Puppeteer screenshots + Sonnet findings, each
+finding citing concrete evidence. Solution maker (real): Sonnet pitch/pages/features/
+differentiators + `automation_opportunities` + the operator call sheet (30s opener, the one
+finding to name, objections, automation upsell for post-close, best call window). Both advance
+the state machine.
+
+Hardening that verifying real leads surfaced (commit "Analyzer vision + resilient audits"):
+
+- **Sonnet audits the real page, not metadata.** The llm adapter now accepts image inputs; the
+  analyzer feeds the actual rendered mobile + desktop screenshots. Findings cite what is visibly
+  there. Example (Qualis Roofing): Sonnet caught that both screenshots render a Cloudflare
+  "Checking the site connection security" gate instead of content, cross-referenced a real 46s
+  LCP and a 92 SEO score against the blank render, and flagged the contradiction, honestly.
+- **PageSpeed transient 500s retried** ("Lighthouse returned error: Something went wrong"). The 4
+  sites that all failed on the first pass (Dallas Commercial, Pappas, Scott Exteriors,
+  Stormnation) all scored on retry.
+- **No qualified lead gets an empty audit.** If PageSpeed and the model both come up short, a
+  deterministic fallback builds findings from strictly-known facts (Lighthouse scores or their
+  measured absence, GBP reviews, site presence). No fabrication. Result: 0 empty audits across
+  the dataset.
+- **Idempotency guards** on analyzer + solution: a duplicate job for an already-advanced lead
+  no-ops (`analyzer.skipped` / `solution.skipped`) instead of burning a Sonnet call and throwing
+  on an illegal transition. Observed working live.
+
+Acceptance (spec §13 Phase 3):
+- Real qualified lead WITH website → full audit (Lighthouse scores, 3-viewport screenshots,
+  3-6 evidence-backed findings) + solution doc with call sheet. Confirmed on Qualis, Firehouse
+  (solution caught an inflated "500+" badge vs the real 57 reviews and recommended leading with
+  the honest number), Scott Exteriors, Dallas Commercial, Stormnation.
+- No-website lead → coherent absence-based audit. Confirmed on RidgePoint Roofing Dallas:
+  5 findings, each citing the real absence (`has_website false`, `4 reviews at 5.0`), tied to
+  lost after-hours/emergency jobs. No invented competitors or data.
+- Cost metered per call into `agent_events.cost_usd` (spec §9); analysis-phase spend tracked.
+
+ENV NOTE (spec §15): some prospect sites sit behind Cloudflare/bot gates, so the request-
+interception screenshot captures the challenge page. The analyzer reports that honestly as a
+finding (a slow security gate IS real signal); demo-quality screenshots that need the real render
+are a Phase 4 concern, not an audit blocker.
 
 ## Resolved by operator (2026-07-03)
 
