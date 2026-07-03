@@ -1,0 +1,38 @@
+# agency-facts.yaml — the ONLY facts demo/website copy may claim (spec §4.1). Never fabricate.
+# Unknown facts stay omitted or [NEEDS]; the builder omits a section rather than invent.
+identity:
+  name: "TradeCraft Sites"
+  from_email: "mann@tradecraftsites.com"
+  domain: "tradecraftsites.com"
+  # CAN-SPAM footer address (operator's real mailing address)
+  address: "14th Main Road, Sector 7, HSR Layout, Bengaluru, Karnataka 560102, India"
+  operator_first_name: "Mann"
+  based_in: "India"   # answered honestly per contract §7, never hidden
+
+deploy:
+  vercel_team_id: "team_voh3ERES2pZRIuOQyokFBIUD"
+  vercel_scope: "mann-pandyas-projects"
+  # demo URL shape: flat {slug}-buildai.vercel.app today; demo.tradecraftsites.com once the
+  # domain is added to Vercel (operator decision pending)
+  demo_base_domain: "[NEEDS: decision] flat vercel.app or demo.tradecraftsites.com"
+
+booking:
+  provider: "cal.com"
+  event_type_slug: "15min"
+  event_type_id: 6200784
+  booking_link: "https://cal.com/mann/15min"   # confirm username; not yet verified live
+
+# Offer numbers = the financer's measured floors (config/unit-costs.yaml). Operator to confirm
+# before these appear in any pricing conversation.
+offer:
+  setup_fee_usd: "[NEEDS: confirm] recommended 500-800"
+  monthly_retainer_usd: "[NEEDS: confirm] recommended 149 (financer floor 116)"
+  automation_single_usd: "[NEEDS: confirm] recommended 249"
+  automation_full_stack_usd: "[NEEDS: confirm] recommended 399-499"
+  guarantee: "You pay nothing until it is live and you are happy."   # contract §1, a real claim
+
+# Trust facts a demo may state ONLY when filled. Empty = the builder omits that section.
+trust:
+  years_in_business: null      # [NEEDS] operator input
+  licenses: []                 # [NEEDS]
+  portfolio_clients: []        # fills as demos convert; first real client anchors this

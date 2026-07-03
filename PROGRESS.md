@@ -96,6 +96,22 @@ Build log per `AGENCY_AUTOPILOT_SPEC.md` §13. Updated at the end of every work 
   leads to qualified, logged lead.repaired events. Hardening note: worker should take a
   pg advisory lock so only one instance runs per database (Phase 7).
 
+## Resolved by operator (2026-07-03)
+
+- VERCEL_TEAM_ID = team_voh3ERES2pZRIuOQyokFBIUD (verified: "Mann Pandya's projects"). Phase 4 deploy unblocked.
+- AGENCY_DOMAIN = tradecraftsites.com (owned).
+- RESEND_API_KEY set (send-only key, verified; least-privilege = correct for transactional).
+  REMAINING for sending: verify tradecraftsites.com in the Resend dashboard (add Resend's DKIM/SPF
+  DNS records) before any transactional email leaves.
+- CALCOM_API_KEY set (v2, verified as mann@tradecraftsites.com). "15min" intro event exists
+  (slug 15min, id 6200784). REMAINING: CALCOM_WEBHOOK_SECRET (create a webhook in Cal.com pointing
+  at the worker's /webhooks/calcom for BOOKING_CREATED/CANCELLED).
+- config/agency-facts.yaml created with confirmed identity + deploy + booking facts; offer numbers
+  and trust facts flagged [NEEDS: confirm] so demo copy never claims an unconfirmed fact.
+- ui-ux-pro-max skill + 21st.dev MCP installed (web-studio demo toolchain).
+- Operator to ROTATE all chat-exposed keys: Google Places, Vercel, Anthropic, PageSpeed, 21st,
+  Resend, Cal.com.
+
 ## Blockers (spec §14 — operator to provide; build continues elsewhere)
 
 - **Before Phase 2:** PAGESPEED_API_KEY (PageSpeed Insights). GOOGLE_PLACES_API_KEY exists from
