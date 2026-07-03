@@ -63,6 +63,9 @@ importers:
       '@autopilot/agents':
         specifier: workspace:*
         version: link:../../packages/agents
+      '@autopilot/blocks':
+        specifier: workspace:*
+        version: link:../../packages/blocks
       '@autopilot/core':
         specifier: workspace:*
         version: link:../../packages/core

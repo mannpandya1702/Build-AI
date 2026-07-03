@@ -6,3 +6,4 @@ export * from "./crawl.js";
 export * from "./dns.js";
 export * from "./pagespeed.js";
 export * from "./screenshots.js";
+export * from "./vercel.js";

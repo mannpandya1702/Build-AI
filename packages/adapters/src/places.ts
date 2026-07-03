@@ -75,3 +75,25 @@ export async function placeDetails(placeId: string): Promise<PlaceHit> {
   if (!res.ok) throw new Error(`places details ${res.status}: ${(await res.text()).slice(0, 200)}`);
   return (await res.json()) as PlaceHit;
 }
+
+// Fetch one GBP photo's bytes by its resource name (the builder pulls real photos for the demo
+// gallery). Cap-metered like any Places call. MOCK returns a 1x1 transparent PNG so builds don't
+// hit the network. Ported from the proven legacy client.
+const MOCK_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+  "base64",
+);
+export async function fetchPhotoBytes(photoName: string, maxWidthPx = 1280): Promise<Buffer> {
+  if (MOCK()) return MOCK_PNG;
+  await checkPlacesCap();
+  const meta = await fetch(`${BASE}/${photoName}/media?maxWidthPx=${maxWidthPx}&skipHttpRedirect=true`, {
+    headers: { "X-Goog-Api-Key": apiKey() },
+  });
+  await meterPlacesCall(`photo: ${photoName.slice(0, 40)}`);
+  if (!meta.ok) throw new Error(`places photo ${meta.status}: ${(await meta.text()).slice(0, 120)}`);
+  const { photoUri } = (await meta.json()) as { photoUri?: string };
+  if (!photoUri) throw new Error("no photoUri returned");
+  const img = await fetch(photoUri);
+  if (!img.ok) throw new Error(`photo media ${img.status}`);
+  return Buffer.from(await img.arrayBuffer());
+}

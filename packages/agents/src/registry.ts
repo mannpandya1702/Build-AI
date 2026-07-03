@@ -18,7 +18,9 @@ export const AGENTS: readonly AgentSpec[] = [
   { name: "analyzer", queue: "agent:analyzer", triggers: ["qualified"] },
   { name: "solution", queue: "agent:solution", triggers: ["analyzed"] },
   { name: "uiux", queue: "agent:uiux", triggers: ["solution_ready"] },
-  { name: "builder", queue: "agent:builder", triggers: ["design_ready", "closed_won"] },
+  // *_building triggers are the QA-fix re-entry (the QA agent sends a failed lead back to rebuild);
+  // the builder's in-flight-build claim keeps a fresh build from re-triggering itself.
+  { name: "builder", queue: "agent:builder", triggers: ["design_ready", "closed_won", "demo_building", "final_building"] },
   { name: "qa", queue: "agent:qa", triggers: ["demo_qa", "final_qa"] },
   { name: "sales", queue: "agent:sales", triggers: ["outreach_ready", "awaiting_approval", "contacted", "replied", "negotiating", "delivery_approval"] },
   // research + monitor are cron/operator-triggered, not status-triggered:

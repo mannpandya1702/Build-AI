@@ -34,4 +34,23 @@ export function loadCaps(): CapsConfig {
   return parse(readFileSync(resolve(CONFIG_DIR, "caps.yaml"), "utf8")) as CapsConfig;
 }
 
+export interface AgencyFacts {
+  identity: { name: string; from_email: string; domain: string; address: string; operator_first_name: string; based_in: string };
+  deploy: { vercel_team_id: string; vercel_scope: string; demo_base_domain: string };
+  booking: { provider: string; event_type_slug: string; event_type_id: number; booking_link: string };
+  offer: Record<string, string>;
+  trust: { years_in_business: number | null; licenses: string[]; portfolio_clients: string[] };
+}
+
+// The ONLY facts demo/website + outreach copy may claim about the AGENCY (spec §4.1). Values that
+// still read as "[NEEDS: ...]" are unconfirmed and must be treated as unknown by any consumer.
+export function loadAgencyFacts(): AgencyFacts {
+  return parse(readFileSync(resolve(CONFIG_DIR, "agency-facts.yaml"), "utf8")) as AgencyFacts;
+}
+
+/** True when a yaml value is still an unconfirmed placeholder ("[NEEDS: ...]") or empty. */
+export function isUnconfirmed(v: unknown): boolean {
+  return v === null || v === undefined || v === "" || (typeof v === "string" && /\[NEEDS:/i.test(v));
+}
+
 export const MOCK = (): boolean => process.env.MOCK_MODE !== "false";

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Source_Sans_3, Archivo, IBM_Plex_Sans, Space_Grotesk, Work_Sans } from "next/font/google";
 import "./globals.css";
-import { site } from "../lib/content";
+import { site, isDemo, watermarkText, isNoindex } from "../lib/content";
 import StickyCallBar from "../components/StickyCallBar";
+import Watermark from "../components/Watermark";
 
 // Three distinctive pairings (CLAUDE.md §5b-bis: never system fonts). All are declared statically
 // (next/font requires it) with preload off; only the pair the theme references is ever downloaded,
@@ -23,7 +24,8 @@ const FONT_PAIRS: Record<string, { display: string; body: string }> = {
 export const metadata: Metadata = {
   title: `${site.businessName} — ${site.primaryService} in ${site.city}, ${site.state}`,
   description: `${site.businessName}: ${site.primaryService.toLowerCase()} and more in ${site.city}, ${site.state}. Fast, local, phone a tap away.`,
-  robots: { index: true, follow: true },
+  // A watermarked demo preview must stay out of search until it is the client's real site (spec §6.7).
+  robots: isNoindex() ? { index: false, follow: false } : { index: true, follow: true },
   openGraph: {
     title: `${site.businessName} — ${site.city}, ${site.state}`,
     description: `${site.primaryService} in ${site.city}. Call today.`,
@@ -77,6 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         {children}
         <StickyCallBar />
+        {isDemo() && <Watermark text={watermarkText()} />}
       </body>
     </html>
   );

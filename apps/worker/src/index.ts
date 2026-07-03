@@ -6,7 +6,7 @@
 
 import PgBoss from "pg-boss";
 import { emitEvent, getPool, type LeadStatus } from "@autopilot/core";
-import { AGENTS, AGENT_BY_TRIGGER, STUB_HANDLERS, research, realScrape, realQualify, realAnalyzer, realSolution } from "@autopilot/agents";
+import { AGENTS, AGENT_BY_TRIGGER, STUB_HANDLERS, research, realScrape, realQualify, realAnalyzer, realSolution, realUiux, realBuilder, realQa } from "@autopilot/agents";
 import { usedToday, loadCaps } from "@autopilot/adapters";
 
 const MOCK = process.env.MOCK_MODE !== "false";
@@ -28,6 +28,9 @@ async function main(): Promise<void> {
     qualify: realQualify,
     analyzer: realAnalyzer,
     solution: realSolution,
+    uiux: realUiux,
+    builder: realBuilder,
+    qa: realQa,
   };
   const handlers = MOCK ? STUB_HANDLERS : REAL_HANDLERS;
 
@@ -56,15 +59,28 @@ async function main(): Promise<void> {
   // never starve another (a flat LIMIT across all statuses did exactly that; PROGRESS.md).
   // Only statuses whose agent has a handler in this mode are scheduled: no no-op job churn.
   const handledTriggers = [...AGENT_BY_TRIGGER.entries()].filter(([, a]) => Boolean(handlers[a.name]));
-  const placesCap = loadCaps().places_calls_per_day;
+  const caps = loadCaps();
+  const placesCap = caps.places_calls_per_day;
+  const buildCap = caps.concurrent_demo_builds; // spec §9: cap concurrent demo builds (default 2)
+  // Fresh builds are gated by a concurrency cap; a lead already mid-build (a QA-fix re-entry) is
+  // NOT gated (it must finish). So only design_ready/closed_won are throttled by buildCap.
+  const FRESH_BUILD: readonly LeadStatus[] = ["design_ready", "closed_won"];
   setInterval(async () => {
     // skip scrape scheduling once the Places budget is spent for the day (no retry churn)
     const placesSpent = await usedToday("places.call").catch(() => 0);
+    const buildingNow = Number(
+      (await pool.query<{ n: string }>(`select count(*)::text n from leads where status in ('demo_building','final_building')`).catch(() => ({ rows: [{ n: "0" }] }))).rows[0].n,
+    );
     for (const [status, agent] of handledTriggers) {
       if (agent.name === "scrape" && placesSpent >= placesCap) continue;
+      // hold fresh builds when the concurrent-build cap is reached (best leads go first, below)
+      if (agent.name === "builder" && FRESH_BUILD.includes(status) && buildingNow >= buildCap) continue;
       try {
+        // builder picks the best leads first (spec §9: score desc); everything else is oldest-first.
+        const orderBy = agent.name === "builder" ? "coalesce(score,0) desc, updated_at asc" : "updated_at asc";
+        const limit = agent.name === "builder" && FRESH_BUILD.includes(status) ? Math.max(0, buildCap - buildingNow) : 10;
         const r = await pool.query<{ id: string }>(
-          `select id from leads where status = $1::lead_status order by updated_at asc limit 10`,
+          `select id from leads where status = $1::lead_status order by ${orderBy} limit ${limit}`,
           [status],
         );
         for (const lead of r.rows) {

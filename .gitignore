@@ -13,6 +13,10 @@ data/cache/
 data/screenshots/
 **/data/screenshots/
 
+# generated demo builds: composed per-lead sites (source + downloaded photos), regenerable
+data/builds/
+**/data/builds/
+
 # generated demo template artifacts
 templates/*/node_modules/
 templates/*/.next/

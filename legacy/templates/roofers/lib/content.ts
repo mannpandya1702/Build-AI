@@ -44,9 +44,21 @@ export interface DemoContent {
   stormBand: boolean;
   faq: DemoFaq[];
   needs: string[];
+  // Demo-vs-final controls (spec §6.7). Absent on a legacy/final build => normal public page.
+  // A demo build sets demo=true (watermark bar) and noindex=true (keep the preview out of search).
+  demo?: boolean;
+  watermark?: string | null;
+  noindex?: boolean;
 }
 
 export const site = data as DemoContent;
+
+/** True when this build is a watermarked demo preview (spec §6.7), not a final client site. */
+export const isDemo = (): boolean => Boolean(site.demo);
+/** The watermark line, or null. Only rendered when isDemo(). */
+export const watermarkText = (): string | null => (site.demo ? site.watermark ?? null : null);
+/** True when the build should carry a noindex robots directive (demos always do). */
+export const isNoindex = (): boolean => Boolean(site.noindex);
 
 /** Build a safe tel: href from a display phone number, or null if there is no number. */
 export function telHref(phone: string | null): string | null {
