@@ -114,6 +114,15 @@ export async function builder(leadId: string): Promise<void> {
   const templateDir = resolve(REPO_ROOT, "legacy", "templates", preset.templateDir);
   if (!existsSync(templateDir)) throw new Error(`template missing at ${templateDir}`);
 
+  // Stale-claim recovery (Phase 7 chaos hardening): a worker killed mid-build leaves its 'building'
+  // row behind, which would block every future claim for this lead+kind FOREVER. A build that has
+  // been 'building' for >30 min is dead (real builds take ~2-4 min); mark it failed so the claim
+  // below can proceed. Bounded to this lead+kind: never touches another lead's live build.
+  await pool.query(
+    `update builds set status='failed' where lead_id=$1 and kind=$2 and status='building' and updated_at < now() - interval '30 minutes'`,
+    [leadId, kind],
+  );
+
   // Atomically claim a build slot: insert a 'building' row only if none is in flight for this
   // lead+kind. This closes the self-trigger race: a fresh job advances design_ready->demo_building,
   // the scheduler then enqueues a second builder job on demo_building, and that job's claim fails

@@ -12,8 +12,8 @@ Build log per `AGENCY_AUTOPILOT_SPEC.md` §13. Updated at the end of every work 
 | 3. Analysis + solution | ✅ complete (2026-07-03) | vision audits + resilient no-empty-audit guarantee; evidence below |
 | 4. Design, build, QA | ✅ complete (2026-07-03) | block library + uiux/builder/qa; real Vercel demo live; evidence below |
 | 5. Outreach + booking | mock ✅ (2026-07-03) | full sequence/gate/reply/booking pass on mock; LIVE gated on operator mailboxes |
-| 6. Monitoring + reports | partial | /reports page live (funnel + spend + unit economics); cron anomaly checks pending |
-| 7. Hardening + docs | pending | |
+| 6. Monitoring + reports | ✅ complete (2026-07-04) | hourly anomaly sweep + daily digest; acceptance 10/10 below |
+| 7. Hardening + docs | ✅ complete (2026-07-04) | advisory lock, stale-claim recovery, mock-on-real guard, RUNBOOK.md; chaos evidence below |
 
 ## Phase 0 work log (2026-07-02)
 
@@ -231,6 +231,56 @@ suppressed; the gate then blocks any further send to that suppressed recipient. 
 
 LIVE smoke test (send/reply/booking round-trip against a real inbox) + DNS startup checks remain,
 gated on the operator's outreach domain + mailboxes (blockers below).
+
+## Phase 6 work log + acceptance (2026-07-04)
+
+Monitor agent (spec §6.10): hourly anomaly sweep (stuck leads with a 6h bar, 24h for
+operator-gated statuses; error spike >5/h; cap exhaustion across Places/sends/Anthropic; worker
+heartbeat missing) deduped on stable keys per 12h so a growing hour-counter never re-alerts; a
+systemic stall groups into ONE anomaly (a 31-lead stall is one incident, not 31 notifications).
+Daily digest at 09:00 IST into `daily_reports` (upsert on date): funnel, emails, calls due vs
+logged, meetings, demos, spend, anomalies, in the §11 voice, always ending with the single
+highest-value lead + the single top blocker. Numbers come from SQL only; Haiku phrases one
+narrative line with a deterministic fallback. Digests render on /reports. Cal.com webhook endpoint
+(`/api/webhooks/calcom`) verifies HMAC on the raw body, matches leads by attendee email, refuses
+unsigned posts, notifies on unmatched bookings.
+
+Acceptance (spec §13 Phase 6) 10/10: digest generates with real numbers; an artificially 8h-stuck
+lead is detected and alerts (grouped, containing the lead id); re-running the hourly does not
+duplicate alerts; digest upserts (never duplicates) per date; `costs->day_usd` reconciles exactly
+with `sum(agent_events.cost_usd)` for the day. The first digest honestly flagged two REAL
+anomalies: 31 leads stalled behind the spent Places cap and the worker being offline.
+
+## Phase 7 work log + evidence (2026-07-04)
+
+- **Single-worker advisory lock**: the worker takes `pg_try_advisory_lock('autopilot_worker')` at
+  boot on a held client; a second worker exits with a clear message. Verified live (worker B
+  refused while worker A ran).
+- **Stale-claim recovery**: a worker killed mid-build used to leave its 'building' claim row
+  forever, permanently wedging that lead. Claims older than 30 min are auto-failed on the next
+  builder pass. (Found by reasoning through the chaos check, fixed before it ever bit.)
+- **Mock-on-real-data guard**: MOCK_MODE=true now REFUSES to start against a database holding
+  real-sourced leads (override: MOCK_ON_REAL_DB=allow). Verified live: refuses with 110 real leads.
+- **RUNBOOK.md**: bring-up from scratch, VPS deploy shape, restart procedure, caps, outreach ops,
+  key rotation (all chat-exposed keys must rotate), common failures table, data hygiene.
+- **Secrets scan**: tracked files grep for all key patterns (sk-ant, AIza, re_, cal_live, vcp/vck,
+  21st_sk): CLEAN.
+- **Chaos evidence**: repeated real container restarts across the build resumed cleanly (documented
+  per phase); duplicate-approve never double-sends (Phase 5 test); duplicate analyzer/solution/
+  builder jobs no-op via idempotency guards + the atomic build claim.
+
+## INCIDENT 2026-07-04 (mock worker vs real data, round 2) + structural fix
+
+While verifying the advisory lock I started a MOCK worker against the live database. The lock
+worked; the stubs then fixture-advanced 108 real leads for ~3 minutes (fixture contact emails,
+localhost builds, fake status transitions up to closed_won). My first kill did not land (signal
+race) and the worker re-contaminated after the first repair; the second, verified kill + a
+second event-log-driven repair restored all 108 leads to their pre-incident statuses (final
+distribution byte-identical: 70/31/5/2/2/1) and purged every fixture artifact (remaining fixture
+rows belong solely to the Phase-1 'Mock Roofing Co 4117' acceptance lead, where they are
+legitimate). Lessons burned in as code, not promises: (1) the mock-on-real-data boot guard above
+makes the whole incident class impossible; (2) verify a kill by checking the EVENT STREAM went
+silent, not the process table (now in RUNBOOK).
 
 ## Resolved by operator (2026-07-03)
 

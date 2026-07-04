@@ -6,7 +6,7 @@
 
 import PgBoss from "pg-boss";
 import { emitEvent, getPool, type LeadStatus } from "@autopilot/core";
-import { AGENTS, AGENT_BY_TRIGGER, STUB_HANDLERS, research, realScrape, realQualify, realAnalyzer, realSolution, realUiux, realBuilder, realQa, realSales, approveAndSend, ingestReply, ingestBooking } from "@autopilot/agents";
+import { AGENTS, AGENT_BY_TRIGGER, STUB_HANDLERS, research, realScrape, realQualify, realAnalyzer, realSolution, realUiux, realBuilder, realQa, realSales, approveAndSend, ingestReply, ingestBooking, monitorHourly, dailyDigest } from "@autopilot/agents";
 import { usedToday, loadCaps } from "@autopilot/adapters";
 
 const MOCK = process.env.MOCK_MODE !== "false";
@@ -15,6 +15,35 @@ async function main(): Promise<void> {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is not set");
   const pool = getPool();
+
+  // Single-worker advisory lock (Phase 7 hardening; PROGRESS.md incidents: a second worker running
+  // stale code twice caused retry storms and fixture contamination). The lock is session-scoped on a
+  // dedicated client held for the process lifetime; a second worker exits instead of double-running.
+  const lockClient = await pool.connect();
+  const lock = await lockClient.query<{ ok: boolean }>("select pg_try_advisory_lock(hashtext('autopilot_worker')) as ok");
+  if (!lock.rows[0].ok) {
+    console.error("[worker] another worker already holds the advisory lock for this database. Exiting.");
+    lockClient.release();
+    process.exit(1);
+  }
+
+  // Mock-on-real-data guard (Phase 7; this class of incident happened TWICE): fixture stubs must
+  // never run against a database holding real leads — they fixture-advance real prospects and
+  // contaminate the CRM. If MOCK_MODE=true and real-sourced leads exist, refuse to start unless
+  // the operator explicitly overrides (MOCK_ON_REAL_DB=allow, for surgical debugging only).
+  if (MOCK && process.env.MOCK_ON_REAL_DB !== "allow") {
+    const real = await pool.query<{ n: string }>(
+      "select count(*)::text n from leads where source in ('places','legacy')",
+    );
+    if (real.rows[0].n !== "0") {
+      console.error(
+        `[worker] REFUSING to run MOCK stubs: this database holds ${real.rows[0].n} real leads. ` +
+          `Use MOCK_MODE=false, or point DATABASE_URL at a scratch database, or set MOCK_ON_REAL_DB=allow if you really mean it.`,
+      );
+      lockClient.release();
+      process.exit(1);
+    }
+  }
 
   const boss = new PgBoss({ connectionString: url, schema: "pgboss" });
   boss.on("error", (err) => console.error("[pg-boss]", err.message));
@@ -137,11 +166,13 @@ async function main(): Promise<void> {
         await emitEvent({ agent: "sales", type: "dev.reply_processed", level: "debug", payload: { request_id: req.id } });
       }
 
-      const bookings = await pool.query<{ id: string; payload: { leadId: string } }>(
-        `select id, payload from agent_events e where e.type='dev.booking_requested'
+      // bookings arrive from the dev panel (dev.booking_requested) or the real Cal.com webhook
+      // (booking.received, inserted by the dashboard's /api/webhooks/calcom after HMAC verification)
+      const bookings = await pool.query<{ id: string; payload: { leadId: string; title?: string; startTime?: string; attendee?: unknown } }>(
+        `select id, payload from agent_events e where e.type in ('dev.booking_requested','booking.received')
            and not exists (select 1 from agent_events s where s.type='dev.booking_processed' and s.payload->>'request_id'=e.id::text) limit 5`);
       for (const req of bookings.rows) {
-        await ingestBooking(req.payload.leadId, {}).catch((err) => console.error("[booking]", (err as Error).message));
+        await ingestBooking(req.payload.leadId, { title: req.payload.title, startTime: req.payload.startTime, attendee: req.payload.attendee }).catch((err) => console.error("[booking]", (err as Error).message));
         await emitEvent({ agent: "sales", type: "dev.booking_processed", level: "debug", payload: { request_id: req.id } });
       }
     } catch (err) {
@@ -154,6 +185,30 @@ async function main(): Promise<void> {
     emitEvent({ agent: "worker", type: "worker.heartbeat", level: "debug" }).catch((e) =>
       console.error("[heartbeat]", e.message),
     );
+  }, 60_000);
+
+  // Monitoring (spec §6.10): hourly anomaly sweep + a daily digest at 09:00 IST. Both are
+  // idempotent (anomalies dedupe on message per 12h; the digest upserts on date), so the minutely
+  // tick is safe: it fires each job at most once per its window.
+  let lastHourly = 0;
+  let lastDigestDay = "";
+  setInterval(async () => {
+    try {
+      const now = new Date();
+      if (Date.now() - lastHourly >= 60 * 60 * 1000) {
+        lastHourly = Date.now();
+        await monitorHourly();
+      }
+      // 09:00 IST = 03:30 UTC. Fire once per calendar day when the wall clock passes it.
+      const istNow = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+      const istDay = istNow.toISOString().slice(0, 10);
+      if (istNow.getUTCHours() >= 9 && lastDigestDay !== istDay) {
+        lastDigestDay = istDay;
+        await dailyDigest();
+      }
+    } catch (err) {
+      console.error("[monitor]", (err as Error).message);
+    }
   }, 60_000);
 
   console.log(`[worker] up. agents: ${AGENTS.map((a) => a.name).join(", ")} | mock=${MOCK}`);

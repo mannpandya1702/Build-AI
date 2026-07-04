@@ -49,5 +49,10 @@ export async function GET() {
     reply_rate: contacted ? (await one("select count(distinct lead_id)::int n from emails where direction='inbound'")) / contacted : 0,
   };
 
-  return NextResponse.json({ funnel, spend: spendRows.rows, tiles });
+  // daily digests (spec §6.10), newest first
+  const digests = (await db().query(
+    "select date, summary_md, anomalies from daily_reports order by date desc limit 7",
+  )).rows;
+
+  return NextResponse.json({ funnel, spend: spendRows.rows, tiles, digests });
 }

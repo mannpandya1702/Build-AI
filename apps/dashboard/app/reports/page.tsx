@@ -10,6 +10,7 @@ interface Report {
   funnel: { stage: string; count: number }[];
   spend: { day: string; usd: number }[];
   tiles: { total_spend: number; cost_per_demo: number; cost_per_qualified: number; demos_deployed: number; qualified: number; reply_rate: number };
+  digests: { date: string; summary_md: string; anomalies: { kind: string; detail: string }[] }[];
 }
 
 function Funnel({ data }: { data: { stage: string; count: number }[] }) {
@@ -95,6 +96,23 @@ export default function ReportsPage() {
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Card className="p-4"><SectionTitle>Pipeline funnel</SectionTitle><div className="mt-4"><Funnel data={r.funnel} /></div></Card>
         <Card className="p-4"><SectionTitle>AI spend (14 days)</SectionTitle><div className="mt-4"><SpendArea data={r.spend} /></div></Card>
+      </div>
+
+      {/* Daily digests (spec §6.10): the monitor's EOD report in the §11 voice. */}
+      <div className="mt-5">
+        <SectionTitle>Daily digests</SectionTitle>
+        <div className="mt-2 space-y-3">
+          {(r.digests ?? []).length === 0 && <Empty>no digests yet (the monitor writes one daily at 09:00 IST)</Empty>}
+          {(r.digests ?? []).map((d) => (
+            <Card key={d.date} className="p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-zinc-200">{d.date}</p>
+                {d.anomalies?.length > 0 && <span className="rounded bg-amber-500/15 px-2 py-0.5 text-xs text-amber-300">{d.anomalies.length} anomalies</span>}
+              </div>
+              <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-zinc-400">{d.summary_md}</pre>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );
