@@ -34,6 +34,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
+  // Only BOOKING_CREATED past this point. Cal.com offers ~20 trigger types (meeting started,
+  // form submitted, transcripts, ...); everything we don't explicitly handle is acknowledged and
+  // ignored, never treated as a booking.
+  if (event !== "BOOKING_CREATED") return NextResponse.json({ ok: true, ignored: event });
+
   // BOOKING_CREATED: match the lead by attendee email.
   const lead = email
     ? await db().query<{ id: string }>("select id from leads where lower(contact_email)=lower($1) limit 1", [email])
