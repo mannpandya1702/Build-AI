@@ -1,7 +1,9 @@
 // One-shot data copy: local dev Postgres -> hosted Postgres (Neon), used at dashboard go-live.
 // Schema must already exist on the target (run `DATABASE_URL=<target> pnpm migrate` first).
-// FK-safe table order; idempotent-ish (skips a table whose target already has rows, so a re-run
-// after a partial failure never duplicates). Usage:
+// FK-safe table order. Batched multi-row INSERTs (per-row round-trips over HTTPS are ~100ms each;
+// batching makes the copy minutes -> seconds). Idempotent: `on conflict do nothing` everywhere and
+// a table is skipped only when source and target counts already MATCH, so a re-run after a partial
+// failure resumes cleanly instead of skipping a half-copied table. Usage:
 //   pnpm exec tsx src/copy-db.ts "<target DATABASE_URL>"   (source = DATABASE_URL from .env.local)
 import { getPool, closePool, createPoolForUrl } from "@autopilot/core";
 
@@ -21,37 +23,46 @@ const TABLES = [
   "notifications", "agent_events", "daily_reports", "settings",
 ] as const;
 
-const BATCH = 500;
+const READ_BATCH = 1000;
+const WRITE_BATCH = 100;
 
 for (const table of TABLES) {
-  const already = await dst.query<{ n: string }>(`select count(*)::text n from ${table}`);
-  if (already.rows[0].n !== "0") {
-    console.log(`SKIP  ${table}: target already has ${already.rows[0].n} rows`);
+  const srcCount = Number((await src.query<{ n: string }>(`select count(*)::text n from ${table}`)).rows[0].n);
+  const dstCount = Number((await dst.query<{ n: string }>(`select count(*)::text n from ${table}`)).rows[0].n);
+  if (srcCount === dstCount) {
+    console.log(`SKIP  ${table}: counts already match (${srcCount})`);
     continue;
   }
   const cols = (await src.query<{ column_name: string }>(
     `select column_name from information_schema.columns where table_name=$1 and table_schema='public' order by ordinal_position`,
     [table],
   )).rows.map((r) => r.column_name);
-  const total = Number((await src.query<{ n: string }>(`select count(*)::text n from ${table}`)).rows[0].n);
-  let copied = 0;
-  while (copied < total) {
-    const rows = (await src.query(`select * from ${table} order by created_at asc limit ${BATCH} offset ${copied}`)).rows;
+
+  let offset = 0;
+  let written = 0;
+  while (offset < srcCount) {
+    const rows = (await src.query(`select * from ${table} order by created_at asc, id asc limit ${READ_BATCH} offset ${offset}`)).rows;
     if (rows.length === 0) break;
-    for (const row of rows) {
-      const vals = cols.map((c) => {
-        const v = (row as Record<string, unknown>)[c];
-        return v !== null && typeof v === "object" && !(v instanceof Date) ? JSON.stringify(v) : v;
+    for (let i = 0; i < rows.length; i += WRITE_BATCH) {
+      const chunk = rows.slice(i, i + WRITE_BATCH);
+      const params: unknown[] = [];
+      const tuples = chunk.map((row, r) => {
+        const ph = cols.map((c, j) => {
+          const v = (row as Record<string, unknown>)[c];
+          params.push(v !== null && typeof v === "object" && !(v instanceof Date) ? JSON.stringify(v) : v);
+          return `$${r * cols.length + j + 1}`;
+        });
+        return `(${ph.join(",")})`;
       });
-      const params = cols.map((_, i) => `$${i + 1}`).join(",");
-      await dst.query(`insert into ${table} (${cols.join(",")}) values (${params}) on conflict do nothing`, vals);
+      await dst.query(`insert into ${table} (${cols.join(",")}) values ${tuples.join(",")} on conflict do nothing`, params);
+      written += chunk.length;
     }
-    copied += rows.length;
+    offset += rows.length;
   }
-  console.log(`OK    ${table}: ${copied}/${total} rows`);
+  const finalDst = Number((await dst.query<{ n: string }>(`select count(*)::text n from ${table}`)).rows[0].n);
+  console.log(`OK    ${table}: source=${srcCount} target=${finalDst}${finalDst === srcCount ? "" : "  <-- MISMATCH"}`);
 }
 
-// sanity: leads count must match
 const a = (await src.query<{ n: string }>("select count(*)::text n from leads")).rows[0].n;
 const b = (await dst.query<{ n: string }>("select count(*)::text n from leads")).rows[0].n;
 console.log(`\nleads: source=${a} target=${b} ${a === b ? "MATCH" : "MISMATCH — investigate before switching DATABASE_URL"}`);

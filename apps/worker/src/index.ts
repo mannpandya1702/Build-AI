@@ -7,6 +7,7 @@
 import PgBoss from "pg-boss";
 import { emitEvent, getPool, type LeadStatus } from "@autopilot/core";
 import { AGENTS, AGENT_BY_TRIGGER, STUB_HANDLERS, research, realScrape, realQualify, realAnalyzer, realSolution, realUiux, realBuilder, realQa, realSales, approveAndSend, ingestReply, ingestBooking, monitorHourly, dailyDigest } from "@autopilot/agents";
+import { bridgeCycle } from "./bridge.js";
 import { usedToday, loadCaps } from "@autopilot/adapters";
 
 const MOCK = process.env.MOCK_MODE !== "false";
@@ -186,6 +187,22 @@ async function main(): Promise<void> {
       console.error("[heartbeat]", e.message),
     );
   }, 60_000);
+
+  // Local<->hosted bridge (RUNBOOK §2b): pulls operator inputs (bookings, Outbox decisions) from
+  // the hosted DB, pushes worker outputs up so the deployed dashboard stays current. No-op when
+  // DATABASE_URL_NEON is unset. Serialized: a cycle never overlaps a slow predecessor.
+  let bridging = false;
+  setInterval(async () => {
+    if (bridging) return;
+    bridging = true;
+    try {
+      await bridgeCycle();
+    } catch (err) {
+      console.error("[bridge]", (err as Error).message);
+    } finally {
+      bridging = false;
+    }
+  }, 45_000);
 
   // Monitoring (spec §6.10): hourly anomaly sweep + a daily digest at 09:00 IST. Both are
   // idempotent (anomalies dedupe on message per 12h; the digest upserts on date), so the minutely

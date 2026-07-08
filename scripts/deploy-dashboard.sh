@@ -39,7 +39,9 @@ echo "redeploying with env..."
 DEPLOY_URL=$(vercel deploy --prod --yes --scope "$SCOPE" --cwd apps/dashboard 2>&1 | grep -oE 'https://[^ ]+\.vercel\.app' | tail -1)
 
 echo "== 5/6 mint protection-bypass secret =="
-BYPASS=$(curl -sS -X POST "https://api.vercel.com/v9/projects/$PROJECT/protection-bypass?teamId=$TEAM_ID" \
+PROJECT_ID=$(curl -sS "https://api.vercel.com/v9/projects/$PROJECT?teamId=$TEAM_ID" -H "Authorization: Bearer $VERCEL_TOKEN" \
+  | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).id))')
+BYPASS=$(curl -sS -X PATCH "https://api.vercel.com/v1/projects/$PROJECT_ID/protection-bypass?teamId=$TEAM_ID" \
   -H "Authorization: Bearer $VERCEL_TOKEN" -H "Content-Type: application/json" -d '{}' \
   | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const o=JSON.parse(s);const k=Object.keys(o.protectionBypass??{})[0];console.log(k??"")})')
 [ -n "$BYPASS" ] || { echo "FAILED to mint bypass secret; check token scopes"; exit 1; }
