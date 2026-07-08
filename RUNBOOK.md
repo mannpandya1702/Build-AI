@@ -42,6 +42,23 @@ That is deliberate. Never run two workers against one database.
    `CALCOM_WEBHOOK_SECRET` set on both sides. The endpoint 503s until the secret exists and 401s
    any unsigned/mis-signed post.
 
+## 2b. Deploy the dashboard to Vercel (public webhook + hosted DB)
+
+The dashboard needs a HOSTED Postgres (a Vercel deployment cannot reach a laptop/container DB).
+ENV NOTE: this dev container blocks raw TCP :5432 egress, so use **Neon** (Postgres over
+HTTPS/WebSocket on :443) — the db seams auto-detect a `*.neon.tech` URL. Supabase becomes viable
+once the worker lives on a VPS with normal egress.
+
+1. Create a free Neon project (neon.tech, ~2 min), copy its connection string.
+2. Run `./scripts/deploy-dashboard.sh "<neon url>"`. It migrates the hosted DB, copies local data
+   (skip-if-present, safe to re-run), deploys `apps/dashboard` with Vercel deployment protection
+   ON (the CRM must never be public without auth), sets env, mints a Protection Bypass secret,
+   and prints the Cal.com Subscriber URL (webhook route + bypass token).
+3. Switch `.env.local` `DATABASE_URL` to the Neon URL and restart the worker, so the worker and
+   the deployed dashboard share one database.
+4. Paste the printed Subscriber URL into Cal.com (triggers: Booking created + Booking canceled;
+   Secret: the CALCOM_WEBHOOK_SECRET value from .env.local).
+
 ## 3. Container/host restarted. What do I do?
 
 Exactly this, in order:
