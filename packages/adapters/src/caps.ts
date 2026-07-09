@@ -22,8 +22,15 @@ export async function checkPlacesCap(): Promise<void> {
   const caps = loadCaps();
   const used = await usedToday("places.call");
   if (used >= caps.places_calls_per_day) {
-    await emitEvent({ agent: "caps", level: "warn", type: "cap.hit", message: `places_calls_per_day (${caps.places_calls_per_day})` });
-    await notifyOperator({ type: "cap_hit", title: "Places API daily cap hit", body: `Used ${used}/${caps.places_calls_per_day}. Discovery paused until tomorrow.` });
+    // Notify ONCE per 12h, not once per capped call: the pre-fix retry storm minted 45k identical
+    // cap_hit notifications and buried the operator's bell. The full history stays in agent_events.
+    const already = await getPool().query<{ n: string }>(
+      "select count(*)::text n from notifications where type='cap_hit' and created_at > now() - interval '12 hours'",
+    );
+    if (already.rows[0].n === "0") {
+      await emitEvent({ agent: "caps", level: "warn", type: "cap.hit", message: `places_calls_per_day (${caps.places_calls_per_day})` });
+      await notifyOperator({ type: "cap_hit", title: "Places API daily cap hit", body: `Used ${used}/${caps.places_calls_per_day}. Discovery paused until tomorrow.` });
+    }
     throw new CapExceededError("places_calls_per_day", caps.places_calls_per_day);
   }
 }
