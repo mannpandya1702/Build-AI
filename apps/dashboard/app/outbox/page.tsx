@@ -27,12 +27,14 @@ export default function OutboxPage() {
   const [o, setO] = useState<Outbox | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [devTools, setDevTools] = useState(false);
 
   useEffect(() => {
     let live = true;
     const tick = async () => { const res = await fetch("/api/outbox", { cache: "no-store" }); if (res.ok) { const d = await res.json(); if (live) setO(d); } };
     tick();
     const t = setInterval(tick, 3000);
+    fetch("/api/dev/enabled").then((r) => r.json()).then((d) => { if (live) setDevTools(Boolean(d.enabled)); }).catch(() => undefined);
     return () => { live = false; clearInterval(t); };
   }, []);
   if (!o) return <div className="animate-pulse text-sm text-zinc-600">Loading outbox…</div>;
@@ -119,7 +121,9 @@ export default function OutboxPage() {
         )) : <Empty>no sends yet</Empty>}</div>
       </section>
 
-      {/* Mock dev panel (spec §11): inject replies to exercise the sequence without real email. */}
+      {/* Mock dev panel (spec §11): inject replies to exercise the sequence without real email.
+          Hidden on hosted deployments (the API also 403s there). */}
+      {devTools && (
       <section className="rounded-xl border border-dashed border-zinc-800 p-3">
         <SectionTitle>Dev panel (mock)</SectionTitle>
         <p className="mt-1 text-xs text-zinc-600">Inject a reply for the most recently contacted lead to exercise the flow.</p>
@@ -133,6 +137,7 @@ export default function OutboxPage() {
           ))}
         </div>
       </section>
+      )}
     </div>
   );
 }

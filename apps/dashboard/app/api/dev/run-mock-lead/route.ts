@@ -2,10 +2,12 @@
 // carries it through every stage. Dev-panel only (spec §11 mock injectors live here later).
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { devToolsEnabled } from "@/lib/devtools";
 
 export const dynamic = "force-dynamic";
 
 export async function POST() {
+  if (!devToolsEnabled()) return NextResponse.json({ error: "dev tools are disabled on hosted deployments" }, { status: 403 });
   const n = Math.floor(Math.random() * 9000 + 1000);
   const name = `Mock Roofing Co ${n}`;
   const r = await db().query(

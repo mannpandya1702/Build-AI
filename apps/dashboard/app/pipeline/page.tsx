@@ -52,6 +52,7 @@ function age(seconds: number): string {
 export default function PipelinePage() {
   const [leads, setLeads] = useState<LeadCard[]>([]);
   const [busy, setBusy] = useState(false);
+  const [devTools, setDevTools] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -62,6 +63,9 @@ export default function PipelinePage() {
     };
     tick();
     const t = setInterval(tick, 2000);
+    // dev buttons (mock lead, discovery trigger) render only where dev tools are enabled (local dev):
+    // on a hosted deployment they would fabricate data in the production database.
+    fetch("/api/dev/enabled").then((r) => r.json()).then((d) => { if (live) setDevTools(Boolean(d.enabled)); }).catch(() => undefined);
     return () => {
       live = false;
       clearInterval(t);
@@ -102,22 +106,24 @@ export default function PipelinePage() {
           <h1 className="text-xl font-bold">Pipeline</h1>
           <p className="mt-1 text-sm text-zinc-500">{leads.length} leads. Columns appear as leads reach them.</p>
         </div>
-        <div className="flex gap-2">
-        <button
-          onClick={discover}
-          disabled={busy}
-          className="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50"
-        >
-          Discover leads
-        </button>
-        <button
-          onClick={runMockLead}
-          disabled={busy}
-          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
-        >
-          {busy ? "Working..." : "Run mock lead"}
-        </button>
-        </div>
+        {devTools && (
+          <div className="flex gap-2">
+            <button
+              onClick={discover}
+              disabled={busy}
+              className="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50"
+            >
+              Discover leads
+            </button>
+            <button
+              onClick={runMockLead}
+              disabled={busy}
+              className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+            >
+              {busy ? "Working..." : "Run mock lead"}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="mt-6 flex gap-3 overflow-x-auto pb-4">

@@ -20,6 +20,10 @@ export function db(): Pool {
         neon.neonConfig.webSocketConstructor = require("ws");
       }
       neon.neonConfig.poolQueryViaFetch = true;
+      // Next.js patches global fetch on Vercel and CACHES it, which made identical SQL return
+      // stale (pre-delete) rows. Every driver fetch must bypass that cache.
+      neon.neonConfig.fetchFunction = (input: RequestInfo, init?: RequestInit) =>
+        fetch(input, { ...init, cache: "no-store" });
       global.__pgPool = new neon.Pool({ connectionString: url, max: 5 }) as unknown as Pool;
     } else {
       global.__pgPool = new Pool({ connectionString: url, max: 5 });
