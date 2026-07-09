@@ -1,10 +1,10 @@
 "use client";
 
-// /reports (spec §8.7): pipeline funnel + spend trend + unit economics. Chart types per the
-// ui-ux-pro-max skill: Funnel (conversion % per stage, biggest drop highlighted) and Area for spend.
-// Hand-built SVG/CSS (skill's "Custom SVG" + "linear list fallback" guidance) to stay dependency-light.
+// /reports (spec §8.7): pipeline funnel + spend trend + unit economics + daily digests. Chart types
+// per the skill: funnel (per-stage conversion %, biggest drop highlighted), area for spend trend,
+// subtle gridlines, tabular figures.
 import { useEffect, useState } from "react";
-import { Card, SectionTitle, StatTile, Empty } from "@/components/ui";
+import { Card, SectionTitle, PageHeader, StatTile, Empty, Skeleton } from "@/components/ui";
 
 interface Report {
   funnel: { stage: string; count: number }[];
@@ -15,7 +15,6 @@ interface Report {
 
 function Funnel({ data }: { data: { stage: string; count: number }[] }) {
   const max = Math.max(1, ...data.map((d) => d.count));
-  // biggest drop = largest proportional fall between consecutive non-zero stages (skill: highlight it)
   let worst = -1, worstDrop = 0;
   for (let i = 1; i < data.length; i++) {
     if (data[i - 1].count > 0) {
@@ -31,19 +30,19 @@ function Funnel({ data }: { data: { stage: string; count: number }[] }) {
         const isDrop = i === worst;
         return (
           <div key={d.stage} className="flex items-center gap-3 text-sm">
-            <span className="w-24 shrink-0 text-right text-zinc-400">{d.stage}</span>
-            <div className="relative h-7 flex-1 overflow-hidden rounded bg-zinc-900">
-              <div className={`flex h-full items-center rounded ${isDrop ? "bg-amber-500/30" : "bg-sky-500/25"}`} style={{ width: `${Math.max(2, (d.count / max) * 100)}%` }}>
-                <span className="px-2 text-xs font-semibold tabular-nums text-zinc-100">{d.count}</span>
+            <span className="w-24 shrink-0 text-right text-muted">{d.stage}</span>
+            <div className="relative h-7 flex-1 overflow-hidden rounded-md bg-surface2/70">
+              <div className={`flex h-full items-center rounded-md transition-[width] duration-300 ${isDrop ? "bg-warn/25" : "bg-data/20"}`} style={{ width: `${Math.max(2, (d.count / max) * 100)}%` }}>
+                <span className="px-2 font-display text-xs font-semibold text-ink">{d.count}</span>
               </div>
             </div>
-            <span className={`w-16 shrink-0 text-right text-xs tabular-nums ${isDrop ? "font-semibold text-amber-400" : "text-zinc-500"}`}>
+            <span className={`w-14 shrink-0 text-right font-display text-[11px] ${isDrop ? "font-semibold text-warn" : "text-faint"}`}>
               {conv != null ? `${conv}%` : "—"}
             </span>
           </div>
         );
       })}
-      {worst > 0 && <p className="pt-1 text-xs text-amber-400/80">Biggest drop-off: {data[worst - 1].stage} → {data[worst].stage}</p>}
+      {worst > 0 && <p className="pt-1 text-xs text-warn/90">Biggest drop-off: {data[worst - 1].stage} → {data[worst].stage}</p>}
     </div>
   );
 }
@@ -58,12 +57,12 @@ function SpendArea({ data }: { data: { day: string; usd: number }[] }) {
   const area = `${x(0)},${h - pad} ${line} ${x(data.length - 1)},${h - pad}`;
   return (
     <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full min-w-[420px]">
-        <polygon points={area} fill="rgb(56 189 248 / 0.15)" />
-        <polyline points={line} fill="none" stroke="rgb(56 189 248)" strokeWidth="2" />
-        {data.map((d, i) => <circle key={i} cx={x(i)} cy={y(d.usd)} r="2" fill="rgb(56 189 248)" />)}
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full min-w-[420px]" role="img" aria-label="AI spend per day, last 14 days">
+        <polygon points={area} fill="rgb(var(--data) / 0.12)" />
+        <polyline points={line} fill="none" stroke="rgb(var(--data))" strokeWidth="2" />
+        {data.map((d, i) => <circle key={i} cx={x(i)} cy={y(d.usd)} r="2" fill="rgb(var(--data))" />)}
       </svg>
-      <div className="flex justify-between text-[10px] text-zinc-600">
+      <div className="flex justify-between font-display text-[10px] text-faint">
         <span>{data[0].day}</span><span>${max.toFixed(2)} max/day</span><span>{data[data.length - 1].day}</span>
       </div>
     </div>
@@ -79,37 +78,35 @@ export default function ReportsPage() {
     const t = setInterval(tick, 5000);
     return () => { live = false; clearInterval(t); };
   }, []);
-  if (!r) return <div className="animate-pulse text-sm text-zinc-600">Loading reports…</div>;
+  if (!r) return <Skeleton rows={5} />;
 
   return (
     <div className="mx-auto max-w-5xl">
-      <h1 className="text-xl font-bold">Reports</h1>
-      <p className="mt-1 text-sm text-zinc-500">Funnel, spend, and unit economics from live pipeline data.</p>
+      <PageHeader title="Reports" description="Funnel, spend, and unit economics from live pipeline data." />
 
-      <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatTile label="AI spend" value={`$${r.tiles.total_spend.toFixed(2)}`} tone="amber" />
-        <StatTile label="Cost / demo" value={`$${r.tiles.cost_per_demo.toFixed(2)}`} sub={`${r.tiles.demos_deployed} demos`} tone="sky" />
+      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
+        <StatTile label="AI spend" value={`$${r.tiles.total_spend.toFixed(2)}`} tone="warn" />
+        <StatTile label="Cost / demo" value={`$${r.tiles.cost_per_demo.toFixed(2)}`} sub={`${r.tiles.demos_deployed} demos`} tone="data" />
         <StatTile label="Cost / qualified" value={`$${r.tiles.cost_per_qualified.toFixed(2)}`} sub={`${r.tiles.qualified} qualified`} />
-        <StatTile label="Reply rate" value={`${Math.round(r.tiles.reply_rate * 100)}%`} tone="emerald" />
+        <StatTile label="Reply rate" value={`${Math.round(r.tiles.reply_rate * 100)}%`} tone="ok" />
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="p-4"><SectionTitle>Pipeline funnel</SectionTitle><div className="mt-4"><Funnel data={r.funnel} /></div></Card>
         <Card className="p-4"><SectionTitle>AI spend (14 days)</SectionTitle><div className="mt-4"><SpendArea data={r.spend} /></div></Card>
       </div>
 
-      {/* Daily digests (spec §6.10): the monitor's EOD report in the §11 voice. */}
-      <div className="mt-5">
+      <div className="mt-6">
         <SectionTitle>Daily digests</SectionTitle>
-        <div className="mt-2 space-y-3">
+        <div className="mt-2 space-y-2.5">
           {(r.digests ?? []).length === 0 && <Empty>no digests yet (the monitor writes one daily at 09:00 IST)</Empty>}
           {(r.digests ?? []).map((d) => (
             <Card key={d.date} className="p-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-zinc-200">{d.date}</p>
-                {d.anomalies?.length > 0 && <span className="rounded bg-amber-500/15 px-2 py-0.5 text-xs text-amber-300">{d.anomalies.length} anomalies</span>}
+                <p className="font-display text-sm font-semibold text-ink">{String(d.date).slice(0, 10)}</p>
+                {d.anomalies?.length > 0 && <span className="rounded-md bg-warn/10 px-2 py-0.5 font-display text-[11px] text-warn">{d.anomalies.length} anomalies</span>}
               </div>
-              <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-zinc-400">{d.summary_md}</pre>
+              <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap font-display text-xs leading-relaxed text-muted">{d.summary_md}</pre>
             </Card>
           ))}
         </div>

@@ -1,37 +1,22 @@
 import type { Metadata } from "next";
+import { Fira_Code, Fira_Sans } from "next/font/google";
 import "./globals.css";
-import Link from "next/link";
-import Bell from "@/components/Bell";
+import Sidebar from "@/components/Sidebar";
+
+// Typography per the skill's design system for data-dense dashboards: Fira Code (display/data:
+// technical, tabular by nature) + Fira Sans (body). Loaded via next/font: self-hosted, no FOIT.
+const display = Fira_Code({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-display", display: "swap" });
+const body = Fira_Sans({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"], variable: "--font-body", display: "swap" });
 
 export const metadata: Metadata = { title: "Agency Autopilot" };
 
-const NAV = [
-  ["/pipeline", "Pipeline"],
-  ["/outbox", "Outbox"],
-  ["/meetings", "Meetings"],
-  ["/builds", "Builds"],
-  ["/activity", "Activity"],
-  ["/reports", "Reports"],
-  ["/settings", "Settings"],
-] as const;
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
-        <div className="flex min-h-screen">
-          <aside className="w-52 shrink-0 border-r border-zinc-800 p-4">
-            <p className="mb-3 text-sm font-bold tracking-wide text-zinc-100">AGENCY AUTOPILOT</p>
-            <div className="mb-4"><Bell /></div>
-            <nav className="space-y-1 text-sm">
-              {NAV.map(([href, label]) => (
-                <Link key={href} href={href} className="block rounded px-2 py-1.5 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100">
-                  {label}
-                </Link>
-              ))}
-            </nav>
-          </aside>
-          <main className="flex-1 p-6">{children}</main>
+    <html lang="en" className={`${display.variable} ${body.variable}`}>
+      <body className="min-h-dvh font-body text-[15px] text-ink antialiased">
+        <div className="flex min-h-dvh flex-col md:flex-row">
+          <Sidebar />
+          <main className="min-w-0 flex-1 px-4 py-5 md:px-8 md:py-7">{children}</main>
         </div>
       </body>
     </html>

@@ -1,8 +1,10 @@
 "use client";
 
-// /pipeline (spec §8.1): kanban by lead status. Poll-based locally; Realtime in production.
-import { useEffect, useState } from "react";
+// /pipeline (spec §8.1): kanban by lead status, with search + stage-group filtering (the skill's
+// dashboard anti-pattern list literally names "No filtering"). Poll-based locally.
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { PageHeader, SearchInput, FilterChip, Skeleton, Empty, statusTone } from "@/components/ui";
 
 interface LeadCard {
   id: string;
@@ -17,30 +19,19 @@ interface LeadCard {
 }
 
 const COLUMNS: readonly string[] = [
-  "discovered",
-  "enriched",
-  "qualified",
-  "analyzed",
-  "solution_ready",
-  "design_ready",
-  "demo_building",
-  "demo_qa",
-  "outreach_ready",
-  "awaiting_approval",
-  "contacted",
-  "replied",
-  "negotiating",
-  "meeting_booked",
-  "closed_won",
-  "final_building",
-  "final_qa",
-  "delivery_approval",
-  "delivered",
-  "nurture",
-  "disqualified",
-  "closed_lost",
-  "suppressed",
+  "discovered", "enriched", "qualified", "analyzed", "solution_ready", "design_ready",
+  "demo_building", "demo_qa", "outreach_ready", "awaiting_approval", "contacted", "replied",
+  "negotiating", "meeting_booked", "closed_won", "final_building", "final_qa",
+  "delivery_approval", "delivered", "nurture", "disqualified", "closed_lost", "suppressed",
 ];
+
+const GROUPS: Record<string, readonly string[]> = {
+  All: COLUMNS,
+  Sourcing: ["discovered", "enriched", "qualified", "disqualified"],
+  Building: ["analyzed", "solution_ready", "design_ready", "demo_building", "demo_qa"],
+  Selling: ["outreach_ready", "awaiting_approval", "contacted", "replied", "negotiating", "meeting_booked", "nurture"],
+  Won: ["closed_won", "final_building", "final_qa", "delivery_approval", "delivered"],
+};
 
 function age(seconds: number): string {
   if (seconds < 90) return `${Math.round(seconds)}s`;
@@ -50,9 +41,11 @@ function age(seconds: number): string {
 }
 
 export default function PipelinePage() {
-  const [leads, setLeads] = useState<LeadCard[]>([]);
+  const [leads, setLeads] = useState<LeadCard[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [devTools, setDevTools] = useState(false);
+  const [q, setQ] = useState("");
+  const [group, setGroup] = useState<keyof typeof GROUPS>("All");
 
   useEffect(() => {
     let live = true;
@@ -91,8 +84,18 @@ export default function PipelinePage() {
     setBusy(false);
   }
 
+  const filtered = useMemo(() => {
+    if (!leads) return [];
+    const needle = q.trim().toLowerCase();
+    return leads.filter(
+      (l) =>
+        GROUPS[group].includes(l.status) &&
+        (!needle || l.company_name.toLowerCase().includes(needle) || (l.city ?? "").toLowerCase().includes(needle)),
+    );
+  }, [leads, q, group]);
+
   const byStatus = new Map<string, LeadCard[]>();
-  for (const l of leads) {
+  for (const l of filtered) {
     const arr = byStatus.get(l.status) ?? [];
     arr.push(l);
     byStatus.set(l.status, arr);
@@ -101,58 +104,67 @@ export default function PipelinePage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold">Pipeline</h1>
-          <p className="mt-1 text-sm text-zinc-500">{leads.length} leads. Columns appear as leads reach them.</p>
-        </div>
+      <PageHeader title="Pipeline" description={leads ? `${leads.length} leads · ${filtered.length} shown` : "loading…"}>
         {devTools && (
-          <div className="flex gap-2">
-            <button
-              onClick={discover}
-              disabled={busy}
-              className="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50"
-            >
+          <>
+            <button onClick={discover} disabled={busy} className="h-9 cursor-pointer rounded-lg border border-line px-3 text-sm text-muted transition-colors duration-150 hover:bg-surface2 hover:text-ink disabled:opacity-50">
               Discover leads
             </button>
-            <button
-              onClick={runMockLead}
-              disabled={busy}
-              className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
-            >
-              {busy ? "Working..." : "Run mock lead"}
+            <button onClick={runMockLead} disabled={busy} className="h-9 cursor-pointer rounded-lg bg-accent px-3 font-display text-sm font-semibold text-accentink transition-opacity duration-150 hover:opacity-90 disabled:opacity-50">
+              {busy ? "Working…" : "Run mock lead"}
             </button>
-          </div>
+          </>
         )}
+      </PageHeader>
+
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <SearchInput value={q} onChange={setQ} placeholder="Search company or city…" />
+        <div className="flex gap-1.5 overflow-x-auto">
+          {(Object.keys(GROUPS) as (keyof typeof GROUPS)[]).map((g) => (
+            <FilterChip key={g} active={group === g} onClick={() => setGroup(g)}>
+              {g}
+            </FilterChip>
+          ))}
+        </div>
       </div>
 
-      <div className="mt-6 flex gap-3 overflow-x-auto pb-4">
-        {visible.length === 0 && <p className="text-sm text-zinc-600">No leads yet. Click "Run mock lead".</p>}
-        {visible.map((col) => (
-          <div key={col} className="w-60 shrink-0 rounded-lg border border-zinc-800 bg-zinc-900/40">
-            <p className="border-b border-zinc-800 px-3 py-2 text-xs font-bold uppercase tracking-wide text-zinc-400">
-              {col.replace(/_/g, " ")} <span className="text-zinc-600">({(byStatus.get(col) ?? []).length})</span>
-            </p>
-            <div className="space-y-2 p-2">
-              {(byStatus.get(col) ?? []).map((l) => (
-                <Link
-                  key={l.id}
-                  href={`/leads/${l.id}`}
-                  className="block rounded-md border border-zinc-800 bg-zinc-950 p-3 hover:border-zinc-600"
-                >
-                  <p className="text-sm font-semibold text-zinc-100">{l.company_name}</p>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    {l.industry ?? "?"} · {l.city ?? "?"}, {l.region ?? "?"}
-                  </p>
-                  <p className="mt-1 flex justify-between text-xs">
-                    <span className="text-zinc-400">{l.score != null ? `score ${l.score}` : "unscored"}</span>
-                    <span className="text-zinc-600">{age(l.seconds_in_stage)} in stage</span>
-                  </p>
-                </Link>
-              ))}
+      {!leads && <Skeleton rows={4} />}
+      {leads && visible.length === 0 && <Empty hint="Adjust the search or stage filter.">No leads match.</Empty>}
+
+      <div className="flex gap-3 overflow-x-auto pb-4">
+        {visible.map((col) => {
+          const tone = statusTone(col);
+          const items = byStatus.get(col) ?? [];
+          return (
+            <div key={col} className="w-64 shrink-0 rounded-card border border-line bg-surface/60">
+              <p className="sticky top-0 flex items-center gap-2 rounded-t-card border-b border-line bg-surface px-3 py-2 font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
+                <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} aria-hidden />
+                {col.replace(/_/g, " ")}
+                <span className="ml-auto rounded-full bg-surface2 px-1.5 font-display text-[10px] text-faint">{items.length}</span>
+              </p>
+              <div className="space-y-1.5 p-1.5">
+                {items.map((l) => (
+                  <Link
+                    key={l.id}
+                    href={`/leads/${l.id}`}
+                    className="block cursor-pointer rounded-lg border border-transparent bg-surface2/60 p-2.5 transition-colors duration-150 hover:border-line hover:bg-surface2"
+                  >
+                    <p className="truncate text-[13px] font-medium leading-snug text-ink">{l.company_name}</p>
+                    <p className="mt-0.5 truncate text-xs text-faint">
+                      {l.industry ?? "?"} · {l.city ?? "?"}, {l.region ?? "?"}
+                    </p>
+                    <p className="mt-1.5 flex justify-between font-display text-[11px]">
+                      <span className={l.score != null && l.score >= 60 ? "text-ok" : "text-muted"}>
+                        {l.score != null ? `score ${l.score}` : "unscored"}
+                      </span>
+                      <span className="text-faint">{age(l.seconds_in_stage)}</span>
+                    </p>
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -1,3 +1,64 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Design tokens — skill-generated system ("Data-Dense Dashboard", blue data + amber highlights),
+   dark variants derived per the skill's color-dark-mode rule (desaturated/lighter tonals, never
+   inversion). RGB channel triplets so Tailwind alpha modifiers work. Density dial 8: 8-32px scale. */
+:root {
+  --bg: 10 14 19;          /* deep blue-black canvas */
+  --surface: 17 22 29;     /* cards */
+  --surface-2: 23 30 39;   /* nested / hover surfaces */
+  --border: 35 46 60;      /* hairlines, visible on both surfaces */
+  --ink: 230 237 243;      /* primary text: 13.5:1 on surface */
+  --ink-muted: 148 163 178;/* secondary text: 5.4:1 */
+  --ink-faint: 100 116 134;/* tertiary/labels: 3.2:1, large/caps only */
+  --data: 96 165 250;      /* blue-400: data, links, active nav */
+  --accent: 245 158 11;    /* amber-500: THE highlight/CTA color, used sparingly */
+  --accent-ink: 26 18 6;   /* text on amber: 10.4:1 */
+  --ok: 52 211 153;
+  --warn: 251 191 36;
+  --danger: 248 113 113;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgb(30 58 138 / 0.14), transparent 60%),
+    rgb(var(--bg));
+}
+
+/* Focus visibility (skill §1: focus-states). Keyboard only; pointer users keep clean surfaces. */
+:focus-visible {
+  outline: 2px solid rgb(var(--data));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Data-dense scrollbars that match the surface system */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--border)) transparent;
+}
+*::-webkit-scrollbar { height: 8px; width: 8px; }
+*::-webkit-scrollbar-thumb { background: rgb(var(--border)); border-radius: 4px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* Skeleton shimmer (skill §3: progressive-loading), disabled under reduced motion */
+.skeleton {
+  background: linear-gradient(90deg, rgb(var(--surface-2)) 25%, rgb(var(--border) / 0.6) 50%, rgb(var(--surface-2)) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

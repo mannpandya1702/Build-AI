@@ -1,12 +1,11 @@
 "use client";
 
 // /leads/[id] (spec §8.2): the full lead story in tabs — Overview, Audit, Solution, Design,
-// Builds+QA, Emails, Timeline. Surfaces the real artifacts the pipeline produces (audit findings,
-// Lighthouse scores, the solution + call sheet, the assigned look, the live demo). Skill UX: loading
-// state, empty states, overflow-safe.
+// Builds+QA, Emails, Timeline. Styled to the skill design system (data-dense, blue data, amber
+// active indicators, Fira Code for figures).
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Card, SectionTitle, StatusPill, StatTile, ScoreDial, PaletteSwatches, Empty, severityTone } from "@/components/ui";
+import { Card, SectionTitle, StatusPill, StatTile, ScoreDial, PaletteSwatches, Empty, Skeleton, severityTone } from "@/components/ui";
 
 interface Finding { category: string; severity: string; evidence: string; why_it_costs_them: string }
 interface Detail {
@@ -39,51 +38,51 @@ export default function LeadPage() {
     return () => { live = false; clearInterval(t); };
   }, [id]);
 
-  if (!d) return <div className="animate-pulse text-sm text-zinc-600">Loading lead…</div>;
+  if (!d) return <Skeleton rows={5} />;
   const L = d.lead;
   const demo = d.builds.find((b) => b.kind === "demo" && b.deploy_url);
-  const count = (t: string) => (t === "Audit" ? (d.audit ? 1 : 0) : t === "Solution" ? (d.solution ? 1 : 0) : t === "Design" ? (d.design ? 1 : 0) : t === "Builds" ? d.builds.length : t === "Emails" ? d.emails.length : 0);
+  const count = (t: string) => (t === "Builds" ? d.builds.length : t === "Emails" ? d.emails.length : 0);
 
   return (
     <div className="mx-auto max-w-6xl">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{L.company_name}</h1>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-display text-xl font-semibold tracking-tight text-ink">{L.company_name}</h1>
             <StatusPill status={L.status} />
-            {d.design?.look_locked && <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[11px] text-zinc-400">look locked</span>}
+            {d.design?.look_locked && <span className="rounded-full bg-surface2 px-2 py-0.5 font-display text-[11px] text-muted">look locked</span>}
           </div>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-muted">
             {L.industry ?? "?"} · {L.city ?? "?"}, {L.region ?? "?"}
-            {L.website_url && <> · <a href={L.website_url} target="_blank" className="text-sky-400 underline">current site</a></>}
+            {L.website_url && <> · <a href={L.website_url} target="_blank" className="cursor-pointer text-data underline underline-offset-2 hover:opacity-80">current site</a></>}
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-3">
-          <StatTile label="Score" value={L.score ?? "—"} tone={(L.score ?? 0) >= 60 ? "emerald" : "zinc"} />
-          <StatTile label="Reviews" value={L.review_count ?? "—"} sub={L.rating ? `${L.rating}★` : undefined} tone="sky" />
-          <StatTile label="AI spend" value={`$${d.spend.toFixed(2)}`} sub="this lead" tone="amber" />
+        <div className="grid grid-cols-3 gap-2.5">
+          <StatTile label="Score" value={L.score ?? "—"} tone={(L.score ?? 0) >= 60 ? "ok" : "ink"} />
+          <StatTile label="Reviews" value={L.review_count ?? "—"} sub={L.rating ? `${L.rating}★` : undefined} tone="data" />
+          <StatTile label="AI spend" value={`$${d.spend.toFixed(2)}`} sub="this lead" tone="warn" />
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="mt-6 flex gap-1 overflow-x-auto border-b border-zinc-800">
+      <div className="mt-5 flex gap-1 overflow-x-auto border-b border-line" role="tablist">
         {TABS.map((t) => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`shrink-0 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${tab === t ? "border-sky-500 text-zinc-100" : "border-transparent text-zinc-500 hover:text-zinc-300"}`}>
-            {t}{["Builds", "Emails"].includes(t) && count(t) > 0 && <span className="ml-1.5 text-zinc-600">{count(t)}</span>}
+          <button key={t} onClick={() => setTab(t)} role="tab" aria-selected={tab === t}
+            className={`shrink-0 cursor-pointer border-b-2 px-3 py-2 text-sm transition-colors duration-150 ${tab === t ? "border-accent font-medium text-ink" : "border-transparent text-muted hover:text-ink"}`}>
+            {t}{["Builds", "Emails"].includes(t) && count(t) > 0 && <span className="ml-1.5 font-display text-[11px] text-faint">{count(t)}</span>}
           </button>
         ))}
       </div>
 
       <div className="mt-5">
         {tab === "Overview" && (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Card className="p-4">
               <SectionTitle>Contact</SectionTitle>
               <dl className="mt-3 space-y-1.5 text-sm">
                 {[["Name", L.contact_name], ["Phone", L.contact_phone], ["Email", L.contact_email], ["GBP", L.gbp_url]].map(([k, v]) => (
-                  <div key={k} className="flex justify-between gap-4"><dt className="text-zinc-500">{k}</dt><dd className="truncate text-zinc-200">{v || <span className="text-zinc-600">—</span>}</dd></div>
+                  <div key={k} className="flex justify-between gap-4"><dt className="shrink-0 text-faint">{k}</dt><dd className="truncate text-ink">{v || <span className="text-faint">—</span>}</dd></div>
                 ))}
               </dl>
             </Card>
@@ -92,8 +91,8 @@ export default function LeadPage() {
               <div className="mt-3 space-y-1.5 text-sm">
                 {L.score_breakdown ? Object.entries(L.score_breakdown).map(([k, v]) => (
                   <div key={k} className="flex items-center justify-between gap-4">
-                    <span className="text-zinc-400">{k.replace(/_/g, " ")}</span>
-                    <span className="font-mono text-zinc-200">+{String(v)}</span>
+                    <span className="text-muted">{k.replace(/_/g, " ")}</span>
+                    <span className="font-display text-[13px] text-ink">+{String(v)}</span>
                   </div>
                 )) : <Empty>not scored yet</Empty>}
               </div>
@@ -102,101 +101,99 @@ export default function LeadPage() {
         )}
 
         {tab === "Audit" && (d.audit ? (
-          <div className="space-y-5">
+          <div className="space-y-3">
             {d.audit.lighthouse && (
               <Card className="p-4">
                 <SectionTitle>Lighthouse (mobile)</SectionTitle>
-                <div className="mt-3 flex flex-wrap gap-5">
+                <div className="mt-3 flex flex-wrap items-center gap-6">
                   <ScoreDial label="perf" score={d.audit.lighthouse.performance ?? null} />
                   <ScoreDial label="seo" score={d.audit.lighthouse.seo ?? null} />
                   <ScoreDial label="a11y" score={d.audit.lighthouse.accessibility ?? null} />
                   <ScoreDial label="best pr." score={d.audit.lighthouse.best_practices ?? null} />
                   {d.audit.lighthouse.lcp_ms > 0 && (
-                    <div className="flex flex-col items-center gap-1"><span className="mt-3 text-lg font-bold tabular-nums text-zinc-200">{(d.audit.lighthouse.lcp_ms / 1000).toFixed(1)}s</span><span className="text-[11px] uppercase tracking-wide text-zinc-500">LCP</span></div>
+                    <div className="flex flex-col items-center gap-1.5">
+                      <span className="font-display text-lg font-semibold text-ink">{(d.audit.lighthouse.lcp_ms / 1000).toFixed(1)}s</span>
+                      <span className="font-display text-[10px] uppercase tracking-[0.12em] text-faint">LCP</span>
+                    </div>
                   )}
                 </div>
               </Card>
             )}
-            {d.audit.summary && <Card className="p-4 text-sm text-zinc-300"><SectionTitle>Summary</SectionTitle><p className="mt-2">{d.audit.summary}</p></Card>}
+            {d.audit.summary && <Card className="p-4 text-sm text-ink"><SectionTitle>Summary</SectionTitle><p className="mt-2 leading-relaxed">{d.audit.summary}</p></Card>}
             <Card className="p-4">
               <SectionTitle>Findings ({d.audit.findings?.length ?? 0})</SectionTitle>
               <div className="mt-3 space-y-3">
                 {(d.audit.findings ?? []).map((f, i) => (
-                  <div key={i} className="border-l-2 border-zinc-800 pl-3">
-                    <p className="text-sm"><span className={`font-semibold uppercase ${severityTone(f.severity)}`}>{f.severity}</span> <span className="text-zinc-500">· {f.category}</span></p>
-                    <p className="mt-0.5 text-sm text-zinc-200">{f.evidence}</p>
-                    <p className="mt-0.5 text-xs text-zinc-500">{f.why_it_costs_them}</p>
+                  <div key={i} className="border-l-2 border-line pl-3">
+                    <p className="font-display text-[11px] uppercase tracking-wide"><span className={`font-semibold ${severityTone(f.severity)}`}>{f.severity}</span> <span className="text-faint">· {f.category}</span></p>
+                    <p className="mt-1 text-sm leading-relaxed text-ink">{f.evidence}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-muted">{f.why_it_costs_them}</p>
                   </div>
                 ))}
               </div>
             </Card>
-            {d.audit.screenshots?.length > 0 && (
-              <Card className="p-4"><SectionTitle>Screenshots</SectionTitle>
-                <p className="mt-2 text-sm text-zinc-500">{d.audit.screenshots.map((s: any) => s.viewport).join(" · ")} captured</p>
-              </Card>
-            )}
           </div>
         ) : <Empty>no audit yet</Empty>)}
 
         {tab === "Solution" && (d.solution ? (
-          <div className="space-y-4">
-            {d.solution.pitch_angle && <Card className="p-4"><SectionTitle>Pitch angle</SectionTitle><p className="mt-2 text-sm text-zinc-200">{d.solution.pitch_angle}</p></Card>}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <Card className="p-4"><SectionTitle>Features</SectionTitle><ul className="mt-2 space-y-1 text-sm text-zinc-300">{(d.solution.features ?? []).map((f, i) => <li key={i} className="flex gap-2"><span className="text-sky-500">›</span>{f}</li>)}</ul></Card>
-              <Card className="p-4"><SectionTitle>Differentiators</SectionTitle><ul className="mt-2 space-y-1 text-sm text-zinc-300">{(d.solution.differentiators ?? []).map((f, i) => <li key={i} className="flex gap-2"><span className="text-emerald-500">✓</span>{f}</li>)}</ul></Card>
+          <div className="space-y-3">
+            {d.solution.pitch_angle && <Card className="p-4"><SectionTitle>Pitch angle</SectionTitle><p className="mt-2 text-sm leading-relaxed text-ink">{d.solution.pitch_angle}</p></Card>}
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <Card className="p-4"><SectionTitle>Features</SectionTitle><ul className="mt-2 space-y-1.5 text-sm text-ink">{(d.solution.features ?? []).map((f, i) => <li key={i} className="flex gap-2 leading-snug"><span className="text-data">›</span>{f}</li>)}</ul></Card>
+              <Card className="p-4"><SectionTitle>Differentiators</SectionTitle><ul className="mt-2 space-y-1.5 text-sm text-ink">{(d.solution.differentiators ?? []).map((f, i) => <li key={i} className="flex gap-2 leading-snug"><span className="text-ok">✓</span>{f}</li>)}</ul></Card>
             </div>
             {d.solution.call_sheet_md && (
               <Card className="p-4"><SectionTitle>Call sheet</SectionTitle>
-                <pre className="mt-2 max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-zinc-950 p-3 text-xs leading-relaxed text-zinc-300">{d.solution.call_sheet_md}</pre>
+                <pre className="mt-2 max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-bg p-3 font-display text-xs leading-relaxed text-muted">{d.solution.call_sheet_md}</pre>
               </Card>
             )}
           </div>
         ) : <Empty>no solution yet</Empty>)}
 
         {tab === "Design" && (d.design ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <Card className="p-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <SectionTitle>Look: {d.design.look_name ?? d.design.brand?.preset}</SectionTitle>
-                <span className="text-xs text-zinc-500">{d.design.brand?.fonts?.display} / {d.design.brand?.fonts?.body}{d.design.brand?.skill_grounded && " · skill-grounded"}</span>
+                <span className="font-display text-[11px] text-faint">{d.design.brand?.fonts?.display} / {d.design.brand?.fonts?.body}{d.design.brand?.skill_grounded && " · skill-grounded"}</span>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-6">
                 {d.design.brand?.palette && <PaletteSwatches palette={d.design.brand.palette} />}
                 <div className="text-sm">
-                  <p className="text-zinc-500">tone</p><p className="text-zinc-200">{d.design.brand?.tone}</p>
-                  {d.design.brand?.hero?.headline && <><p className="mt-2 text-zinc-500">hero</p><p className="text-zinc-200">{d.design.brand.hero.headline}</p></>}
+                  <p className="text-faint">tone</p><p className="text-ink">{d.design.brand?.tone}</p>
+                  {d.design.brand?.hero?.headline && <><p className="mt-2 text-faint">hero</p><p className="text-ink">{d.design.brand.hero.headline}</p></>}
                 </div>
               </div>
             </Card>
             <Card className="p-4"><SectionTitle>Blocks</SectionTitle>
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {(d.design.page_specs?.[0]?.blocks ?? []).map((b: any, i: number) => <span key={i} className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-300">{b.block}</span>)}
+                {(d.design.page_specs?.[0]?.blocks ?? []).map((b: any, i: number) => <span key={i} className="rounded-md bg-surface2 px-2 py-0.5 font-display text-[11px] text-muted">{b.block}</span>)}
               </div>
             </Card>
           </div>
         ) : <Empty>no design yet</Empty>)}
 
         {tab === "Builds" && (d.builds.length ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {demo && (
               <Card className="overflow-hidden">
-                <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
+                <div className="flex items-center justify-between border-b border-line px-4 py-2">
                   <SectionTitle>Live demo preview</SectionTitle>
-                  <a href={demo.deploy_url!} target="_blank" className="text-xs text-sky-400 underline">open ↗</a>
+                  <a href={demo.deploy_url!} target="_blank" className="cursor-pointer font-display text-[11px] text-data underline underline-offset-2 hover:opacity-80">open ↗</a>
                 </div>
-                <iframe src={demo.deploy_url!} className="h-[600px] w-full bg-white" title="demo preview" />
+                <iframe src={demo.deploy_url!} className="h-[560px] w-full bg-white" title="demo preview" loading="lazy" />
               </Card>
             )}
             <Card className="p-4"><SectionTitle>Build history</SectionTitle>
-              <div className="mt-2 space-y-2">
+              <div className="mt-2 space-y-1.5">
                 {d.builds.map((b) => {
                   const q = d.qa.find((x) => x.kind === b.kind && x.iteration === b.iteration);
                   return (
-                    <div key={b.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-800 px-3 py-2 text-sm">
-                      <span className="font-mono text-zinc-300">{b.kind} #{b.iteration}</span>
-                      <span className="text-zinc-500">{b.status}</span>
-                      {q && <span className={`rounded px-1.5 py-0.5 text-xs ${q.passed ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300"}`}>QA {q.passed ? "pass" : `fail (${q.issues?.length ?? 0})`}</span>}
-                      {b.deploy_url && <a href={b.deploy_url} target="_blank" className="ml-auto truncate text-sky-400 underline">{b.deploy_url.replace("https://", "")}</a>}
+                    <div key={b.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm">
+                      <span className="font-display text-[13px] text-ink">{b.kind} #{b.iteration}</span>
+                      <span className="text-faint">{b.status}</span>
+                      {q && <span className={`rounded-md px-1.5 py-0.5 font-display text-[11px] ${q.passed ? "bg-ok/10 text-ok" : "bg-danger/10 text-danger"}`}>QA {q.passed ? "pass" : `fail (${q.issues?.length ?? 0})`}</span>}
+                      {b.deploy_url && <a href={b.deploy_url} target="_blank" className="ml-auto cursor-pointer truncate text-data underline underline-offset-2 hover:opacity-80">{b.deploy_url.replace("https://", "")}</a>}
                     </div>
                   );
                 })}
@@ -206,27 +203,27 @@ export default function LeadPage() {
         ) : <Empty>no builds yet</Empty>)}
 
         {tab === "Emails" && (d.emails.length ? (
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {d.emails.map((e) => (
               <Card key={e.id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm">
-                <span className={e.direction === "inbound" ? "text-sky-400" : "text-zinc-400"}>{e.direction}</span>
-                <span className="text-zinc-500">{e.kind}</span>
-                <span className="text-zinc-200">{e.subject ?? "(no subject)"}</span>
-                <span className="ml-auto text-xs text-zinc-500">{e.status}</span>
+                <span className={`font-display text-[11px] uppercase ${e.direction === "inbound" ? "text-data" : "text-faint"}`}>{e.direction}</span>
+                <span className="text-faint">{e.kind}</span>
+                <span className="text-ink">{e.subject ?? "(no subject)"}</span>
+                <span className="ml-auto font-display text-[11px] text-faint">{e.status}</span>
               </Card>
             ))}
           </div>
-        ) : <Empty>no emails yet (outreach is Phase 5)</Empty>)}
+        ) : <Empty hint="Outreach goes live with Phase 5 sending.">no emails yet</Empty>)}
 
         {tab === "Timeline" && (
-          <div className="space-y-1 font-mono text-xs">
+          <div className="space-y-1 font-display text-xs">
             {d.events.map((e) => (
-              <div key={e.id} className="flex gap-3 rounded border border-zinc-900 bg-zinc-900/40 px-3 py-1.5">
-                <span className="w-16 shrink-0 text-zinc-600">{new Date(e.created_at).toLocaleTimeString()}</span>
-                <span className={`w-16 shrink-0 ${e.level === "error" ? "text-rose-400" : e.level === "warn" ? "text-amber-400" : "text-zinc-400"}`}>{e.agent}</span>
-                <span className="w-40 shrink-0 text-zinc-500">{e.type}</span>
-                <span className="flex-1 text-zinc-300">{e.message}</span>
-                {e.cost_usd && <span className="text-zinc-600">${Number(e.cost_usd).toFixed(3)}</span>}
+              <div key={e.id} className="flex gap-3 rounded-md border border-line/50 bg-surface/60 px-3 py-1.5">
+                <span className="w-16 shrink-0 text-faint">{new Date(e.created_at).toLocaleTimeString()}</span>
+                <span className={`w-16 shrink-0 ${e.level === "error" ? "text-danger" : e.level === "warn" ? "text-warn" : "text-muted"}`}>{e.agent}</span>
+                <span className="w-44 shrink-0 truncate text-faint">{e.type}</span>
+                <span className="min-w-0 flex-1 truncate text-muted">{e.message}</span>
+                {e.cost_usd && <span className="shrink-0 text-faint">${Number(e.cost_usd).toFixed(3)}</span>}
               </div>
             ))}
           </div>

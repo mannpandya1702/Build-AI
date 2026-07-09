@@ -1,10 +1,9 @@
 "use client";
 
-// /meetings (spec §8.4): booked intro calls. Scaffolded with live (currently empty) data; lights up
-// when Phase 5 Cal.com booking is wired.
+// /meetings (spec §8.4): booked intro calls. Lights up when Phase 5 Cal.com booking goes live.
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, StatusPill, Empty } from "@/components/ui";
+import { Card, PageHeader, StatusPill, Empty, Skeleton } from "@/components/ui";
 
 interface Meeting { id: string; title: string | null; start_time: string | null; timezone: string | null; status: string; attendee: any; lead_id: string; company_name: string; city: string | null }
 
@@ -17,22 +16,21 @@ export default function MeetingsPage() {
     const t = setInterval(tick, 5000);
     return () => { live = false; clearInterval(t); };
   }, []);
-  if (!m) return <div className="animate-pulse text-sm text-zinc-600">Loading meetings…</div>;
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="text-xl font-bold">Meetings</h1>
-      <p className="mt-1 text-sm text-zinc-500">Booked intro calls. Booking goes live with Phase 5 (Cal.com).</p>
-      <div className="mt-6 space-y-2">
-        {m.length === 0 && <Empty>no meetings booked yet</Empty>}
-        {m.map((mt) => (
-          <Card key={mt.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-            <div>
-              <Link href={`/leads/${mt.lead_id}`} className="font-semibold text-zinc-100 hover:text-sky-400">{mt.company_name}</Link>
-              <p className="text-xs text-zinc-500">{mt.title ?? "Intro call"} · {mt.city}</p>
+      <PageHeader title="Meetings" description="Booked intro calls, straight from the Cal.com webhook." />
+      {!m && <Skeleton rows={3} />}
+      <div className="space-y-1.5">
+        {m && m.length === 0 && <Empty hint="Bookings arrive automatically once outreach is live.">no meetings booked yet</Empty>}
+        {(m ?? []).map((mt) => (
+          <Card key={mt.id} className="flex flex-wrap items-center gap-3 px-4 py-3 transition-colors duration-150 hover:border-faint/40">
+            <div className="min-w-0">
+              <Link href={`/leads/${mt.lead_id}`} className="cursor-pointer font-medium text-ink transition-colors duration-150 hover:text-data">{mt.company_name}</Link>
+              <p className="truncate text-xs text-faint">{mt.title ?? "Intro call"} · {mt.city}</p>
             </div>
             <div className="ml-auto text-right">
-              <p className="text-sm text-zinc-200">{mt.start_time ? new Date(mt.start_time).toLocaleString() : "—"}</p>
+              <p className="font-display text-[13px] text-ink">{mt.start_time ? new Date(mt.start_time).toLocaleString() : "—"}</p>
               <StatusPill status={mt.status} />
             </div>
           </Card>
