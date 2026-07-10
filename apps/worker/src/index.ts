@@ -65,9 +65,33 @@ async function main(): Promise<void> {
   };
   const handlers = MOCK ? STUB_HANDLERS : REAL_HANDLERS;
 
+  // Operator kill switch (dashboard "Worker" toggle): settings.worker_enabled gates all NEW work
+  // (scheduler, research + operator-action polls). In-flight jobs drain naturally; heartbeat,
+  // monitoring, and the bridge keep running while paused so status stays live and hosted toggles
+  // reach us. Default is PAUSED: a freshly booted worker never starts spending until the operator
+  // flips it on.
+  let workerEnabled = false;
+  await pool.query(
+    `insert into settings (key, value) values ('worker_enabled', '"false"'::jsonb) on conflict (key) do nothing`,
+  );
+  async function refreshEnabled(): Promise<void> {
+    const r = await pool.query<{ value: unknown }>("select value from settings where key='worker_enabled'");
+    const next = String(r.rows[0]?.value ?? "false").replace(/"/g, "") === "true";
+    if (next !== workerEnabled) {
+      workerEnabled = next;
+      await emitEvent({ agent: "worker", type: next ? "worker.resumed" : "worker.paused", message: `processing ${next ? "resumed" : "paused"} by operator` });
+      console.log(`[worker] processing ${next ? "RESUMED" : "PAUSED"}`);
+    }
+  }
+  await refreshEnabled();
+
   // one consumer per agent queue
   for (const agent of AGENTS) {
     await boss.work<{ leadId: string }>(agent.queue, { teamSize: 2 }, async (job) => {
+      // Paused: complete the job as a no-op. Nothing is lost — jobs are derived from lead status,
+      // so the scheduler re-enqueues pending work the moment processing resumes. Without this gate a
+      // stale queue backlog drains into handlers right through a pause (observed live).
+      if (!workerEnabled) return;
       const handler = handlers[agent.name];
       if (!handler) return; // not yet implemented for this mode: lead waits, nothing fabricated
       try {
@@ -97,6 +121,8 @@ async function main(): Promise<void> {
   // NOT gated (it must finish). So only design_ready/closed_won are throttled by buildCap.
   const FRESH_BUILD: readonly LeadStatus[] = ["design_ready", "closed_won"];
   setInterval(async () => {
+    await refreshEnabled().catch(() => undefined);
+    if (!workerEnabled) return; // paused: schedule nothing (in-flight jobs drain)
     // skip scrape scheduling once the Places budget is spent for the day (no retry churn)
     const placesSpent = await usedToday("places.call").catch(() => 0);
     const buildingNow = Number(
@@ -136,6 +162,7 @@ async function main(): Promise<void> {
     "agent:research-run",
     { teamSize: 1 },
     async (job) => {
+      if (!workerEnabled) return; // no-op; the poll re-finds the request on resume
       await research(job.data.requestId, job.data.count, {
         vertical: job.data.vertical,
         cities: job.data.cities,
@@ -144,6 +171,7 @@ async function main(): Promise<void> {
     },
   );
   setInterval(async () => {
+    if (!workerEnabled) return;
     try {
       const r = await pool.query<{ id: string; payload: { count?: number; vertical?: string; cities?: string[]; country?: string } }>(
         `select e.id, e.payload from agent_events e
@@ -167,6 +195,7 @@ async function main(): Promise<void> {
   // agent logic that owns the deps). Approvals: the operator flips an email to 'approved' in the
   // Outbox; the worker gate-checks + sends. Simulated reply/booking arrive as dev events.
   setInterval(async () => {
+    if (!workerEnabled) return; // paused: approvals/replies/bookings stay queued, processed on resume
     try {
       const approved = await pool.query<{ idempotency_key: string }>(
         "select idempotency_key from emails where status='approved' and idempotency_key is not null limit 5");

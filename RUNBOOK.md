@@ -67,6 +67,13 @@ service postgresql start
 cd apps/worker && MOCK_MODE=false pnpm dev     # (or MOCK_MODE=true for fixture work)
 cd apps/dashboard && pnpm dev
 ```
+
+The worker BOOTS PAUSED (settings.worker_enabled, default false): it heartbeats, bridges, and
+monitors, but schedules no pipeline work and completes queued jobs as no-ops until the operator
+flips the sidebar Worker toggle to Running (dashboard, local or hosted; hosted toggles reach the
+worker via the bridge within ~1 minute). Pause = stop new work + drop queued jobs safely (the
+scheduler re-derives all work from lead status on resume). The dashboard cannot START a dead
+process — if the switch shows Offline, run the commands above on the host.
 Recovery is designed to be boring: jobs are idempotent keyed on (lead, step), sends carry
 idempotency keys (retried sends never double-send), builds use an atomic claim row, and stale
 claims (>30 min in 'building') are auto-failed on the next builder pass so a mid-build crash never

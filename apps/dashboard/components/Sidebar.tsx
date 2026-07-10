@@ -6,6 +6,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Bell from "@/components/Bell";
+import WorkerSwitch from "@/components/WorkerSwitch";
 import { Icon, type IconName } from "@/components/icons";
 
 const NAV: { href: string; label: string; icon: IconName }[] = [
@@ -34,6 +35,10 @@ export default function Sidebar() {
         <div className="md:mt-4">
           <Bell />
         </div>
+      </div>
+
+      <div className="px-2 pb-2 md:pb-0">
+        <WorkerSwitch />
       </div>
 
       <nav className="flex gap-1 overflow-x-auto px-2 pb-2 md:mt-2 md:flex-col md:pb-4" aria-label="Primary">

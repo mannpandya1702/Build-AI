@@ -89,6 +89,32 @@ export async function bridgeCycle(): Promise<void> {
   if (!rem) return;
   const local = getPool();
 
+  // Settings reconcile, TWO-WAY on key, newest updated_at wins. The hosted dashboard writes
+  // settings (worker on/off toggle, discover-panel targeting) and so does the local side; settings
+  // is deliberately NOT in the id-keyed up-sync below (local and hosted rows for the same key have
+  // different ids), so this merge is its only sync path.
+  const [remoteSettings, localSettings] = await Promise.all([
+    rem.query<{ key: string; value: unknown; updated_at: string }>("select key, value, updated_at from settings"),
+    local.query<{ key: string; value: unknown; updated_at: string }>("select key, value, updated_at from settings"),
+  ]);
+  const localByKey = new Map(localSettings.rows.map((r) => [r.key, r]));
+  const remoteByKey = new Map(remoteSettings.rows.map((r) => [r.key, r]));
+  const guardedUpsert = (db: DbPool) => (key: string, value: unknown, updatedAt: string) =>
+    db.query(
+      `insert into settings (key, value, updated_at) values ($1,$2,$3)
+       on conflict (key) do update set value = excluded.value, updated_at = excluded.updated_at
+       where settings.updated_at < excluded.updated_at`,
+      [key, JSON.stringify(value), updatedAt],
+    );
+  for (const s of remoteSettings.rows) {
+    const l = localByKey.get(s.key);
+    if (!l || new Date(l.updated_at) < new Date(s.updated_at)) await guardedUpsert(local)(s.key, s.value, s.updated_at);
+  }
+  for (const l of localSettings.rows) {
+    const r = remoteByKey.get(l.key);
+    if (!r || new Date(r.updated_at) < new Date(l.updated_at)) await guardedUpsert(rem)(l.key, l.value, l.updated_at);
+  }
+
   // DOWN: operator inputs created on the hosted side, each pulled exactly once. Local replays are
   // inserted with agent='bridge'; the pulls exclude that agent so a replay that gets up-synced back
   // to the hosted DB can never be pulled again (replay loop).
@@ -103,13 +129,18 @@ export async function bridgeCycle(): Promise<void> {
       [type],
     );
     for (const b of rows.rows) {
-      await local.query(
-        "insert into agent_events (agent, lead_id, type, message, payload) values ('bridge',$1,$2,$3,$4)",
-        [b.lead_id, type, b.message ?? "bridged from hosted", JSON.stringify(b.payload ?? {})],
-      );
+      // Round-trip guard: the up-sync copies local events (with their ids) to the hosted DB; an
+      // event whose id already exists locally ORIGINATED here and must not be replayed as input.
+      const originatedLocally = await local.query("select 1 from agent_events where id = $1", [b.id]);
+      if (!originatedLocally.rowCount) {
+        await local.query(
+          "insert into agent_events (agent, lead_id, type, message, payload) values ('bridge',$1,$2,$3,$4)",
+          [b.lead_id, type, b.message ?? "bridged from hosted", JSON.stringify(b.payload ?? {})],
+        );
+      }
       await rem.query(
         "insert into agent_events (agent, type, level, message, payload) values ('bridge','bridge.pulled','debug',$2,$1)",
-        [JSON.stringify({ remote_id: b.id }), `${type} pulled to worker`],
+        [JSON.stringify({ remote_id: b.id }), `${type} ${originatedLocally.rowCount ? "recognized as local origin" : "pulled to worker"}`],
       );
     }
   }
