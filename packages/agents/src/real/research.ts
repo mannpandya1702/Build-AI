@@ -22,12 +22,33 @@ function cityRegion(addr?: string): { city: string | null; region: string | null
   return m ? { city: m[1].trim(), region: m[2] } : { city: null, region: null };
 }
 
-export async function research(requestId: string, count: number): Promise<void> {
-  const pool = getPool();
-  await emitEvent({ agent: "research", type: "research.started", message: `target ${count}`, payload: { request_id: requestId, count } });
+export interface ResearchTargeting {
+  vertical?: string;
+  cities?: string[];
+  country?: string;
+}
 
+export async function research(requestId: string, count: number, targeting?: ResearchTargeting): Promise<void> {
+  const pool = getPool();
+
+  // Explicit targeting from the dashboard's discover panel wins over icp.yaml + saved overrides.
   const icp = await mergedIcp();
+  if (targeting?.vertical?.trim()) icp.active_vertical = targeting.vertical.trim().toLowerCase();
+  if (targeting?.cities?.length) icp.cities = targeting.cities;
+  if (targeting?.country?.trim()) icp.country = targeting.country.trim();
+
+  await emitEvent({
+    agent: "research",
+    type: "research.started",
+    message: `target ${count} · ${icp.active_vertical} · ${icp.cities.length} cities · ${icp.country}`,
+    payload: { request_id: requestId, count, vertical: icp.active_vertical, cities: icp.cities, country: icp.country },
+  });
+
+  // Custom niches (not in icp.yaml's verticals map) search by the niche name itself.
   const keywords: string[] = icp.verticals[icp.active_vertical]?.keywords ?? [icp.active_vertical];
+  // Places text search resolves US "City, ST" strings alone; outside the US the country name in the
+  // query keeps results in the right place ("plumbers in Richmond, Australia" vs Richmond, VA).
+  const countrySuffix = icp.country && icp.country.toUpperCase() !== "US" ? `, ${icp.country}` : "";
 
   const existing = await pool.query<{ google_place_id: string | null; website_url: string | null }>(
     "select google_place_id, website_url from leads",
@@ -46,7 +67,7 @@ export async function research(requestId: string, count: number): Promise<void> 
       do {
         let hits;
         try {
-          hits = await searchPlaces(`${kw} in ${city}`, 20, pageToken);
+          hits = await searchPlaces(`${kw} in ${city}${countrySuffix}`, 20, pageToken);
         } catch (err) {
           if (err instanceof CapExceededError) {
             await emitEvent({ agent: "research", level: "warn", type: "research.paused", message: err.message, payload: { request_id: requestId } });
@@ -101,7 +122,9 @@ async function mergedIcp() {
   if (r.rowCount) {
     const o = r.rows[0].value ?? {};
     if (Array.isArray(o.cities) && o.cities.length) icp.cities = o.cities;
-    if (typeof o.active_vertical === "string" && icp.verticals[o.active_vertical]) icp.active_vertical = o.active_vertical;
+    // custom verticals are allowed: keywords fall back to the niche name itself
+    if (typeof o.active_vertical === "string" && o.active_vertical.trim()) icp.active_vertical = o.active_vertical.trim().toLowerCase();
+    if (typeof o.country === "string" && o.country.trim()) icp.country = o.country.trim();
     if (typeof o.qualify_threshold === "number") icp.qualify_threshold = o.qualify_threshold;
   }
   return icp;

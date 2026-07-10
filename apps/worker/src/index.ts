@@ -130,20 +130,33 @@ async function main(): Promise<void> {
     }
   }, 2000);
 
-  // operator-triggered research requests ride the event stream (research.requested -> started)
-  await boss.work<{ requestId: string; count: number }>("agent:research-run", { teamSize: 1 }, async (job) => {
-    await research(job.data.requestId, job.data.count);
-  });
+  // operator-triggered research requests ride the event stream (research.requested -> started).
+  // The payload carries the discover panel's targeting (vertical, cities, country).
+  await boss.work<{ requestId: string; count: number; vertical?: string; cities?: string[]; country?: string }>(
+    "agent:research-run",
+    { teamSize: 1 },
+    async (job) => {
+      await research(job.data.requestId, job.data.count, {
+        vertical: job.data.vertical,
+        cities: job.data.cities,
+        country: job.data.country,
+      });
+    },
+  );
   setInterval(async () => {
     try {
-      const r = await pool.query<{ id: string; payload: { count?: number } }>(
+      const r = await pool.query<{ id: string; payload: { count?: number; vertical?: string; cities?: string[]; country?: string } }>(
         `select e.id, e.payload from agent_events e
          where e.type = 'research.requested'
            and not exists (select 1 from agent_events s where s.type = 'research.started' and s.payload->>'request_id' = e.id::text)
          limit 5`,
       );
       for (const req of r.rows) {
-        await boss.send("agent:research-run", { requestId: req.id, count: req.payload?.count ?? 50 }, { singletonKey: req.id, retryLimit: 2 });
+        await boss.send(
+          "agent:research-run",
+          { requestId: req.id, count: req.payload?.count ?? 50, vertical: req.payload?.vertical, cities: req.payload?.cities, country: req.payload?.country },
+          { singletonKey: req.id, retryLimit: 2 },
+        );
       }
     } catch (err) {
       console.error("[research-poll]", (err as Error).message);

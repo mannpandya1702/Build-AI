@@ -40,12 +40,25 @@ function age(seconds: number): string {
   return `${Math.round(seconds / 86400)}d`;
 }
 
+const NICHES = ["roofing", "plumbing", "hvac", "dental", "custom"] as const;
+const COUNTRIES = ["United States", "Canada", "United Kingdom", "Australia", "India", "other"] as const;
+
 export default function PipelinePage() {
   const [leads, setLeads] = useState<LeadCard[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [devTools, setDevTools] = useState(false);
   const [q, setQ] = useState("");
   const [group, setGroup] = useState<keyof typeof GROUPS>("All");
+
+  // Discover panel (targeting: niche + cities + country, spec §2.3 "expansion is a config change")
+  const [showDiscover, setShowDiscover] = useState(false);
+  const [niche, setNiche] = useState<string>("roofing");
+  const [customNiche, setCustomNiche] = useState("");
+  const [citiesText, setCitiesText] = useState("");
+  const [country, setCountry] = useState<string>("United States");
+  const [customCountry, setCustomCountry] = useState("");
+  const [count, setCount] = useState(25);
+  const [discoverMsg, setDiscoverMsg] = useState<string>("");
 
   useEffect(() => {
     let live = true;
@@ -56,9 +69,23 @@ export default function PipelinePage() {
     };
     tick();
     const t = setInterval(tick, 2000);
-    // dev buttons (mock lead, discovery trigger) render only where dev tools are enabled (local dev):
-    // on a hosted deployment they would fabricate data in the production database.
+    // dev-only fabricators (mock lead) render only where dev tools are enabled
     fetch("/api/dev/enabled").then((r) => r.json()).then((d) => { if (live) setDevTools(Boolean(d.enabled)); }).catch(() => undefined);
+    // prefill the discover panel with the saved targeting
+    fetch("/api/settings", { cache: "no-store" }).then((r) => r.json()).then((d) => {
+      if (!live) return;
+      const o = d.settings?.icp_overrides ?? {};
+      if (typeof o.active_vertical === "string") {
+        if ((NICHES as readonly string[]).includes(o.active_vertical)) setNiche(o.active_vertical);
+        else { setNiche("custom"); setCustomNiche(o.active_vertical); }
+      }
+      if (Array.isArray(o.cities) && o.cities.length) setCitiesText(o.cities.join(", "));
+      if (typeof o.country === "string" && o.country) {
+        if ((COUNTRIES as readonly string[]).includes(o.country)) setCountry(o.country);
+        else if (o.country.toUpperCase() === "US") setCountry("United States");
+        else { setCountry("other"); setCustomCountry(o.country); }
+      }
+    }).catch(() => undefined);
     return () => {
       live = false;
       clearInterval(t);
@@ -71,17 +98,27 @@ export default function PipelinePage() {
     setBusy(false);
   }
 
-  async function discover() {
+  async function submitDiscover() {
+    const vertical = niche === "custom" ? customNiche.trim() : niche;
+    const finalCountry = country === "other" ? customCountry.trim() : country === "United States" ? "US" : country;
+    const cities = citiesText.split(/[,\n;]+/).map((c) => c.trim()).filter(Boolean);
+    if (!vertical) { setDiscoverMsg("pick or type a niche"); return; }
+    if (cities.length === 0) { setDiscoverMsg("add at least one city"); return; }
+    if (!finalCountry) { setDiscoverMsg("pick or type a country"); return; }
     setBusy(true);
-    const count = parseInt(prompt("How many leads to discover?", "50") ?? "0", 10);
-    if (count > 0) {
-      await fetch("/api/dev/discover", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ count }),
-      });
-    }
+    setDiscoverMsg("");
+    const res = await fetch("/api/discover", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ count, vertical, cities, country: finalCountry }),
+    });
+    const d = await res.json().catch(() => ({}));
     setBusy(false);
+    if (res.ok) {
+      setDiscoverMsg(`queued: ${d.count} ${d.vertical} leads in ${cities.length} cit${cities.length === 1 ? "y" : "ies"} (${finalCountry}). The worker picks it up within a minute.`);
+    } else {
+      setDiscoverMsg(`error: ${d.error ?? res.status}`);
+    }
   }
 
   const filtered = useMemo(() => {
@@ -106,16 +143,66 @@ export default function PipelinePage() {
     <div>
       <PageHeader title="Pipeline" description={leads ? `${leads.length} leads · ${filtered.length} shown` : "loading…"}>
         {devTools && (
-          <>
-            <button onClick={discover} disabled={busy} className="h-9 cursor-pointer rounded-lg border border-line px-3 text-sm text-muted transition-colors duration-150 hover:bg-surface2 hover:text-ink disabled:opacity-50">
-              Discover leads
-            </button>
-            <button onClick={runMockLead} disabled={busy} className="h-9 cursor-pointer rounded-lg bg-accent px-3 font-display text-sm font-semibold text-accentink transition-opacity duration-150 hover:opacity-90 disabled:opacity-50">
-              {busy ? "Working…" : "Run mock lead"}
-            </button>
-          </>
+          <button onClick={runMockLead} disabled={busy} className="h-9 cursor-pointer rounded-lg border border-line px-3 text-sm text-muted transition-colors duration-150 hover:bg-surface2 hover:text-ink disabled:opacity-50">
+            Run mock lead
+          </button>
         )}
+        <button onClick={() => setShowDiscover(!showDiscover)} aria-expanded={showDiscover}
+          className="h-9 cursor-pointer rounded-lg bg-accent px-3 font-display text-sm font-semibold text-accentink transition-opacity duration-150 hover:opacity-90">
+          {showDiscover ? "Close" : "Discover leads"}
+        </button>
       </PageHeader>
+
+      {showDiscover && (
+        <div className="mb-4 rounded-card border border-line bg-surface p-4">
+          <p className="font-display text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">Discover new leads</p>
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <label htmlFor="niche" className="block text-xs text-muted">Niche</label>
+              <select id="niche" value={niche} onChange={(e) => setNiche(e.target.value)}
+                className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-line bg-surface2 px-2.5 text-sm text-ink outline-none transition-colors duration-150 focus:border-data/60">
+                {NICHES.map((n) => <option key={n} value={n}>{n === "custom" ? "custom…" : n}</option>)}
+              </select>
+              {niche === "custom" && (
+                <input value={customNiche} onChange={(e) => setCustomNiche(e.target.value)} placeholder="e.g. landscapers"
+                  aria-label="Custom niche"
+                  className="mt-1.5 h-10 w-full rounded-lg border border-line bg-surface2 px-2.5 text-sm text-ink outline-none placeholder:text-faint focus:border-data/60" />
+              )}
+            </div>
+            <div>
+              <label htmlFor="cities" className="block text-xs text-muted">Cities (comma-separated)</label>
+              <input id="cities" value={citiesText} onChange={(e) => setCitiesText(e.target.value)} placeholder="Dallas, TX, Plano, TX"
+                className="mt-1 h-10 w-full rounded-lg border border-line bg-surface2 px-2.5 text-sm text-ink outline-none placeholder:text-faint focus:border-data/60" />
+              <p className="mt-1 text-[11px] text-faint">US cities work best as “City, ST”.</p>
+            </div>
+            <div>
+              <label htmlFor="country" className="block text-xs text-muted">Country</label>
+              <select id="country" value={country} onChange={(e) => setCountry(e.target.value)}
+                className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-line bg-surface2 px-2.5 text-sm text-ink outline-none transition-colors duration-150 focus:border-data/60">
+                {COUNTRIES.map((c) => <option key={c} value={c}>{c === "other" ? "other…" : c}</option>)}
+              </select>
+              {country === "other" && (
+                <input value={customCountry} onChange={(e) => setCustomCountry(e.target.value)} placeholder="e.g. Germany"
+                  aria-label="Custom country"
+                  className="mt-1.5 h-10 w-full rounded-lg border border-line bg-surface2 px-2.5 text-sm text-ink outline-none placeholder:text-faint focus:border-data/60" />
+              )}
+            </div>
+            <div>
+              <label htmlFor="count" className="block text-xs text-muted">How many</label>
+              <input id="count" type="number" min={1} max={200} value={count} onChange={(e) => setCount(Math.min(200, Math.max(1, parseInt(e.target.value || "1", 10))))}
+                className="mt-1 h-10 w-full rounded-lg border border-line bg-surface2 px-2.5 font-display text-sm text-ink outline-none focus:border-data/60" />
+              <p className="mt-1 text-[11px] text-faint">Places cap: 200 calls/day.</p>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button onClick={submitDiscover} disabled={busy}
+              className="h-10 cursor-pointer rounded-lg bg-accent px-5 font-display text-sm font-semibold text-accentink transition-opacity duration-150 hover:opacity-90 disabled:opacity-50">
+              {busy ? "Queuing…" : "Start discovery"}
+            </button>
+            {discoverMsg && <span className={`text-sm ${discoverMsg.startsWith("error") ? "text-danger" : "text-muted"}`} role="status">{discoverMsg}</span>}
+          </div>
+        </div>
+      )}
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <SearchInput value={q} onChange={setQ} placeholder="Search company or city…" />

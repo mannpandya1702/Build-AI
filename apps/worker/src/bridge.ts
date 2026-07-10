@@ -89,22 +89,29 @@ export async function bridgeCycle(): Promise<void> {
   if (!rem) return;
   const local = getPool();
 
-  // DOWN: bookings received by the hosted webhook, pulled exactly once.
-  const bookings = await rem.query<{ id: string; lead_id: string | null; message: string | null; payload: unknown }>(
-    `select e.id, e.lead_id, e.message, e.payload from agent_events e
-     where e.type = 'booking.received'
-       and not exists (select 1 from agent_events m where m.type='bridge.pulled' and m.payload->>'remote_id' = e.id::text)
-     limit 10`,
-  );
-  for (const b of bookings.rows) {
-    await local.query(
-      "insert into agent_events (agent, lead_id, type, message, payload) values ('bridge',$1,'booking.received',$2,$3)",
-      [b.lead_id, b.message ?? "bridged from hosted", JSON.stringify(b.payload ?? {})],
+  // DOWN: operator inputs created on the hosted side, each pulled exactly once. Local replays are
+  // inserted with agent='bridge'; the pulls exclude that agent so a replay that gets up-synced back
+  // to the hosted DB can never be pulled again (replay loop).
+  const PULL_TYPES = ["booking.received", "research.requested"] as const;
+  for (const type of PULL_TYPES) {
+    const rows = await rem.query<{ id: string; lead_id: string | null; message: string | null; payload: unknown }>(
+      `select e.id, e.lead_id, e.message, e.payload from agent_events e
+       where e.type = $1
+         and e.agent <> 'bridge'
+         and not exists (select 1 from agent_events m where m.type='bridge.pulled' and m.payload->>'remote_id' = e.id::text)
+       limit 10`,
+      [type],
     );
-    await rem.query(
-      "insert into agent_events (agent, type, level, message, payload) values ('bridge','bridge.pulled','debug','booking pulled to worker',$1)",
-      [JSON.stringify({ remote_id: b.id })],
-    );
+    for (const b of rows.rows) {
+      await local.query(
+        "insert into agent_events (agent, lead_id, type, message, payload) values ('bridge',$1,$2,$3,$4)",
+        [b.lead_id, type, b.message ?? "bridged from hosted", JSON.stringify(b.payload ?? {})],
+      );
+      await rem.query(
+        "insert into agent_events (agent, type, level, message, payload) values ('bridge','bridge.pulled','debug',$2,$1)",
+        [JSON.stringify({ remote_id: b.id }), `${type} pulled to worker`],
+      );
+    }
   }
 
   // DOWN: Outbox decisions made on the deployed dashboard.
