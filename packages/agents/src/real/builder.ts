@@ -8,8 +8,9 @@ import { cpSync, existsSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { advanceLead, emitEvent, getPool, notifyOperator } from "@autopilot/core";
-import { deployDir, loadAgencyFacts, loadCaps, fetchPhotoBytes, MOCK } from "@autopilot/adapters";
+import { deployDir, loadAgencyFacts, loadCaps, fetchPhotoBytes, placeDetails, MOCK } from "@autopilot/adapters";
 import { presetForIndustry, PRESET_BY_ID, type Preset } from "@autopilot/blocks";
+import { generatePersonalizedCopy, fetchSiteText } from "./copy.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../..");
@@ -148,8 +149,29 @@ export async function builder(leadId: string): Promise<void> {
   mkdirSync(BUILDS_DIR, { recursive: true });
   cpSync(templateDir, destDir, { recursive: true, filter: (src) => !/node_modules|\.next|[/\\]out([/\\]|$)/.test(src) });
 
-  const reviews = curateReviews(lead.reviews);
-  const photoNames = (Array.isArray(lead.photos) ? lead.photos : []).map((p: any) => (typeof p === "string" ? p : p?.name)).filter(Boolean);
+  // Evidence refresh: legacy-imported leads carry empty reviews/photos even though their Google
+  // profile has both (Places returns them; the old import skipped them). One Details call fills
+  // the gap so the demo can show REAL reviews and photos instead of empty states.
+  let leadReviews = lead.reviews;
+  let leadPhotos = lead.photos;
+  const reviewsEmpty = !Array.isArray(leadReviews) || leadReviews.length === 0;
+  const photosEmpty = !Array.isArray(leadPhotos) || leadPhotos.length === 0;
+  if ((reviewsEmpty || photosEmpty) && lead.google_place_id && !MOCK()) {
+    try {
+      const fresh = await placeDetails(lead.google_place_id);
+      if (reviewsEmpty && fresh.reviews?.length) leadReviews = fresh.reviews;
+      if (photosEmpty && fresh.photos?.length) leadPhotos = fresh.photos;
+      await pool.query("update leads set reviews=$2, photos=$3 where id=$1", [
+        leadId, JSON.stringify(leadReviews ?? []), JSON.stringify(leadPhotos ?? []),
+      ]);
+      await emitEvent({ agent: "builder", leadId, level: "debug", type: "evidence.refreshed", message: `Places details: ${fresh.reviews?.length ?? 0} reviews, ${fresh.photos?.length ?? 0} photos` });
+    } catch (err) {
+      await emitEvent({ agent: "builder", leadId, level: "debug", type: "evidence.refresh_failed", message: (err as Error).message });
+    }
+  }
+
+  const reviews = curateReviews(leadReviews);
+  const photoNames = (Array.isArray(leadPhotos) ? leadPhotos : []).map((p: any) => (typeof p === "string" ? p : p?.name)).filter(Boolean);
   const photos = await downloadPhotos(photoNames, destDir);
 
   const look = design.brand ?? {};
@@ -171,7 +193,45 @@ export async function builder(leadId: string): Promise<void> {
   if (!lead.contact_phone) needs.push("[NEEDS: phone] no phone on the GBP; tap-to-call not wired");
   if (photos.length === 0) needs.push("[NEEDS: photos] no GBP photos downloaded; gallery shows an honest preview state");
   if (reviews.length === 0) needs.push("[NEEDS: reviews] no positive review text available");
-  needs.push("[NEEDS: confirm services & storm/insurance work] roofer defaults; confirm with owner before send");
+
+  // Personalized copy from THIS business's evidence (contract §5a; operator directive 2026-07-11:
+  // no more identical template text across demos). Evidence: their reviews, our audit of their
+  // current site, that site's own visible text, the sales angle. Falls back to the safe trade
+  // defaults on any failure — a build never blocks on copy.
+  let copy = null;
+  if (!MOCK()) {
+    const audit = (await pool.query(
+      "select summary, findings from audits where lead_id=$1 order by created_at desc limit 1", [leadId])).rows[0];
+    const solution = (await pool.query(
+      "select pitch_angle from solutions where lead_id=$1 order by created_at desc limit 1", [leadId])).rows[0];
+    const siteText = await fetchSiteText(lead.website_url ?? null);
+    copy = await generatePersonalizedCopy(leadId, {
+      companyName: lead.company_name,
+      city,
+      state: lead.region ?? "",
+      industry: lead.industry ?? preset.id,
+      rating: lead.rating != null ? Number(lead.rating) : null,
+      reviewCount: lead.review_count ?? null,
+      phone: lead.contact_phone ?? null,
+      reviews: (Array.isArray(leadReviews) ? leadReviews : []).map((r: any) => ({
+        rating: Number(r.rating ?? 5),
+        text: String(r.text?.text ?? r.text ?? "").trim(),
+      })).filter((r: { text: string }) => r.text).slice(0, 10),
+      auditSummary: audit?.summary ?? null,
+      auditFindings: Array.isArray(audit?.findings) ? audit.findings.map((f: any) => String(f.evidence ?? "")).filter(Boolean).slice(0, 6) : [],
+      siteText,
+      pitchAngle: solution?.pitch_angle ?? null,
+    });
+    await emitEvent({
+      agent: "builder", leadId, level: copy ? "info" : "warn",
+      type: copy ? "copy.generated" : "copy.fallback",
+      message: copy
+        ? `personalized copy from evidence (site text: ${siteText ? "yes" : "no"}, reviews: ${Array.isArray(leadReviews) ? leadReviews.length : 0}, audit: ${audit ? "yes" : "no"})`
+        : "copy generation failed guards; using trade defaults",
+    });
+  }
+  if (copy?.needs.length) needs.push(...copy.needs);
+  if (!copy) needs.push("[NEEDS: confirm services & storm/insurance work] roofer defaults; confirm with owner before send");
 
   const content = {
     placeId: lead.google_place_id ?? leadId,
@@ -179,8 +239,9 @@ export async function builder(leadId: string): Promise<void> {
     city,
     state: lead.region ?? "",
     phone: lead.contact_phone ?? null,
-    primaryService: "Roof Repair",
-    services: DEFAULT_ROOFER_SERVICES,
+    primaryService: copy?.primaryService ?? "Roof Repair",
+    heroSubline: copy?.heroSubline ?? null,
+    services: copy?.services ?? DEFAULT_ROOFER_SERVICES,
     reviews,
     photos,
     heroPhoto: photos[0]?.src ?? null,
@@ -192,7 +253,7 @@ export async function builder(leadId: string): Promise<void> {
     brandColor: "#b4380d",
     theme,
     stormBand: preset.id === "roofing",
-    faq: [
+    faq: copy?.faq ?? [
       { q: "What areas do you cover?", a: `${city} and the surrounding area.` },
       { q: "How do I get a quote?", a: lead.contact_phone ? `Call ${lead.contact_phone} or use the form above. It takes under a minute.` : "Use the form above. It takes under a minute." },
       { q: "What should I do after a storm?", a: "Get the roof inspected and the damage photographed before you file anything. Then you know exactly what you're dealing with." },

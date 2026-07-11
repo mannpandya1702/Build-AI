@@ -314,6 +314,21 @@ rebuilt as card + tap-call button + framed map; footer composed with logo mark +
 QA: full-page renders reviewed at 1280 and 390 in BOTH tones (cedar-paper light editorial,
 granite-frame dark) — same bones, unmistakably different sites. All copy unchanged (fact-safe).
 
+## Per-business copy personalization (2026-07-11, operator directive)
+
+Operator: demos shipped identical template text (same four service blurbs, same subline, same FAQ)
+— "we first need to see their current website and work they do." Shipped:
+- `copy.ts` (agents): `generatePersonalizedCopy` — Sonnet writes hero subline, primary service,
+  services w/ blurbs, and FAQ from EVIDENCE ONLY: their verbatim Google reviews, the analyzer's
+  audit of their current site, the visible text of that site (fetched once, honest UA, §6 ethics),
+  and the sales angle. Guards: §3 voiceLint on every string, invented-number check (any digit in
+  copy must exist in evidence), zod schema, length caps. Any guard failure → trade defaults +
+  `copy.fallback` event; builds never block on copy.
+- Builder refreshes evidence first: legacy-imported leads had empty reviews/photos (import skipped
+  them) — one Places Details call fills both and persists to the lead.
+- Template: `heroSubline` flows from content.json into all five hero variants.
+- Unknowns the model wanted to claim but couldn't verify land in `needs` as `[NEEDS: confirm]`.
+
 ## INCIDENT 2026-07-10/11 (orphaned Outbox approvals) + structural fixes
 
 Fallout from the 07-10 pause leak: the two prematurely-drafted Touch-1 emails (James Kate

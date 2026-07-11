@@ -33,6 +33,7 @@ export interface DemoContent {
   state: string;
   phone: string | null;
   primaryService: string;
+  heroSubline?: string | null;
   services: { name: string; blurb: string }[];
   reviews: DemoReview[];
   photos: { src: string; alt: string }[];

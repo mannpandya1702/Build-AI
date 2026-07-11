@@ -123,7 +123,8 @@ function GradientBackdrop() {
   );
 }
 
-const SUBLINE = "Local crew. Fast response. Your call answered.";
+// Personalized per lead by the builder (their reviews, their site); safe default otherwise.
+const SUBLINE = site.heroSubline ?? "Local crew. Fast response. Your call answered.";
 
 /** Variant A "photo": full-bleed photo (or gradient) behind left-aligned type. */
 function HeroPhoto({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
