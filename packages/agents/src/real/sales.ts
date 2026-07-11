@@ -27,14 +27,21 @@ async function getLead(id: string): Promise<Lead> {
   return r.rows[0];
 }
 
-/** The one real observation to open with: the audit's top finding, else the solution pitch. Real, cited. */
+/** The one real observation to open with. Preference order matters (2026-07-11 fix): the
+ *  solution's pitch_angle is written in plain customer language ("a homepage that loads in 14
+ *  seconds is sending leaking-roof callers back to Google"); the audit summary is the plain-voice
+ *  fallback. Raw finding evidence is NEVER used — it reads as Lighthouse jargon ("LCP at
+ *  14.16 seconds") that means nothing to an owner. */
 async function observation(leadId: string, company: string): Promise<string> {
-  const a = await getPool().query<{ evidence: string; summary: string }>(
-    "select (findings->0->>'evidence') as evidence, summary from audits where lead_id=$1 order by created_at desc limit 1", [leadId]);
-  const ev = a.rows[0]?.evidence;
-  if (ev) return ev.charAt(0).toUpperCase() + ev.slice(1);
-  const s = await getPool().query<{ pitch_angle: string }>("select pitch_angle from solutions where lead_id=$1 order by created_at desc limit 1", [leadId]);
-  return s.rows[0]?.pitch_angle ?? `Your Google presence is stronger than the site behind it.`;
+  const s = await getPool().query<{ pitch_angle: string | null }>(
+    "select pitch_angle from solutions where lead_id=$1 order by created_at desc limit 1", [leadId]);
+  const pitch = s.rows[0]?.pitch_angle?.trim();
+  if (pitch) return pitch;
+  const a = await getPool().query<{ summary: string | null }>(
+    "select summary from audits where lead_id=$1 order by created_at desc limit 1", [leadId]);
+  const summary = a.rows[0]?.summary?.trim();
+  if (summary) return summary;
+  return `Your Google presence is stronger than the site behind it.`;
 }
 
 async function demoUrl(leadId: string): Promise<string | null> {
