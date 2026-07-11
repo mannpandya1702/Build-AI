@@ -39,6 +39,14 @@ export async function GET() {
     `select l.id as lead_id, l.company_name, l.contact_phone, l.city
      from leads l where l.status = 'contacted' order by l.updated_at asc limit 50`,
   )).rows;
+  // phone-first leads (contract §6): demo live + phone, but NO email anywhere to send it to —
+  // the call IS Touch 1, with the live demo as the reason for the call.
+  const callFirst = (await db().query(
+    `select l.id as lead_id, l.company_name, l.contact_phone, l.city, b.deploy_url
+     from leads l join builds b on b.lead_id = l.id and b.kind = 'demo' and b.deploy_url like 'https://%'
+     where l.status = 'outreach_ready' and l.contact_email is null and l.contact_phone is not null
+     order by coalesce(l.score,0) desc limit 50`,
+  )).rows;
 
-  return NextResponse.json({ awaiting, queued, blocked, sent, replies, callsDue, blockReasons });
+  return NextResponse.json({ awaiting, queued, blocked, sent, replies, callsDue, callFirst, blockReasons });
 }

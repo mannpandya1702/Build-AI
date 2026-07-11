@@ -92,7 +92,19 @@ export async function sales(leadId: string): Promise<void> {
       );
       if (already.rows[0].n === "0") {
         await emitEvent({ agent: "sales", leadId, level: "warn", type: "outreach.blocked", message: built.blocked });
-        await notifyOperator({ type: "outreach_blocked", title: `${lead.company_name}: outreach blocked (${built.blocked})`, leadId });
+        // No email but a live demo + phone = a phone-first lead, not a dead one (contract §6: the
+        // call is the primary channel; the demo is the reason for the call). Say that.
+        const phoneFirst = built.blocked === "no contact email on file" && lead.contact_phone && (await demoUrl(leadId));
+        await notifyOperator({
+          type: "outreach_blocked",
+          title: phoneFirst
+            ? `Call ${lead.company_name} (${lead.contact_phone}): demo is live, no email found`
+            : `${lead.company_name}: outreach blocked (${built.blocked})`,
+          body: phoneFirst
+            ? "No email address exists for this lead, so the demo drop can't go by email. The demo is deployed: open the lead page for the call sheet and lead with the call."
+            : undefined,
+          leadId,
+        });
       }
       return; // hold at outreach_ready
     }

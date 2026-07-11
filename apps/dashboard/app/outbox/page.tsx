@@ -7,8 +7,8 @@ import Link from "next/link";
 import { Card, SectionTitle, PageHeader, Empty, Skeleton } from "@/components/ui";
 
 interface Email { id: string; direction: string; kind: string; subject: string | null; body_text: string | null; status: string; company_name: string; lead_id: string; contact_email: string | null }
-interface Call { lead_id: string; company_name: string; contact_phone: string | null; city: string | null }
-interface Outbox { awaiting: Email[]; queued: Email[]; blocked: Email[]; sent: Email[]; replies: Email[]; callsDue: Call[]; blockReasons: Record<string, string> }
+interface Call { lead_id: string; company_name: string; contact_phone: string | null; city: string | null; deploy_url?: string }
+interface Outbox { awaiting: Email[]; queued: Email[]; blocked: Email[]; sent: Email[]; replies: Email[]; callsDue: Call[]; callFirst: Call[]; blockReasons: Record<string, string> }
 
 const BANNED = ["i hope this email finds you well", "i wanted to reach out", "circle back", "touch base", "just following up", "synergy", "game-changer", "leverage", "cutting-edge", "elevate", "seamless", "unlock", "reach out"];
 function voiceIssues(text: string): string[] {
@@ -104,6 +104,25 @@ export default function OutboxPage() {
           <section>
             <SectionTitle>Blocked / rejected ({o.blocked.length})</SectionTitle>
             <div className="mt-2 space-y-1.5">{o.blocked.map((e) => <Row key={e.id} e={e} note={o.blockReasons[e.lead_id] ?? "gate refused or draft rejected"} tone="danger" />)}</div>
+          </section>
+        )}
+
+        {o.callFirst.length > 0 && (
+          <section>
+            <SectionTitle>Call-first leads ({o.callFirst.length})</SectionTitle>
+            <p className="mt-1 text-xs text-faint">Demo is live but no email exists for these businesses. The call is Touch 1; the demo is the reason for the call.</p>
+            <div className="mt-2 space-y-1.5">
+              {o.callFirst.map((c) => (
+                <Card key={c.lead_id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm">
+                  <Link href={`/leads/${c.lead_id}`} className="cursor-pointer font-medium text-ink hover:text-data">{c.company_name}</Link>
+                  <span className="text-faint">{c.city}</span>
+                  {c.deploy_url && (
+                    <a href={c.deploy_url} target="_blank" rel="noreferrer" className="cursor-pointer font-display text-[11px] text-data underline underline-offset-2">demo ↗</a>
+                  )}
+                  {c.contact_phone && <span className="ml-auto font-display text-[13px] font-semibold text-ok">{c.contact_phone}</span>}
+                </Card>
+              ))}
+            </div>
           </section>
         )}
 
