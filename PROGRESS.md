@@ -328,6 +328,14 @@ Operator: demos shipped identical template text (same four service blurbs, same 
   them) — one Places Details call fills both and persists to the lead.
 - Template: `heroSubline` flows from content.json into all five hero variants.
 - Unknowns the model wanted to claim but couldn't verify land in `needs` as `[NEEDS: confirm]`.
+- Guards hardened on live pilots: reasons on every rejection, em/en dashes sanitized not rejected,
+  one guided retry, and a claim-word guard (free/warranty/licensed/certified/emergency need
+  evidence — caught "Free-look inspections" invented on the pilot).
+- FLEET REBUILT 2026-07-11: 13/13 demos personalized, 0 fallbacks, all QA-passed back to
+  outreach_ready. Spot-checks confirm real grounding: Sercon's subline names Rene (their reviews),
+  We Roof Dallas leads with insurance-claim help (their reviews), service lists differ per
+  business (Sercon: patio covers + HOA help; We Roof Dallas: commercial + multifamily; White
+  Rock: gutters). Same accountability trail: copy.generated/copy.fallback events per build.
 
 ## INCIDENT 2026-07-10/11 (orphaned Outbox approvals) + structural fixes
 
