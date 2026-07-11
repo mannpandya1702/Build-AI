@@ -1,7 +1,10 @@
 # Hard limits (spec §4.5). Hitting a cap pauses that resource and notifies; never silently drops.
 places_calls_per_day: 200
-mailbox_daily_send_cap: 25
-total_daily_sends: 50
+# Operator decision 2026-07-11: mann@tradecraftsites.com (the MAIN domain mailbox) is the outreach
+# mailbox. Warm-up ramp protects the domain's reputation: 10/day now; raise toward 25 after ~2
+# clean weeks (watch bounces + complaints in the Resend dashboard before each raise).
+mailbox_daily_send_cap: 10
+total_daily_sends: 10
 concurrent_demo_builds: 2
 anthropic_usd_per_lead_demo_phase: 3
 anthropic_usd_per_day: 15

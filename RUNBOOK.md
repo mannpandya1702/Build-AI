@@ -108,8 +108,12 @@ Hard limits; hitting one pauses that resource and notifies, never silently drops
 - Every send passes the gate (suppression, caps, CAN-SPAM footer, honest subject) — the gate lives
   in `packages/adapters/src/email.ts`, single choke point.
 - Cold SMS does not exist in this system. Do not add it (TCPA, CLAUDE.md §0.4).
-- Before real sending exists: outreach domain + 2-3 Google Workspace mailboxes, warmed 2-3 weeks;
-  verify DKIM/SPF/DMARC; keep the main agency domain out of cold outreach.
+- Outreach mailbox (OPERATOR DECISION 2026-07-11): mann@tradecraftsites.com — the main-domain
+  mailbox IS the outreach sender. Verified: Resend domain auth passes, DMARC p=quarantine live.
+  The trade-off accepted: cold-email complaints/bounces hit the primary domain's reputation, so
+  caps run a warm-up ramp (10/day now; raise toward 25 after ~2 clean weeks, checking bounce and
+  complaint rates in Resend before each raise). Revisit a dedicated outreach domain + extra
+  mailboxes if volume grows past one mailbox's safe ceiling (~25/day).
 
 ## 6. Rotate credentials
 

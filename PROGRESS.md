@@ -386,6 +386,12 @@ silent, not the process table (now in RUNBOOK).
 - Operator to ROTATE all chat-exposed keys: Google Places, Vercel, Anthropic, PageSpeed, 21st,
   Resend, Cal.com.
 
+## Resolved by operator (2026-07-11)
+
+- Outreach mailbox = mann@tradecraftsites.com (main domain; operator explicitly chose it over a
+  dedicated outreach domain). DNS verified: Resend auth passing, DMARC p=quarantine. Caps set to a
+  warm-up ramp (10/day) to protect the domain's reputation; RUNBOOK §5 has the raise schedule.
+
 ## Blockers (spec §14 — operator to provide; build continues elsewhere)
 
 - **Before Phase 2:** PAGESPEED_API_KEY (PageSpeed Insights). GOOGLE_PLACES_API_KEY exists from
