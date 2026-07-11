@@ -93,10 +93,13 @@ export async function sendEmail(input: SendInput): Promise<SendResult> {
   }
   const key = process.env.RESEND_API_KEY;
   if (!key) throw new Error("RESEND_API_KEY is not set");
+  // BCC every send back to the sender's own mailbox (operator ask, 2026-07-11): Resend sends via
+  // its own infrastructure, so nothing appears in the Gmail Sent folder — the BCC copy is how the
+  // operator keeps a searchable record (and reply context) in the inbox they actually live in.
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "Idempotency-Key": input.idempotencyKey },
-    body: JSON.stringify({ from, to: input.toEmail, subject: input.subject, text: input.bodyText, ...(input.bodyHtml ? { html: input.bodyHtml } : {}) }),
+    body: JSON.stringify({ from, to: input.toEmail, bcc: from, subject: input.subject, text: input.bodyText, ...(input.bodyHtml ? { html: input.bodyHtml } : {}) }),
   });
   if (!res.ok) throw new Error(`resend ${res.status}: ${(await res.text()).slice(0, 200)}`);
   const d = (await res.json()) as { id?: string };
