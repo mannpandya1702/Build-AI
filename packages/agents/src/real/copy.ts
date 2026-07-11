@@ -74,6 +74,16 @@ function inventedNumbers(copyText: string, evidenceText: string): string[] {
   return nums.filter((n) => !evidenceText.includes(n.replace(/[.,]$/, "")));
 }
 
+/** Claim words that promise something on the owner's behalf (§5b: service/pricing claims are
+ *  gated behind evidence). Caught live: "Free-look inspections" with no "free" anywhere in the
+ *  evidence. The template's own standard offer copy is separate; this guards GENERATED text. */
+const CLAIM_WORDS = ["free", "warranty", "warranties", "guarantee", "guaranteed", "licensed", "insured", "certified", "24/7", "emergency", "same-day", "same day"];
+function unevidencedClaims(copyText: string, evidenceText: string): string[] {
+  const lc = copyText.toLowerCase();
+  const le = evidenceText.toLowerCase();
+  return CLAIM_WORDS.filter((w) => lc.includes(w) && !le.includes(w));
+}
+
 const SYSTEM = `You write website copy for one specific US local service business. You write in the founder's plain voice:
 - Short sentences. Concrete over vague. No corporate words (leverage, solutions, seamless, elevate, unlock, cutting-edge).
 - NEVER an em dash. Use periods, commas, colons, or parentheses.
@@ -161,6 +171,12 @@ export async function generatePersonalizedCopy(leadId: string, ev: CopyEvidence)
     if (invented.length) {
       lastReason = `invented numbers: ${invented.join(", ")}`;
       feedback = `Your previous attempt was rejected because these numbers are not in the evidence: ${invented.join(", ")}. Remove every number that the evidence does not contain.\n\n`;
+      continue;
+    }
+    const claims = unevidencedClaims(allText, evidenceText);
+    if (claims.length) {
+      lastReason = `unevidenced claims: ${claims.join(", ")}`;
+      feedback = `Your previous attempt was rejected because these claim words are not supported by the evidence: ${claims.join(", ")}. Do not promise anything (free, warranty, licensed, certified, emergency availability) unless the evidence states it.\n\n`;
       continue;
     }
 
