@@ -1,7 +1,7 @@
 import Hero from "../components/Hero";
 import { Services, StormBand, Process, Gallery, Reviews, Faq, Contact } from "../components/Sections";
 import QuoteForm from "../components/QuoteForm";
-import { site } from "../lib/content";
+import { site, telHref } from "../lib/content";
 
 // Home follows the validated narrative order (CLAUDE.md §5b): hook (hero with the stats strip at
 // its base) → THE PROBLEM (storm card, inset on paper) → solution (services) → how it works →
@@ -18,8 +18,13 @@ export default function Page() {
       <Gallery />
       <Reviews />
 
-      {/* The offer: the page's second dark anchor. The white form card pops on ink. */}
-      <section id="quote" className="bg-ink py-20 text-white md:py-28">
+      {/* The offer: the page's second dark anchor. The white form card pops on ink; a brand glow
+          keeps the band from reading flat (§5b-bis: this dark differs from the hero's). */}
+      <section
+        id="quote"
+        className="texture-shingle bg-ink py-20 text-white md:py-28"
+        style={{ backgroundImage: "radial-gradient(80% 90% at 100% 0%, rgb(var(--brand) / 0.25) 0%, transparent 55%)" }}
+      >
         <div className="mx-auto max-w-6xl px-5">
           <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:items-center">
             <div>
@@ -44,11 +49,26 @@ export default function Page() {
       <Faq />
       <Contact />
 
-      <footer className="bg-ink py-10 text-center text-sm text-white/60">
-        <p className="font-display text-base font-extrabold text-white/90">{site.businessName}</p>
-        <p className="mt-1">
-          {site.city}, {site.state} · Roofing you can reach with one tap.
+      {/* Footer: composed close with full NAP (name, address, phone — §5b: consistent with GBP). */}
+      <footer className="border-t border-white/10 bg-ink py-12 text-center text-sm text-white/60">
+        <p className="mx-auto flex items-center justify-center gap-2.5">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand font-display text-base font-extrabold text-brandink">
+            {site.businessName.charAt(0)}
+          </span>
+          <span className="font-display text-lg font-extrabold tracking-tight text-white">{site.businessName}</span>
         </p>
+        <p className="mt-3">
+          {site.address ? `${site.address} · ` : ""}
+          {site.city}, {site.state}
+        </p>
+        {site.phone && telHref(site.phone) && (
+          <p className="mt-1">
+            <a href={telHref(site.phone)!} className="font-bold text-white/85 underline-offset-4 hover:underline">
+              {site.phone}
+            </a>
+          </p>
+        )}
+        <p className="mt-4 border-t border-white/10 pt-4 text-xs text-white/40">Roofing you can reach with one tap.</p>
       </footer>
     </main>
   );

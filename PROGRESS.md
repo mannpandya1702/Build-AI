@@ -301,6 +301,19 @@ template look. Encoded in CLAUDE.md §5d (uniqueness + premium mandate) and ship
   cannot call MCP), so 21st feeds the registry/template variants at build time, per-lead runtime
   grounding stays with the local skill. Registry expansion comes BEFORE any look reuse.
 
+## Full-page premium pass (2026-07-11, operator directive follow-up)
+
+"Whole website looks premium, not only hero." Full-page render audit found the body reading
+generated where the hero read designed. Fixed in the roofing template (§5b-bis applied below the
+fold): services = bento with a full-width featured brand panel + hairline-accented cards (uniform
+white-card grid was the exact slop pattern); process = brand-badge steps joined by a connecting
+line on shingle-textured paper2; gallery preview tiles redesigned (alternating brand/ink tints,
+dashed frames, a "send your job photos" CTA tile); quote anchor gains a brand glow + texture
+(second dark differs from the first, per section rhythm); FAQ gets brand tick markers; contact
+rebuilt as card + tap-call button + framed map; footer composed with logo mark + full NAP.
+QA: full-page renders reviewed at 1280 and 390 in BOTH tones (cedar-paper light editorial,
+granite-frame dark) — same bones, unmistakably different sites. All copy unchanged (fact-safe).
+
 ## INCIDENT 2026-07-10/11 (orphaned Outbox approvals) + structural fixes
 
 Fallout from the 07-10 pause leak: the two prematurely-drafted Touch-1 emails (James Kate

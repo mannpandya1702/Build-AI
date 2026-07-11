@@ -37,6 +37,18 @@ body {
   );
 }
 
+/* Ink-based twin for LIGHT sections (white lines are invisible on paper): the same shingle
+   rhythm keeps the light bands from reading flat (§5b-bis atmosphere over flatness). */
+.texture-shingle-ink {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgb(var(--ink) / 0.025) 0px,
+    rgb(var(--ink) / 0.025) 1px,
+    transparent 1px,
+    transparent 14px
+  );
+}
+
 /* Review marquee: CSS-driven infinite track (never <marquee>). The track holds the list twice;
    -50% translate loops seamlessly. Pauses on hover so cards can be read (WCAG 2.2.2 pause intent). */
 @keyframes marquee-x {
