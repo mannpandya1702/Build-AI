@@ -134,8 +134,15 @@ async function main(): Promise<void> {
       // hold fresh builds when the concurrent-build cap is reached (best leads go first, below)
       if (agent.name === "builder" && FRESH_BUILD.includes(status) && buildingNow >= buildCap) continue;
       try {
-        // builder picks the best leads first (spec §9: score desc); everything else is oldest-first.
-        let orderBy = agent.name === "builder" ? "coalesce(score,0) desc, updated_at asc" : "updated_at asc";
+        // builder picks the best leads first (spec §9: score desc). Sales puts EMAILABLE leads
+        // first: a no-email lead at outreach_ready blocks silently (call-first) but keeps its
+        // updated_at, so oldest-first let 12 of them pin all 10 slots and starve every email lead
+        // behind them (observed live 2026-07-11: 17 drafts stuck for 30+ min). Everything else is
+        // oldest-first.
+        let orderBy =
+          agent.name === "builder" ? "coalesce(score,0) desc, updated_at asc"
+          : agent.name === "sales" ? "(contact_email is not null) desc, updated_at asc"
+          : "updated_at asc";
         let limit = agent.name === "builder" && FRESH_BUILD.includes(status) ? Math.max(0, buildCap - buildingNow) : 10;
         // Demo batch (operator: "build the top N demos first"): admission is gated at the uiux
         // trigger, best scores first. Accounting is ADMISSION-time (design.admitted emitted at

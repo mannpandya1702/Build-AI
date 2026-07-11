@@ -34,13 +34,21 @@ export interface GeneratedCopy {
   needs: string[];
 }
 
+// Minimums are validated; MAXIMUMS are clamped after parse (a word-boundary trim), not rejected —
+// a 118-char subline is a trim job, not a regeneration (three live fallbacks were "too_big" only).
 const Schema = z.object({
-  primary_service: z.string().min(3).max(40),
-  hero_subline: z.string().min(10).max(110),
-  services: z.array(z.object({ name: z.string().min(3).max(48), blurb: z.string().min(10).max(140) })).min(3).max(6),
-  faq: z.array(z.object({ q: z.string().min(5).max(90), a: z.string().min(5).max(220) })).min(2).max(4),
-  unknowns: z.array(z.string()).max(6).default([]),
+  primary_service: z.string().min(3),
+  hero_subline: z.string().min(10),
+  services: z.array(z.object({ name: z.string().min(3), blurb: z.string().min(10) })).min(3).max(6),
+  faq: z.array(z.object({ q: z.string().min(5), a: z.string().min(5) })).min(2).max(4),
+  unknowns: z.array(z.string()).max(8).default([]),
 });
+
+function clamp(s: string, max: number): string {
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max).replace(/\s+\S*$/, "").replace(/[,.;:]$/, "");
+  return cut.length >= 10 ? cut : s.slice(0, max);
+}
 
 /** Fetch the visible text of their current website (public page, one request, honest UA — system
  *  rule §6). Returns null on any failure: personalization then leans on reviews + audit alone. */
@@ -147,13 +155,14 @@ export async function generatePersonalizedCopy(leadId: string, ev: CopyEvidence)
       continue;
     }
 
-    // §3 voice + fabrication guards over every generated string (em dashes sanitized first).
+    // §3 voice + fabrication guards over every generated string (em dashes sanitized and
+    // overlength strings clamped first — both are mechanical fixes, not regenerations).
     parsed = {
       ...parsed,
-      primary_service: sanitize(parsed.primary_service),
-      hero_subline: sanitize(parsed.hero_subline),
-      services: parsed.services.map((s) => ({ name: sanitize(s.name), blurb: sanitize(s.blurb) })),
-      faq: parsed.faq.map((f) => ({ q: sanitize(f.q), a: sanitize(f.a) })),
+      primary_service: clamp(sanitize(parsed.primary_service), 40),
+      hero_subline: clamp(sanitize(parsed.hero_subline), 110),
+      services: parsed.services.map((s) => ({ name: clamp(sanitize(s.name), 48), blurb: clamp(sanitize(s.blurb), 140) })),
+      faq: parsed.faq.map((f) => ({ q: clamp(sanitize(f.q), 90), a: clamp(sanitize(f.a), 220) })),
     };
     const allText = [
       parsed.primary_service,
