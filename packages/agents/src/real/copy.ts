@@ -88,7 +88,14 @@ HARD RULES (breaking any makes the output unusable):
 
 Return ONLY JSON: {"primary_service": string, "hero_subline": string (<=110 chars), "services": [{"name","blurb"(<=140 chars)}] (3-6), "faq": [{"q","a"}] (2-4), "unknowns": [string]}`;
 
-export async function generatePersonalizedCopy(leadId: string, ev: CopyEvidence): Promise<GeneratedCopy | null> {
+/** Em/en dashes are a mechanical fix, not a regeneration: replace with ", " then re-check. */
+function sanitize(s: string): string {
+  return s.replace(/\s*[—–]\s*/g, ", ").replace(/\s+,/g, ",").trim();
+}
+
+export type CopyResult = { ok: true; copy: GeneratedCopy } | { ok: false; reason: string };
+
+export async function generatePersonalizedCopy(leadId: string, ev: CopyEvidence): Promise<CopyResult> {
   const evidenceBundle = [
     `Business: ${ev.companyName} (${ev.industry}) in ${ev.city}, ${ev.state}`,
     ev.phone ? `Phone: ${ev.phone}` : "Phone: unknown",
@@ -101,47 +108,72 @@ export async function generatePersonalizedCopy(leadId: string, ev: CopyEvidence)
     ev.siteText ? `Visible text of their current website (truncated):\n"""${ev.siteText}"""` : "Their current website text could not be read.",
     ev.pitchAngle ? `Sales angle we identified: ${ev.pitchAngle}` : "",
   ].filter(Boolean).join("\n\n");
+  const evidenceText = `${evidenceBundle} ${ev.rating ?? ""} ${ev.reviewCount ?? ""} ${ev.phone ?? ""} 24 7 24/7 1 2 3`;
 
-  let raw: string;
-  try {
-    raw = await llm({
-      tier: "sonnet",
-      agent: "builder",
-      leadId,
-      maxTokens: 1200,
-      system: SYSTEM,
-      prompt: `Evidence:\n\n${evidenceBundle}\n\nWrite the copy JSON now.`,
-      mockResponse: "{}",
-    });
-  } catch {
-    return null;
+  let feedback = "";
+  let lastReason = "unknown";
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    let raw: string;
+    try {
+      raw = await llm({
+        tier: "sonnet",
+        agent: "builder",
+        leadId,
+        maxTokens: 1600,
+        system: SYSTEM,
+        prompt: `Evidence:\n\n${evidenceBundle}\n\n${feedback}Write the copy JSON now.`,
+        mockResponse: "{}",
+      });
+    } catch (err) {
+      return { ok: false, reason: `llm error: ${(err as Error).message}` };
+    }
+
+    let parsed: z.infer<typeof Schema>;
+    try {
+      parsed = Schema.parse(JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1)));
+    } catch (err) {
+      lastReason = `parse/schema: ${(err as Error).message.slice(0, 200)}`;
+      feedback = `Your previous attempt was rejected (${lastReason}). Return ONLY the JSON object, matching the schema and length limits exactly.\n\n`;
+      continue;
+    }
+
+    // §3 voice + fabrication guards over every generated string (em dashes sanitized first).
+    parsed = {
+      ...parsed,
+      primary_service: sanitize(parsed.primary_service),
+      hero_subline: sanitize(parsed.hero_subline),
+      services: parsed.services.map((s) => ({ name: sanitize(s.name), blurb: sanitize(s.blurb) })),
+      faq: parsed.faq.map((f) => ({ q: sanitize(f.q), a: sanitize(f.a) })),
+    };
+    const allText = [
+      parsed.primary_service,
+      parsed.hero_subline,
+      ...parsed.services.flatMap((s) => [s.name, s.blurb]),
+      ...parsed.faq.flatMap((f) => [f.q, f.a]),
+    ].join("\n");
+    const voice = voiceLint(allText);
+    if (voice.length) {
+      lastReason = `voice: ${voice.join(", ")}`;
+      feedback = `Your previous attempt was rejected for voice violations: ${voice.join(", ")}. Remove them and rewrite in the plain voice.\n\n`;
+      continue;
+    }
+    const invented = inventedNumbers(allText, evidenceText);
+    if (invented.length) {
+      lastReason = `invented numbers: ${invented.join(", ")}`;
+      feedback = `Your previous attempt was rejected because these numbers are not in the evidence: ${invented.join(", ")}. Remove every number that the evidence does not contain.\n\n`;
+      continue;
+    }
+
+    return {
+      ok: true,
+      copy: {
+        primaryService: parsed.primary_service,
+        heroSubline: parsed.hero_subline,
+        services: parsed.services,
+        faq: parsed.faq,
+        needs: parsed.unknowns.map((u) => `[NEEDS: confirm] ${u}`),
+      },
+    };
   }
-
-  let parsed: z.infer<typeof Schema>;
-  try {
-    parsed = Schema.parse(JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1)));
-  } catch {
-    return null;
-  }
-
-  // §3 voice + fabrication guards over every generated string.
-  const allText = [
-    parsed.primary_service,
-    parsed.hero_subline,
-    ...parsed.services.flatMap((s) => [s.name, s.blurb]),
-    ...parsed.faq.flatMap((f) => [f.q, f.a]),
-  ].join("\n");
-  const voice = voiceLint(allText);
-  if (voice.length) return null;
-  const evidenceText = `${evidenceBundle} ${ev.rating ?? ""} ${ev.reviewCount ?? ""} ${ev.phone ?? ""} 24 7 24/7`;
-  const invented = inventedNumbers(allText, evidenceText);
-  if (invented.length) return null;
-
-  return {
-    primaryService: parsed.primary_service,
-    heroSubline: parsed.hero_subline,
-    services: parsed.services,
-    faq: parsed.faq,
-    needs: parsed.unknowns.map((u) => `[NEEDS: confirm] ${u}`),
-  };
+  return { ok: false, reason: lastReason };
 }

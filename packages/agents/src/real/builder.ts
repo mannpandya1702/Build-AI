@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import { advanceLead, emitEvent, getPool, notifyOperator } from "@autopilot/core";
 import { deployDir, loadAgencyFacts, loadCaps, fetchPhotoBytes, placeDetails, MOCK } from "@autopilot/adapters";
 import { presetForIndustry, PRESET_BY_ID, type Preset } from "@autopilot/blocks";
-import { generatePersonalizedCopy, fetchSiteText } from "./copy.js";
+import { generatePersonalizedCopy, fetchSiteText, type GeneratedCopy } from "./copy.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../..");
@@ -198,14 +198,14 @@ export async function builder(leadId: string): Promise<void> {
   // no more identical template text across demos). Evidence: their reviews, our audit of their
   // current site, that site's own visible text, the sales angle. Falls back to the safe trade
   // defaults on any failure — a build never blocks on copy.
-  let copy = null;
+  let copy: GeneratedCopy | null = null;
   if (!MOCK()) {
     const audit = (await pool.query(
       "select summary, findings from audits where lead_id=$1 order by created_at desc limit 1", [leadId])).rows[0];
     const solution = (await pool.query(
       "select pitch_angle from solutions where lead_id=$1 order by created_at desc limit 1", [leadId])).rows[0];
     const siteText = await fetchSiteText(lead.website_url ?? null);
-    copy = await generatePersonalizedCopy(leadId, {
+    const result = await generatePersonalizedCopy(leadId, {
       companyName: lead.company_name,
       city,
       state: lead.region ?? "",
@@ -222,12 +222,13 @@ export async function builder(leadId: string): Promise<void> {
       siteText,
       pitchAngle: solution?.pitch_angle ?? null,
     });
+    copy = result.ok ? result.copy : null;
     await emitEvent({
       agent: "builder", leadId, level: copy ? "info" : "warn",
       type: copy ? "copy.generated" : "copy.fallback",
       message: copy
         ? `personalized copy from evidence (site text: ${siteText ? "yes" : "no"}, reviews: ${Array.isArray(leadReviews) ? leadReviews.length : 0}, audit: ${audit ? "yes" : "no"})`
-        : "copy generation failed guards; using trade defaults",
+        : `copy generation failed guards (${result.ok ? "" : result.reason}); using trade defaults`,
     });
   }
   if (copy?.needs.length) needs.push(...copy.needs);
