@@ -8,7 +8,7 @@ import PgBoss from "pg-boss";
 import { emitEvent, getPool, type LeadStatus } from "@autopilot/core";
 import { AGENTS, AGENT_BY_TRIGGER, STUB_HANDLERS, research, realScrape, realQualify, realAnalyzer, realSolution, realUiux, realBuilder, realQa, realSales, approveAndSend, ingestReply, ingestBooking, monitorHourly, dailyDigest } from "@autopilot/agents";
 import { bridgeCycle } from "./bridge.js";
-import { demoBatchRemaining } from "./batch.js";
+import { readDemoBatch } from "./batch.js";
 import { usedToday, loadCaps } from "@autopilot/adapters";
 
 const MOCK = process.env.MOCK_MODE !== "false";
@@ -138,16 +138,51 @@ async function main(): Promise<void> {
         let orderBy = agent.name === "builder" ? "coalesce(score,0) desc, updated_at asc" : "updated_at asc";
         let limit = agent.name === "builder" && FRESH_BUILD.includes(status) ? Math.max(0, buildCap - buildingNow) : 10;
         // Demo batch (operator: "build the top N demos first"): admission is gated at the uiux
-        // trigger, best scores first (see batch.ts). The deterministic score-desc pick + singleton
-        // keys keep re-ticks from admitting extras while jobs are in flight; a higher-scored lead
-        // landing mid-flight can overshoot by at most the in-flight count, shown honestly as
-        // used > size. Final builds (closed_won) are a signed deal and are never batch-gated.
+        // trigger, best scores first. Accounting is ADMISSION-time (design.admitted emitted at
+        // enqueue; see batch.ts) — completion-only counting let newly qualified high scorers slip
+        // in while admitted leads were in flight (batch of 5 admitted 7, live 2026-07-11). Already-
+        // admitted leads still sitting at solution_ready are always re-enqueued (singleton dedupes)
+        // so a retry-exhausted job never strands a consumed slot. Final builds (closed_won) are a
+        // signed deal and are never batch-gated.
         if (agent.name === "uiux") {
-          const remaining = await demoBatchRemaining(pool);
-          if (remaining !== null) {
+          const batch = await readDemoBatch(pool);
+          if (batch) {
+            const enqueue = (leadId: string) =>
+              boss.send(
+                agent.queue,
+                { leadId },
+                { singletonKey: `${leadId}:${status}`, singletonSeconds: 300, retryLimit: 3, retryBackoff: true },
+              );
+            const admitted = await pool.query<{ id: string }>(
+              `select l.id from leads l
+               where l.status = $1::lead_status and exists (
+                 select 1 from agent_events e
+                 where e.lead_id = l.id and e.type = 'design.admitted' and e.created_at > $2)`,
+              [status, batch.startedAt],
+            );
+            for (const lead of admitted.rows) await enqueue(lead.id);
+            const remaining = batch.size - batch.used;
             if (remaining <= 0) continue;
-            orderBy = "coalesce(score,0) desc, updated_at asc";
-            limit = Math.min(10, remaining);
+            const picks = await pool.query<{ id: string }>(
+              `select l.id from leads l
+               where l.status = $1::lead_status and not exists (
+                 select 1 from agent_events e
+                 where e.lead_id = l.id and e.type = 'design.admitted' and e.created_at > $2)
+               order by coalesce(l.score,0) desc, l.updated_at asc limit ${Math.min(10, remaining)}`,
+              [status, batch.startedAt],
+            );
+            for (const lead of picks.rows) {
+              await emitEvent({
+                agent: "uiux",
+                leadId: lead.id,
+                type: "design.admitted",
+                level: "debug",
+                message: "admitted to demo batch (top scores first)",
+                payload: { batch_started_at: batch.startedAt, batch_size: batch.size },
+              });
+              await enqueue(lead.id);
+            }
+            continue; // batch path fully handled this status
           }
         }
         const r = await pool.query<{ id: string }>(

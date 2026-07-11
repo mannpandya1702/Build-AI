@@ -18,15 +18,16 @@ export async function GET() {
   const lastBeat = hb.rows[0]?.t ? new Date(hb.rows[0].t) : null;
   const online = Boolean(lastBeat && Date.now() - lastBeat.getTime() < 3 * 60 * 1000);
 
-  // Demo batch: size <= 0 or no row = no limit. "Used" = distinct leads that reached design.ready
-  // after the batch started (same accounting as the worker's admission gate in apps/worker).
+  // Demo batch: size <= 0 or no row = no limit. "Used" = distinct leads admitted to the batch
+  // (design.admitted at enqueue) or completed (design.ready) after the batch started — the same
+  // admission-time accounting as the worker's gate (apps/worker/src/batch.ts).
   const bv = batchRow.rows[0]?.value;
   const size = Number(bv?.size ?? 0);
   let demo_batch: { size: number; used: number; remaining: number; started_at: string | null } | null = null;
   if (bv && Number.isFinite(size) && size > 0) {
     const used = Number(
       (await db().query<{ n: string }>(
-        "select count(distinct lead_id)::text n from agent_events where type='design.ready' and created_at > $1",
+        "select count(distinct lead_id)::text n from agent_events where type in ('design.admitted','design.ready') and created_at > $1",
         [bv.started_at ?? "1970-01-01T00:00:00Z"],
       )).rows[0].n,
     );
