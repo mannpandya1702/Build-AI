@@ -15,8 +15,13 @@ interface LeadCard {
   region: string | null;
   status: string;
   score: number | null;
+  has_email: boolean;
   seconds_in_stage: number;
 }
+
+// Contact-channel filter (operator, 2026-07-11): leads WITH an email get the Touch-1 demo-drop
+// flow; leads WITHOUT are call-first. Segmenting them is how the operator plans the day.
+const CONTACT = ["All contacts", "Has email", "No email"] as const;
 
 const COLUMNS: readonly string[] = [
   "discovered", "enriched", "qualified", "analyzed", "solution_ready", "design_ready",
@@ -49,6 +54,7 @@ export default function PipelinePage() {
   const [devTools, setDevTools] = useState(false);
   const [q, setQ] = useState("");
   const [group, setGroup] = useState<keyof typeof GROUPS>("All");
+  const [contact, setContact] = useState<(typeof CONTACT)[number]>("All contacts");
 
   // Discover panel (targeting: niche + cities + country, spec §2.3 "expansion is a config change")
   const [showDiscover, setShowDiscover] = useState(false);
@@ -127,9 +133,10 @@ export default function PipelinePage() {
     return leads.filter(
       (l) =>
         GROUPS[group].includes(l.status) &&
+        (contact === "All contacts" || (contact === "Has email" ? l.has_email : !l.has_email)) &&
         (!needle || l.company_name.toLowerCase().includes(needle) || (l.city ?? "").toLowerCase().includes(needle)),
     );
-  }, [leads, q, group]);
+  }, [leads, q, group, contact]);
 
   const byStatus = new Map<string, LeadCard[]>();
   for (const l of filtered) {
@@ -213,6 +220,13 @@ export default function PipelinePage() {
             </FilterChip>
           ))}
         </div>
+        <div className="flex gap-1.5 overflow-x-auto border-l border-line pl-2">
+          {CONTACT.map((c) => (
+            <FilterChip key={c} active={contact === c} onClick={() => setContact(c)}>
+              {c === "Has email" ? "✉ Has email" : c === "No email" ? "☎ No email" : c}
+            </FilterChip>
+          ))}
+        </div>
       </div>
 
       {!leads && <Skeleton rows={4} />}
@@ -236,7 +250,16 @@ export default function PipelinePage() {
                     href={`/leads/${l.id}`}
                     className="block cursor-pointer rounded-lg border border-transparent bg-surface2/60 p-2.5 transition-colors duration-150 hover:border-line hover:bg-surface2"
                   >
-                    <p className="truncate text-[13px] font-medium leading-snug text-ink">{l.company_name}</p>
+                    <p className="flex items-start justify-between gap-1.5 text-[13px] font-medium leading-snug text-ink">
+                      <span className="truncate">{l.company_name}</span>
+                      <span
+                        className={`shrink-0 font-display text-[10px] ${l.has_email ? "text-data" : "text-faint"}`}
+                        title={l.has_email ? "Has email: demo-drop by email + call" : "No email: call-first lead"}
+                        aria-label={l.has_email ? "has email" : "no email, call first"}
+                      >
+                        {l.has_email ? "✉" : "☎"}
+                      </span>
+                    </p>
                     <p className="mt-0.5 truncate text-xs text-faint">
                       {l.industry ?? "?"} · {l.city ?? "?"}, {l.region ?? "?"}
                     </p>
