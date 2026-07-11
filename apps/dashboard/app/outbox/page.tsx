@@ -8,7 +8,7 @@ import { Card, SectionTitle, PageHeader, Empty, Skeleton } from "@/components/ui
 
 interface Email { id: string; direction: string; kind: string; subject: string | null; body_text: string | null; status: string; company_name: string; lead_id: string; contact_email: string | null }
 interface Call { lead_id: string; company_name: string; contact_phone: string | null; city: string | null }
-interface Outbox { awaiting: Email[]; sent: Email[]; replies: Email[]; callsDue: Call[] }
+interface Outbox { awaiting: Email[]; queued: Email[]; blocked: Email[]; sent: Email[]; replies: Email[]; callsDue: Call[]; blockReasons: Record<string, string> }
 
 const BANNED = ["i hope this email finds you well", "i wanted to reach out", "circle back", "touch base", "just following up", "synergy", "game-changer", "leverage", "cutting-edge", "elevate", "seamless", "unlock", "reach out"];
 function voiceIssues(text: string): string[] {
@@ -39,11 +39,14 @@ export default function OutboxPage() {
 
   const act = async (fn: () => Promise<void>) => { setBusy(true); await fn(); setBusy(false); };
 
-  const Row = ({ e }: { e: Email }) => (
-    <Card className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm transition-colors duration-150 hover:border-faint/40">
-      <Link href={`/leads/${e.lead_id}`} className="cursor-pointer font-medium text-ink hover:text-data">{e.company_name}</Link>
-      <span className="truncate text-muted">{e.subject ?? e.kind}</span>
-      <span className="ml-auto font-display text-[11px] text-faint">{e.status}</span>
+  const Row = ({ e, note, tone }: { e: Email; note?: string; tone?: "warn" | "danger" }) => (
+    <Card className="px-3 py-2 text-sm transition-colors duration-150 hover:border-faint/40">
+      <div className="flex flex-wrap items-center gap-2">
+        <Link href={`/leads/${e.lead_id}`} className="cursor-pointer font-medium text-ink hover:text-data">{e.company_name}</Link>
+        <span className="truncate text-muted">{e.subject ?? e.kind}</span>
+        <span className="ml-auto font-display text-[11px] text-faint">{e.status}</span>
+      </div>
+      {note && <p className={`mt-1 text-xs ${tone === "danger" ? "text-danger" : "text-warn"}`}>{note}</p>}
     </Card>
   );
 
@@ -88,6 +91,21 @@ export default function OutboxPage() {
             })}
           </div>
         </section>
+
+        {o.queued.length > 0 && (
+          <section>
+            <SectionTitle>Approved, waiting to send ({o.queued.length})</SectionTitle>
+            <p className="mt-1 text-xs text-faint">These send the next time the worker is Running. If it stays paused or offline, they wait here.</p>
+            <div className="mt-2 space-y-1.5">{o.queued.map((e) => <Row key={e.id} e={e} note={e.contact_email ? undefined : "lead has no contact email: this will fail the gate"} tone="warn" />)}</div>
+          </section>
+        )}
+
+        {o.blocked.length > 0 && (
+          <section>
+            <SectionTitle>Blocked / rejected ({o.blocked.length})</SectionTitle>
+            <div className="mt-2 space-y-1.5">{o.blocked.map((e) => <Row key={e.id} e={e} note={o.blockReasons[e.lead_id] ?? "gate refused or draft rejected"} tone="danger" />)}</div>
+          </section>
+        )}
 
         <section>
           <SectionTitle>Calls due today ({o.callsDue.length})</SectionTitle>

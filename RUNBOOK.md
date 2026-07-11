@@ -123,6 +123,7 @@ ALL keys shared in chat during the build are considered exposed: rotate them bef
 | `pagespeed 500: Lighthouse returned error` | Google-side transient | adapter retries x2; persistent failures become an audit finding, not a crash |
 | Demo behind a Vercel login wall | SSO protection re-enabled | deploy adapter PATCHes it off; check project settings if it recurs |
 | Email stuck `awaiting_approval` | review mode, operator has not acted | approve/reject in /outbox |
+| Approved an email, nothing sent | worker paused/offline (approvals execute only while Running), or the gate refused (no contact email, suppression, caps) | /outbox shows it under "Approved, waiting to send" or "Blocked" with the reason; fix the cause, or re-draft after adding a contact email |
 | `outreach.blocked` event | no demo URL or unconfirmed agency facts | deploy the demo / fill config/agency-facts.yaml |
 | Digest "no worker heartbeat" | worker down | §3 above |
 
@@ -131,5 +132,8 @@ ALL keys shared in chat during the build are considered exposed: rotate them bef
 - `data/screenshots/`, `data/builds/`, `/tmp/outbox/` are regenerable artifacts, gitignored.
 - Real prospect data lives only in Postgres. Test rows use the `ZZ ...` name prefix and `.example`
   emails and are cleaned up by their tests; if you find strays: `delete from leads where company_name like 'ZZ %'`.
+- The bridge up-sync has NO delete tombstone: deleting a row locally leaves its hosted copy alive
+  (2026-07-10: two locally-reverted drafts stayed in the hosted Outbox and got approved into a dead
+  end). Any manual local delete of a bridged table must delete the hosted row in the same session.
 - Suppression list and sent-email rows are the legal record. Never bulk-delete `emails`,
   `suppression_list`, or `agent_events`.

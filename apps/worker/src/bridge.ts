@@ -154,6 +154,36 @@ export async function bridgeCycle(): Promise<void> {
       `update emails set status = $2::email_status where idempotency_key = $1 and status = 'awaiting_approval'`,
       [d.idempotency_key, d.status],
     );
+    // Orphan guard (2026-07-10 incident): a hosted decision whose email has NO local row at all
+    // no-ops silently forever — the operator approved a send that can never happen (the up-sync
+    // never deletes, so a locally-deleted draft lives on in the hosted Outbox). Surface it once
+    // per idempotency_key instead of swallowing it.
+    if (d.status === "approved") {
+      const exists = await local.query("select 1 from emails where idempotency_key = $1", [d.idempotency_key]);
+      if (!exists.rowCount) {
+        const seen = await local.query(
+          "select 1 from agent_events where type='bridge.orphan_email' and payload->>'idempotency_key' = $1",
+          [d.idempotency_key],
+        );
+        if (!seen.rowCount) {
+          await local.query(
+            `insert into agent_events (agent, type, level, message, payload)
+             values ('bridge','bridge.orphan_email','warn',$1,$2)`,
+            [
+              `hosted Outbox approved an email the worker has no record of (${d.idempotency_key}); it cannot send`,
+              JSON.stringify({ idempotency_key: d.idempotency_key }),
+            ],
+          );
+          await local.query(
+            `insert into notifications (type, title, body) values ('bridge_orphan',$1,$2)`,
+            [
+              "Approved email has no worker-side record",
+              `Idempotency key ${d.idempotency_key}. The approval cannot execute; check the lead and re-draft if outreach is still wanted.`,
+            ],
+          );
+        }
+      }
+    }
   }
 
   // UP: worker outputs -> hosted, so the deployed dashboard stays current.

@@ -46,6 +46,10 @@ async function demoUrl(leadId: string): Promise<string | null> {
 /** Build the Touch-1 demo-drop email. Deterministic shape (guaranteed §3-clean), real observation,
  *  real demo link, CAN-SPAM footer. Under ~90 words, one link, a single binary close. */
 async function buildTouch1(lead: Lead): Promise<{ subject: string; body: string } | { blocked: string }> {
+  // No recipient = nothing to send. Check BEFORE drafting: a draft with no destination reaches the
+  // Outbox, gets approved, and only then fails the gate — the operator approves into a dead end
+  // (exactly what happened with the two 2026-07-10 orphans; see PROGRESS.md).
+  if (!lead.contact_email) return { blocked: "no contact email on file" };
   const footer = canSpamFooter();
   if (!footer) return { blocked: "agency name/address unconfirmed (CAN-SPAM footer)" };
   const link = await demoUrl(lead.id);
@@ -79,8 +83,17 @@ export async function sales(leadId: string): Promise<void> {
   if (lead.status === "outreach_ready") {
     const built = await buildTouch1(lead);
     if ("blocked" in built) {
-      await emitEvent({ agent: "sales", leadId, level: "warn", type: "outreach.blocked", message: built.blocked });
-      await notifyOperator({ type: "outreach_blocked", title: `${lead.company_name}: outreach blocked (${built.blocked})`, leadId });
+      // Once per 12h per lead (cap_hit precedent): outreach_ready re-triggers every few minutes,
+      // and a non-transient block (e.g. no contact email) would otherwise bury the bell and the
+      // activity feed under identical warnings.
+      const already = await pool.query<{ n: string }>(
+        "select count(*)::text n from notifications where type='outreach_blocked' and lead_id=$1 and created_at > now() - interval '12 hours'",
+        [leadId],
+      );
+      if (already.rows[0].n === "0") {
+        await emitEvent({ agent: "sales", leadId, level: "warn", type: "outreach.blocked", message: built.blocked });
+        await notifyOperator({ type: "outreach_blocked", title: `${lead.company_name}: outreach blocked (${built.blocked})`, leadId });
+      }
       return; // hold at outreach_ready
     }
     const problems = voiceLint(`${built.subject}\n${built.body}`);

@@ -284,6 +284,26 @@ the builder's concurrent-build cap (2) is unchanged. Verified: 6/6 accounting te
 UI screenshot reviewed. Worker restarted on the new code (boots paused). Hosted dashboard needs
 one redeploy to SHOW the control (deploy not run this session: operator did not request it).
 
+## INCIDENT 2026-07-10/11 (orphaned Outbox approvals) + structural fixes
+
+Fallout from the 07-10 pause leak: the two prematurely-drafted Touch-1 emails (James Kate
+Roofing, Imperial Roofing) were reverted LOCALLY, but the bridge had already up-synced them and
+the up-sync has no delete tombstone — so they stayed visible in the hosted Outbox. The operator
+approved both there on 07-10 ~18:20. The approvals could never execute: (1) no local email rows
+(the decisions-pull no-ops), (2) worker paused, and (3) both leads have NO contact email, so the
+gate would have refused anyway. After approval they also vanished from the Outbox page, which
+only listed awaiting/sent. Repair + structural fixes (all shipped 07-11):
+- rows restored in BOTH DBs as status='failed' with `email.gated` events + bell notifications
+  stating the real reason (no contact email on file);
+- sales agent now blocks drafting when the lead has no contact email (no more approve-into-a-dead-
+  end), with blocked-notification dedupe per lead per 12h (cap_hit pattern);
+- Outbox page grew "Approved, waiting to send" and "Blocked / rejected" sections with reasons —
+  an email row can no longer silently disappear from the page;
+- bridge decisions-pull surfaces orphaned approvals (hosted approval, no local row) as a warn
+  event + notification once per idempotency_key;
+- RUNBOOK: failure-table row for "approved but nothing sent" + data-hygiene rule: never delete a
+  bridged row locally without deleting the hosted copy in the same session.
+
 ## INCIDENT 2026-07-04 (mock worker vs real data, round 2) + structural fix
 
 While verifying the advisory lock I started a MOCK worker against the live database. The lock
