@@ -7,7 +7,10 @@
 // (never Inter/Roboto/system), accent derived from the trade. Palette values are RGB channel triplets
 // ("r g b") so Tailwind alpha modifiers work on CSS variables.
 
-export type HeroVariant = "photo" | "split" | "bold";
+// "frame" (framed photo canvas under the copy) and "paper" (light editorial: ink on warm paper,
+// angled photo) were added 2026-07-11, structures adapted from 21st.dev patterns and restyled to
+// this contract — see legacy/templates/roofers/components/Hero.tsx.
+export type HeroVariant = "photo" | "split" | "bold" | "frame" | "paper";
 
 export interface Palette {
   brand: string;
@@ -43,6 +46,12 @@ const ROOFING: Look[] = [
   { name: "copper-standing-seam", preset: "roofing", palette: { brand: "180 83 9", brandInk: "253 247 238", ink: "26 22 17", paper: "251 246 238", paper2: "245 237 224" }, typePairing: { display: "Bebas Neue", body: "Source Sans 3" }, heroVariant: "photo" },
   { name: "clay-adobe", preset: "roofing", palette: { brand: "168 88 50", brandInk: "255 249 242", ink: "30 22 18", paper: "250 244 235", paper2: "244 234 221" }, typePairing: { display: "Outfit", body: "Rubik" }, heroVariant: "photo" },
   { name: "slate-architect", preset: "roofing", palette: { brand: "38 80 110", brandInk: "244 248 251", ink: "20 26 32", paper: "245 247 249", paper2: "232 237 241" }, typePairing: { display: "Sora", body: "Manrope" }, heroVariant: "bold" },
+  // 2026-07-11: "frame"/"paper" structural variants (21st-sourced, contract-restyled). These four
+  // widen the template's structural range — "paper" opens LIGHT, which no earlier look could.
+  { name: "cedar-paper", preset: "roofing", palette: { brand: "166 61 21", brandInk: "255 250 244", ink: "28 22 18", paper: "250 246 240", paper2: "243 235 225" }, typePairing: { display: "Bricolage Grotesque", body: "Manrope" }, heroVariant: "paper" },
+  { name: "limestone-editorial", preset: "roofing", palette: { brand: "154 52 18", brandInk: "255 249 243", ink: "24 24 27", paper: "251 250 247", paper2: "241 239 233" }, typePairing: { display: "Sora", body: "Hanken Grotesk" }, heroVariant: "paper" },
+  { name: "timber-frame", preset: "roofing", palette: { brand: "146 64 14", brandInk: "255 250 242", ink: "22 18 14", paper: "250 247 241", paper2: "242 237 228" }, typePairing: { display: "Anton", body: "Rubik" }, heroVariant: "frame" },
+  { name: "granite-frame", preset: "roofing", palette: { brand: "185 28 28", brandInk: "255 248 248", ink: "17 24 39", paper: "247 248 250", paper2: "235 238 242" }, typePairing: { display: "Bebas Neue", body: "Manrope" }, heroVariant: "frame" },
 ];
 
 // Plumbing: deep trust blues + one warm emergency accent (water on the floor at 11pm).
@@ -56,6 +65,9 @@ const PLUMBING: Look[] = [
   { name: "signal-azure", preset: "plumbing", palette: { brand: "4 92 150", brandInk: "240 247 252", ink: "12 22 38", paper: "244 247 250", paper2: "231 237 243" }, typePairing: { display: "Outfit", body: "Work Sans" }, heroVariant: "photo" },
   { name: "tidewater-teal", preset: "plumbing", palette: { brand: "13 110 108", brandInk: "240 250 248", ink: "10 30 32", paper: "243 247 245", paper2: "230 239 236" }, typePairing: { display: "Sora", body: "Manrope" }, heroVariant: "bold" },
   { name: "amber-forge", preset: "plumbing", palette: { brand: "188 90 16", brandInk: "255 249 240", ink: "18 26 42", paper: "246 242 236", paper2: "236 230 222" }, typePairing: { display: "Archivo", body: "Manrope" }, heroVariant: "split" },
+  // 2026-07-11: frame/paper structural variants (21st-sourced, contract-restyled).
+  { name: "porcelain-paper", preset: "plumbing", palette: { brand: "30 64 175", brandInk: "248 250 255", ink: "20 26 40", paper: "250 249 245", paper2: "239 238 231" }, typePairing: { display: "Sora", body: "Source Sans 3" }, heroVariant: "paper" },
+  { name: "cast-iron-frame", preset: "plumbing", palette: { brand: "9 88 160", brandInk: "245 250 254", ink: "12 18 30", paper: "246 247 244", paper2: "234 236 230" }, typePairing: { display: "Chivo", body: "Work Sans" }, heroVariant: "frame" },
 ];
 
 // HVAC: cool blue for comfort + a warm accent for the emergency (no heat in January).
@@ -65,6 +77,8 @@ const HVAC: Look[] = [
   // Skill-grounded + anti-slop-verified (CLAUDE.md §9).
   { name: "arctic-current", preset: "hvac", palette: { brand: "6 118 175", brandInk: "255 255 255", ink: "13 23 33", paper: "244 249 252", paper2: "229 240 247" }, typePairing: { display: "Sora", body: "Work Sans" }, heroVariant: "split" },
   { name: "furnace-copper", preset: "hvac", palette: { brand: "185 72 20", brandInk: "255 250 244", ink: "24 20 16", paper: "250 245 240", paper2: "242 234 226" }, typePairing: { display: "Space Grotesk", body: "DM Sans" }, heroVariant: "bold" },
+  // 2026-07-11: paper structural variant (21st-sourced, contract-restyled).
+  { name: "thermostat-paper", preset: "hvac", palette: { brand: "198 60 16", brandInk: "255 249 243", ink: "18 24 33", paper: "248 250 251", paper2: "235 241 245" }, typePairing: { display: "Outfit", body: "Manrope" }, heroVariant: "paper" },
 ];
 
 // Dental / med spa: editorial serif, calm and premium, booking-first (they book quietly online).
@@ -74,6 +88,9 @@ const DENTAL: Look[] = [
   // Skill-grounded + anti-slop-verified (CLAUDE.md §9).
   { name: "sage-editorial", preset: "dental", palette: { brand: "17 94 89", brandInk: "255 255 255", ink: "22 28 30", paper: "250 250 247", paper2: "237 240 237" }, typePairing: { display: "Fraunces", body: "Public Sans" }, heroVariant: "split" },
   { name: "rose-editorial", preset: "dental", palette: { brand: "159 55 74", brandInk: "255 251 250", ink: "26 22 24", paper: "251 249 248", paper2: "242 236 236" }, typePairing: { display: "Playfair Display", body: "Work Sans" }, heroVariant: "photo" },
+  // 2026-07-11: paper structural variant (21st-sourced, contract-restyled) — the light editorial
+  // opening is the natural fit for this vertical (quiet, considered, booking-first).
+  { name: "linen-editorial", preset: "dental", palette: { brand: "30 84 108", brandInk: "247 251 253", ink: "24 28 32", paper: "251 250 246", paper2: "241 240 233" }, typePairing: { display: "Fraunces", body: "Newsreader" }, heroVariant: "paper" },
 ];
 
 export const LOOKS: readonly Look[] = [...ROOFING, ...PLUMBING, ...HVAC, ...DENTAL];

@@ -23,7 +23,7 @@ export interface DemoTheme {
   // to fontPair when absent (older content.json).
   displayFont?: string;
   bodyFont?: string;
-  heroVariant: "photo" | "split" | "bold";
+  heroVariant: "photo" | "split" | "bold" | "frame" | "paper";
 }
 
 export interface DemoContent {

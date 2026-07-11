@@ -284,6 +284,23 @@ the builder's concurrent-build cap (2) is unchanged. Verified: 6/6 accounting te
 UI screenshot reviewed. Worker restarted on the new code (boots paused). Hosted dashboard needs
 one redeploy to SHOW the control (deploy not run this session: operator did not request it).
 
+## Design uniqueness mandate (2026-07-11, operator directive)
+
+Operator: every demo + final site must use ui-ux-pro-max + 21st, look premium, and never repeat a
+template look. Encoded in CLAUDE.md §5d (uniqueness + premium mandate) and shipped concretely:
+- Two NEW hero structures in the roofing template, sourced from 21st.dev patterns via the MCP
+  (interactive session) and restyled through §5b-bis: **frame** (dark, copy over atmosphere, photo
+  as a wide framed canvas) and **paper** (LIGHT editorial: ink on warm paper, brand rule, angled
+  photo right; tone-aware TopBar/CTAs/StatsStrip). First light-opening look in the system.
+- 8 new skill-grounded looks using them (roofing 14, plumbing 10, hvac 5, dental 5 = 34 total);
+  all 8 WCAG-verified (CTA 4.9-8.4, body 16+); existing 26 looks untouched (assignments are
+  locked per contract). Seeded to local DB, bridge syncs to hosted.
+- QA: both variants rendered locally + screenshot-reviewed, desktop + mobile (conversion skeleton
+  intact: tap-call top bar, location H1, dual CTAs, stats strip, sticky call bar).
+- Honest mechanic documented: 21st MCP tools exist only in interactive sessions (headless worker
+  cannot call MCP), so 21st feeds the registry/template variants at build time, per-lead runtime
+  grounding stays with the local skill. Registry expansion comes BEFORE any look reuse.
+
 ## INCIDENT 2026-07-10/11 (orphaned Outbox approvals) + structural fixes
 
 Fallout from the 07-10 pause leak: the two prematurely-drafted Touch-1 emails (James Kate

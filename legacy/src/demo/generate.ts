@@ -45,7 +45,7 @@ export interface DemoTheme {
   // RGB channel triplets ("r g b") so Tailwind alpha modifiers work (see globals.css).
   palette: { brand: string; brandInk: string; ink: string; paper: string; paper2: string };
   fontPair: "bricolage" | "archivo" | "grotesk";
-  heroVariant: "photo" | "split" | "bold";
+  heroVariant: "photo" | "split" | "bold" | "frame" | "paper";
 }
 
 // Four curated looks (CLAUDE.md §5d: per-lead differentiation, same bones different skin).

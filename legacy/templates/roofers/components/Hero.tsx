@@ -3,9 +3,13 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { site, telHref } from "../lib/content";
 
-// The one hero moment (CLAUDE.md §5c) in three structural variants (CLAUDE.md §5d: per-lead
-// differentiation). All variants share the same conversion skeleton: top bar, location headline,
-// dual-persona CTAs, glass stats strip at the base. Reduced motion respected throughout.
+// The one hero moment (CLAUDE.md §5c) in five structural variants (CLAUDE.md §5d: per-lead
+// differentiation). "photo"/"split"/"bold" are dark atmosphere heroes; "frame" presents the photo
+// as a wide framed canvas under the copy (structure adapted from a 21st.dev pattern, restyled to
+// contract); "paper" is a LIGHT editorial hero: ink type on warm paper, angled photo right — it
+// doubles the perceived range of the template so two prospects never read the same opening. All
+// variants share the same conversion skeleton: top bar, location headline, dual-persona CTAs,
+// stats strip at the base. Reduced motion respected throughout.
 
 function useStagger() {
   const reduce = useReducedMotion();
@@ -19,16 +23,19 @@ function useStagger() {
         };
 }
 
-function TopBar() {
+type Tone = "dark" | "light";
+
+function TopBar({ tone = "dark" }: { tone?: Tone }) {
   const href = telHref(site.phone);
+  const light = tone === "light";
   return (
-    <div className="relative z-10 border-b border-white/10 bg-white/5 backdrop-blur-md">
+    <div className={`relative z-10 border-b backdrop-blur-md ${light ? "border-ink/10 bg-paper2/60" : "border-white/10 bg-white/5"}`}>
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-2.5 text-sm">
-        <span className="font-semibold tracking-wide text-white/80">
+        <span className={`font-semibold tracking-wide ${light ? "text-ink/70" : "text-white/80"}`}>
           Serving {site.city}, {site.state}
         </span>
         {href && (
-          <a href={href} className="font-bold text-white underline-offset-4 hover:underline">
+          <a href={href} className={`font-bold underline-offset-4 hover:underline ${light ? "text-ink" : "text-white"}`}>
             {site.phone}
           </a>
         )}
@@ -37,8 +44,9 @@ function TopBar() {
   );
 }
 
-function Ctas({ center = false }: { center?: boolean }) {
+function Ctas({ center = false, tone = "dark" }: { center?: boolean; tone?: Tone }) {
   const href = telHref(site.phone);
+  const light = tone === "light";
   return (
     <div className={`flex flex-col gap-3 sm:flex-row ${center ? "sm:justify-center" : ""}`}>
       {href ? (
@@ -58,7 +66,9 @@ function Ctas({ center = false }: { center?: boolean }) {
       )}
       <a
         href="#quote"
-        className="flex min-h-tap items-center justify-center rounded-full border-2 border-white/40 px-8 py-3.5 font-display text-lg font-semibold text-white transition-colors hover:border-white active:scale-95"
+        className={`flex min-h-tap items-center justify-center rounded-full border-2 px-8 py-3.5 font-display text-lg font-semibold transition-colors active:scale-95 ${
+          light ? "border-ink/30 text-ink hover:border-ink" : "border-white/40 text-white hover:border-white"
+        }`}
       >
         Book a free inspection
       </a>
@@ -66,29 +76,35 @@ function Ctas({ center = false }: { center?: boolean }) {
   );
 }
 
-function StatsStrip({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
+function StatsStrip({ stagger, tone = "dark" }: { stagger: ReturnType<typeof useStagger>; tone?: Tone }) {
   if (site.rating == null && site.reviewCount == null) return null;
+  const light = tone === "light";
+  const num = light ? "text-ink" : "text-white";
+  const label = light ? "text-ink/50" : "text-white/50";
   return (
-    <motion.div {...stagger(4)} className="relative z-10 border-t border-white/10 bg-ink/60 backdrop-blur-md">
-      <div className="mx-auto grid max-w-6xl grid-cols-3 divide-x divide-white/10 px-2 py-5 md:py-6">
+    <motion.div
+      {...stagger(4)}
+      className={`relative z-10 border-t backdrop-blur-md ${light ? "border-ink/10 bg-paper2/80" : "border-white/10 bg-ink/60"}`}
+    >
+      <div className={`mx-auto grid max-w-6xl grid-cols-3 divide-x px-2 py-5 md:py-6 ${light ? "divide-ink/10" : "divide-white/10"}`}>
         {site.rating != null && (
           <div className="px-3 text-center">
-            <p className="font-display text-2xl font-extrabold text-white md:text-4xl">
-              <span aria-hidden className="mr-1 text-lg text-amber-400 md:text-2xl">★</span>
+            <p className={`font-display text-2xl font-extrabold md:text-4xl ${num}`}>
+              <span aria-hidden className={`mr-1 text-lg md:text-2xl ${light ? "text-amber-500" : "text-amber-400"}`}>★</span>
               {site.rating.toFixed(1)}
             </p>
-            <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-white/50 md:text-sm">Google rating</p>
+            <p className={`mt-1 text-xs font-semibold uppercase tracking-wide md:text-sm ${label}`}>Google rating</p>
           </div>
         )}
         {site.reviewCount != null && (
           <div className="px-3 text-center">
-            <p className="font-display text-2xl font-extrabold text-white md:text-4xl">{site.reviewCount}</p>
-            <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-white/50 md:text-sm">Google reviews</p>
+            <p className={`font-display text-2xl font-extrabold md:text-4xl ${num}`}>{site.reviewCount}</p>
+            <p className={`mt-1 text-xs font-semibold uppercase tracking-wide md:text-sm ${label}`}>Google reviews</p>
           </div>
         )}
         <div className="px-3 text-center">
-          <p className="font-display text-2xl font-extrabold text-white md:text-4xl">{site.city}</p>
-          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-white/50 md:text-sm">Local &amp; nearby</p>
+          <p className={`font-display text-2xl font-extrabold md:text-4xl ${num}`}>{site.city}</p>
+          <p className={`mt-1 text-xs font-semibold uppercase tracking-wide md:text-sm ${label}`}>Local &amp; nearby</p>
         </div>
       </div>
     </motion.div>
@@ -204,14 +220,107 @@ function HeroBold({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
   );
 }
 
+/** Variant D "frame": copy on dark atmosphere, then the photo as a wide framed canvas panel.
+ *  Structure adapted from a 21st.dev hero pattern (app-frame-below-copy), restyled to contract:
+ *  real work photo instead of a product screenshot, brand glow, conversion skeleton untouched. */
+function HeroFrame({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
+  return (
+    <>
+      <div aria-hidden className="absolute inset-0">
+        <GradientBackdrop />
+      </div>
+      <div className="relative z-10 mx-auto max-w-6xl px-5 pb-10 pt-12 md:pb-14 md:pt-20">
+        <motion.p {...stagger(0)} className="font-display text-sm font-medium uppercase tracking-[0.2em] text-white/70">
+          {site.businessName}
+        </motion.p>
+        <motion.h1 {...stagger(1)} className="mt-4 max-w-3xl font-display text-5xl font-extrabold leading-[0.98] tracking-tight md:text-7xl">
+          {site.primaryService} in {site.city}, {site.state}
+        </motion.h1>
+        <motion.p {...stagger(2)} className="mt-5 max-w-xl text-lg text-white/85 md:text-xl">
+          {SUBLINE}
+          {site.reviewCount ? ` ${site.reviewCount} Google reviews and counting.` : ""}
+        </motion.p>
+        <motion.div {...stagger(3)} className="mt-9">
+          <Ctas />
+        </motion.div>
+        {site.heroPhoto && (
+          <motion.div {...stagger(4)} className="mt-12 overflow-hidden rounded-3xl ring-1 ring-white/20 shadow-2xl">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={site.heroPhoto}
+              alt={`Work by ${site.businessName}`}
+              className="aspect-[16/9] w-full object-cover md:aspect-[21/9]"
+              fetchPriority="high"
+            />
+          </motion.div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/** Variant E "paper": LIGHT editorial hero — ink type on warm paper, angled photo right.
+ *  Structure adapted from a 21st.dev editorial split pattern, restyled to contract (warm paper,
+ *  brand rule under the headline, accent reserved for the call CTA). */
+function HeroPaper({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
+  return (
+    <>
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{ background: "radial-gradient(80% 60% at 0% 0%, rgb(var(--brand) / 0.08) 0%, transparent 55%)" }}
+      />
+      <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 pb-14 pt-12 md:grid-cols-[1.15fr_1fr] md:pb-20 md:pt-16">
+        <div>
+          <motion.p {...stagger(0)} className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-ink/60">
+            {site.businessName}
+          </motion.p>
+          <motion.h1 {...stagger(1)} className="mt-4 font-display text-5xl font-extrabold leading-[0.98] tracking-tight text-ink md:text-7xl">
+            {site.primaryService} in {site.city}, {site.state}
+          </motion.h1>
+          <motion.div {...stagger(1)} aria-hidden className="mt-6 h-1 w-16 rounded-full bg-brand" />
+          <motion.p {...stagger(2)} className="mt-6 max-w-xl text-lg text-ink/70 md:text-xl">
+            {SUBLINE}
+            {site.reviewCount ? ` ${site.reviewCount} Google reviews and counting.` : ""}
+          </motion.p>
+          <motion.div {...stagger(3)} className="mt-9">
+            <Ctas tone="light" />
+          </motion.div>
+        </div>
+        {site.heroPhoto && (
+          <motion.div
+            {...stagger(2)}
+            className="hidden overflow-hidden md:block"
+            style={{ clipPath: "polygon(14% 0, 100% 0, 100% 100%, 0 100%)" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={site.heroPhoto} alt={`Work by ${site.businessName}`} className="aspect-[4/5] w-full object-cover" fetchPriority="high" />
+          </motion.div>
+        )}
+      </div>
+    </>
+  );
+}
+
 export default function Hero() {
   const stagger = useStagger();
   const variant = site.theme.heroVariant;
+  const tone: Tone = variant === "paper" ? "light" : "dark";
   return (
-    <header className="relative overflow-hidden bg-ink text-white">
-      <TopBar />
-      {variant === "split" ? <HeroSplit stagger={stagger} /> : variant === "bold" ? <HeroBold stagger={stagger} /> : <HeroPhoto stagger={stagger} />}
-      <StatsStrip stagger={stagger} />
+    <header className={`relative overflow-hidden ${tone === "light" ? "bg-paper text-ink" : "bg-ink text-white"}`}>
+      <TopBar tone={tone} />
+      {variant === "split" ? (
+        <HeroSplit stagger={stagger} />
+      ) : variant === "bold" ? (
+        <HeroBold stagger={stagger} />
+      ) : variant === "frame" ? (
+        <HeroFrame stagger={stagger} />
+      ) : variant === "paper" ? (
+        <HeroPaper stagger={stagger} />
+      ) : (
+        <HeroPhoto stagger={stagger} />
+      )}
+      <StatsStrip stagger={stagger} tone={tone} />
     </header>
   );
 }
