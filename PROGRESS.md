@@ -269,6 +269,21 @@ anomalies: 31 leads stalled behind the spent Places cap and the worker being off
   per phase); duplicate-approve never double-sends (Phase 5 test); duplicate analyzer/solution/
   builder jobs no-op via idempotency guards + the atomic build claim.
 
+## Demo batch limit (2026-07-11)
+
+Operator control: "build the top N demos first." Sidebar Worker card gains a demo-limit input;
+`settings.demo_batch = {size, started_at}` rides the existing two-way settings bridge (clearing
+writes size 0, never a row delete — the bridge merge has no delete tombstone). The worker gates
+admission at the **uiux trigger** (solution_ready): design_ready flows into the builder
+automatically, so admission there IS committing to a demo. When a batch is active the pick becomes
+score-desc (top leads first) with `limit = min(10, remaining)`; `used` = distinct leads with a
+`design.ready` event after `started_at` (immutable accounting: QA re-entries and rebuilds never
+double-count; a new batch restarts the count). Final builds (closed_won) are never batch-gated;
+the builder's concurrent-build cap (2) is unchanged. Verified: 6/6 accounting tests
+(`apps/worker/src/test-batch.ts`, ZZ rows, self-cleaning), API set/reject/clear exercised live,
+UI screenshot reviewed. Worker restarted on the new code (boots paused). Hosted dashboard needs
+one redeploy to SHOW the control (deploy not run this session: operator did not request it).
+
 ## INCIDENT 2026-07-04 (mock worker vs real data, round 2) + structural fix
 
 While verifying the advisory lock I started a MOCK worker against the live database. The lock

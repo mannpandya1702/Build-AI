@@ -74,6 +74,10 @@ flips the sidebar Worker toggle to Running (dashboard, local or hosted; hosted t
 worker via the bridge within ~1 minute). Pause = stop new work + drop queued jobs safely (the
 scheduler re-derives all work from lead status on resume). The dashboard cannot START a dead
 process — if the switch shows Offline, run the commands above on the host.
+The Worker card also holds the DEMO LIMIT ("build the top N demos first"): with a limit set, only
+the N best-scored leads get admitted into design+build, then admission stops until the operator
+sets a new number (setting one restarts the count from that moment; clear = no limit). Final
+builds for signed deals are never gated by it.
 Recovery is designed to be boring: jobs are idempotent keyed on (lead, step), sends carry
 idempotency keys (retried sends never double-send), builds use an atomic claim row, and stale
 claims (>30 min in 'building') are auto-failed on the next builder pass so a mid-build crash never

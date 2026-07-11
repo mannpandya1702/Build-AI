@@ -8,6 +8,7 @@ import PgBoss from "pg-boss";
 import { emitEvent, getPool, type LeadStatus } from "@autopilot/core";
 import { AGENTS, AGENT_BY_TRIGGER, STUB_HANDLERS, research, realScrape, realQualify, realAnalyzer, realSolution, realUiux, realBuilder, realQa, realSales, approveAndSend, ingestReply, ingestBooking, monitorHourly, dailyDigest } from "@autopilot/agents";
 import { bridgeCycle } from "./bridge.js";
+import { demoBatchRemaining } from "./batch.js";
 import { usedToday, loadCaps } from "@autopilot/adapters";
 
 const MOCK = process.env.MOCK_MODE !== "false";
@@ -134,8 +135,21 @@ async function main(): Promise<void> {
       if (agent.name === "builder" && FRESH_BUILD.includes(status) && buildingNow >= buildCap) continue;
       try {
         // builder picks the best leads first (spec §9: score desc); everything else is oldest-first.
-        const orderBy = agent.name === "builder" ? "coalesce(score,0) desc, updated_at asc" : "updated_at asc";
-        const limit = agent.name === "builder" && FRESH_BUILD.includes(status) ? Math.max(0, buildCap - buildingNow) : 10;
+        let orderBy = agent.name === "builder" ? "coalesce(score,0) desc, updated_at asc" : "updated_at asc";
+        let limit = agent.name === "builder" && FRESH_BUILD.includes(status) ? Math.max(0, buildCap - buildingNow) : 10;
+        // Demo batch (operator: "build the top N demos first"): admission is gated at the uiux
+        // trigger, best scores first (see batch.ts). The deterministic score-desc pick + singleton
+        // keys keep re-ticks from admitting extras while jobs are in flight; a higher-scored lead
+        // landing mid-flight can overshoot by at most the in-flight count, shown honestly as
+        // used > size. Final builds (closed_won) are a signed deal and are never batch-gated.
+        if (agent.name === "uiux") {
+          const remaining = await demoBatchRemaining(pool);
+          if (remaining !== null) {
+            if (remaining <= 0) continue;
+            orderBy = "coalesce(score,0) desc, updated_at asc";
+            limit = Math.min(10, remaining);
+          }
+        }
         const r = await pool.query<{ id: string }>(
           `select id from leads where status = $1::lead_status order by ${orderBy} limit ${limit}`,
           [status],
