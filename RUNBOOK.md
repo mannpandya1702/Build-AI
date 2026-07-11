@@ -61,7 +61,16 @@ once the worker lives on a VPS with normal egress.
 
 ## 3. Container/host restarted. What do I do?
 
-Exactly this, in order:
+In remote (Claude Code web) sessions this is AUTOMATIC: the SessionStart hook
+(`.claude/hooks/session-start.sh`) starts postgres and `scripts/worker-supervisor.sh` on every
+session start, and the supervisor keeps one worker alive (liveness = the postgres advisory lock;
+it terminates zombie lock sessions with stale heartbeats and restarts). Caveat: the hook fires on
+session START — if the container is reclaimed while nobody is talking to the session, the worker
+stays down until the next message/session. The worker still BOOTS PAUSED and honors the dashboard
+toggle. The permanent fix for 24/7 uptime is the VPS deploy (§2): this container is a build
+environment, not a server.
+
+Manual bring-up (local dev, or if the hook is unavailable):
 ```bash
 service postgresql start
 cd apps/worker && MOCK_MODE=false pnpm dev     # (or MOCK_MODE=true for fixture work)

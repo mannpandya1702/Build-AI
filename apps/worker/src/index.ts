@@ -168,7 +168,8 @@ async function main(): Promise<void> {
                where l.status = $1::lead_status and not exists (
                  select 1 from agent_events e
                  where e.lead_id = l.id and e.type = 'design.admitted' and e.created_at > $2)
-               order by coalesce(l.score,0) desc, l.updated_at asc limit ${Math.min(10, remaining)}`,
+               order by coalesce(l.score,0) desc, (l.contact_email is not null) desc, l.updated_at asc
+               limit ${Math.min(10, remaining)}`,
               [status, batch.startedAt],
             );
             for (const lead of picks.rows) {
