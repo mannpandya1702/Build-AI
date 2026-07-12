@@ -1,7 +1,8 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { site, telHref } from "../lib/content";
+import { Tilt, Parallax, CountUp, useReducedMotionSafe } from "./Motion";
 
 // The one hero moment (CLAUDE.md §5c) in five structural variants (CLAUDE.md §5d: per-lead
 // differentiation). "photo"/"split"/"bold" are dark atmosphere heroes; "frame" presents the photo
@@ -12,7 +13,7 @@ import { site, telHref } from "../lib/content";
 // stats strip at the base. Reduced motion respected throughout.
 
 function useStagger() {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   return (i: number) =>
     reduce
       ? { initial: { opacity: 1, y: 0 }, animate: { opacity: 1, y: 0 } }
@@ -116,14 +117,16 @@ function StatsStrip({ stagger, tone = "dark" }: { stagger: ReturnType<typeof use
           <div className="px-3 text-center">
             <p className={`font-display text-2xl font-extrabold md:text-4xl ${num}`}>
               <span aria-hidden className={`mr-1 text-lg md:text-2xl ${light ? "text-amber-500" : "text-amber-400"}`}>★</span>
-              {site.rating.toFixed(1)}
+              <CountUp value={Number(site.rating)} decimals={1} />
             </p>
             <p className={`mt-1 text-xs font-semibold uppercase tracking-wide md:text-sm ${label}`}>Google rating</p>
           </div>
         )}
         {site.reviewCount != null && (
           <div className="px-3 text-center">
-            <p className={`font-display text-2xl font-extrabold md:text-4xl ${num}`}>{site.reviewCount}</p>
+            <p className={`font-display text-2xl font-extrabold md:text-4xl ${num}`}>
+              <CountUp value={site.reviewCount} />
+            </p>
             <p className={`mt-1 text-xs font-semibold uppercase tracking-wide md:text-sm ${label}`}>Google reviews</p>
           </div>
         )}
@@ -138,13 +141,20 @@ function StatsStrip({ stagger, tone = "dark" }: { stagger: ReturnType<typeof use
 
 function GradientBackdrop() {
   return (
-    <div
-      className="h-full w-full texture-shingle"
-      style={{
-        background:
-          "radial-gradient(90% 70% at 15% 0%, rgb(var(--brand) / 0.45) 0%, transparent 60%), radial-gradient(70% 60% at 100% 100%, rgba(255,255,255,0.06) 0%, transparent 55%)",
-      }}
-    />
+    <div className="relative h-full w-full overflow-hidden">
+      <div
+        className="absolute inset-0 texture-shingle"
+        style={{
+          background: "radial-gradient(70% 60% at 100% 100%, rgba(255,255,255,0.06) 0%, transparent 55%)",
+        }}
+      />
+      {/* the brand glow lives, drifting slowly — atmosphere over flatness (§5b-bis + §5c) */}
+      <div
+        aria-hidden
+        className="glow-drift absolute -left-1/4 -top-1/3 h-[120%] w-[90%]"
+        style={{ background: "radial-gradient(closest-side, rgb(var(--brand) / 0.45) 0%, transparent 70%)" }}
+      />
+    </div>
   );
 }
 
@@ -155,11 +165,14 @@ const SUBLINE = site.heroSubline ?? "Local crew. Fast response. Your call answer
 function HeroPhoto({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
   return (
     <>
-      <div aria-hidden className="absolute inset-0">
+      <div aria-hidden className="absolute inset-0 overflow-hidden">
         {site.heroPhoto ? (
           <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={site.heroPhoto} alt="" className="h-full w-full object-cover" fetchPriority="high" />
+            {/* parallax depth: the photo drifts slower than the scroll (§5c, cinematic layer) */}
+            <Parallax className="absolute -inset-y-8 inset-x-0" amount={70}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={site.heroPhoto} alt="" className="h-full w-full object-cover" fetchPriority="high" />
+            </Parallax>
             <div className="absolute inset-0 bg-gradient-to-b from-ink/90 via-ink/80 to-ink" />
             <div className="absolute inset-0 bg-gradient-to-r from-ink/80 via-ink/40 to-transparent" />
           </>
@@ -210,9 +223,11 @@ function HeroSplit({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
           </motion.div>
         </div>
         {site.heroPhoto && (
-          <motion.div {...stagger(2)} className="hidden overflow-hidden rounded-3xl ring-1 ring-white/20 md:block">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={site.heroPhoto} alt={`Work by ${site.businessName}`} className="aspect-[4/5] w-full object-cover" fetchPriority="high" />
+          <motion.div {...stagger(2)} className="hidden md:block">
+            <Tilt className="relative overflow-hidden rounded-3xl ring-1 ring-white/20">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={site.heroPhoto} alt={`Work by ${site.businessName}`} className="aspect-[4/5] w-full object-cover" fetchPriority="high" />
+            </Tilt>
           </motion.div>
         )}
       </div>
@@ -270,14 +285,16 @@ function HeroFrame({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
           <Ctas />
         </motion.div>
         {site.heroPhoto && (
-          <motion.div {...stagger(4)} className="mt-12 overflow-hidden rounded-3xl ring-1 ring-white/20 shadow-2xl">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={site.heroPhoto}
-              alt={`Work by ${site.businessName}`}
-              className="aspect-[16/9] w-full object-cover md:aspect-[21/9]"
-              fetchPriority="high"
-            />
+          <motion.div {...stagger(4)} className="mt-12">
+            <Tilt max={4} className="relative overflow-hidden rounded-3xl ring-1 ring-white/20 shadow-2xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={site.heroPhoto}
+                alt={`Work by ${site.businessName}`}
+                className="aspect-[16/9] w-full object-cover md:aspect-[21/9]"
+                fetchPriority="high"
+              />
+            </Tilt>
           </motion.div>
         )}
       </div>
@@ -314,13 +331,13 @@ function HeroPaper({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
           </motion.div>
         </div>
         {site.heroPhoto && (
-          <motion.div
-            {...stagger(2)}
-            className="hidden overflow-hidden md:block"
-            style={{ clipPath: "polygon(14% 0, 100% 0, 100% 100%, 0 100%)" }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={site.heroPhoto} alt={`Work by ${site.businessName}`} className="aspect-[4/5] w-full object-cover" fetchPriority="high" />
+          <motion.div {...stagger(2)} className="hidden md:block">
+            <Tilt max={5} className="relative overflow-hidden" >
+              <div style={{ clipPath: "polygon(14% 0, 100% 0, 100% 100%, 0 100%)" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={site.heroPhoto} alt={`Work by ${site.businessName}`} className="aspect-[4/5] w-full object-cover" fetchPriority="high" />
+              </div>
+            </Tilt>
           </motion.div>
         )}
       </div>

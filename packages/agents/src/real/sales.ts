@@ -88,6 +88,16 @@ export async function sales(leadId: string): Promise<void> {
   const lead = await getLead(leadId);
 
   if (lead.status === "outreach_ready") {
+    // A demo REBUILD returns a lead here after QA even though its Touch-1 already exists (drafted,
+    // approved, or sent). Never re-draft or re-notify: put it back where it was and stop.
+    const existing = await pool.query<{ status: string }>(
+      "select status from emails where lead_id=$1 and direction='outbound' and kind='outreach' order by created_at desc limit 1", [leadId]);
+    if (existing.rowCount && ["awaiting_approval", "approved", "sent"].includes(existing.rows[0].status)) {
+      if (existing.rows[0].status === "sent") await advanceLead(leadId, "contacted", { agent: "sales" });
+      else await advanceLead(leadId, "awaiting_approval", { agent: "sales" });
+      await emitEvent({ agent: "sales", leadId, level: "debug", type: "sales.waiting", message: "touch 1 already exists; restored stage after rebuild" });
+      return;
+    }
     const built = await buildTouch1(lead);
     if ("blocked" in built) {
       // Once per 12h per lead (cap_hit precedent): outreach_ready re-triggers every few minutes,

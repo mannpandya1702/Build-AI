@@ -20,12 +20,13 @@ export default function Page() {
 
       {/* The offer: the page's second dark anchor. The white form card pops on ink; a brand glow
           keeps the band from reading flat (§5b-bis: this dark differs from the hero's). */}
-      <section
-        id="quote"
-        className="texture-shingle bg-ink py-20 text-white md:py-28"
-        style={{ backgroundImage: "radial-gradient(80% 90% at 100% 0%, rgb(var(--brand) / 0.25) 0%, transparent 55%)" }}
-      >
-        <div className="mx-auto max-w-6xl px-5">
+      <section id="quote" className="texture-shingle relative overflow-hidden bg-ink py-20 text-white md:py-28">
+        <div
+          aria-hidden
+          className="glow-drift absolute -right-1/4 -top-1/2 h-[160%] w-[80%]"
+          style={{ background: "radial-gradient(closest-side, rgb(var(--brand) / 0.28) 0%, transparent 70%)" }}
+        />
+        <div className="relative mx-auto max-w-6xl px-5">
           <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:items-center">
             <div>
               <p className="font-display text-sm font-medium uppercase tracking-[0.2em] text-amber-400">Free quote</p>

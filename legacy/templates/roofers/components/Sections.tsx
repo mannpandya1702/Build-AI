@@ -1,11 +1,12 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useReducedMotionSafe } from "./Motion";
 import { site, telHref, mapEmbedUrl } from "../lib/content";
 
 // A single scroll-reveal wrapper reused across sections. Respects reduced motion.
 function Reveal({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   if (reduce) return <div className={className}>{children}</div>;
   return (
     <motion.div
@@ -101,11 +102,14 @@ export function StormBand() {
       <Reveal className="mx-auto max-w-6xl">
         <div
           className="texture-shingle relative overflow-hidden rounded-3xl text-white ring-1 ring-white/10"
-          style={{
-            background:
-              "radial-gradient(110% 130% at 90% -10%, rgb(var(--brand) / 0.5) 0%, transparent 55%), linear-gradient(150deg, rgb(26 14 9) 0%, rgb(15 9 6) 100%)",
-          }}
+          style={{ background: "linear-gradient(150deg, rgb(26 14 9) 0%, rgb(15 9 6) 100%)" }}
         >
+          {/* storm glow, alive (§5c atmosphere) */}
+          <div
+            aria-hidden
+            className="glow-drift absolute -right-1/4 -top-1/2 h-[160%] w-[80%]"
+            style={{ background: "radial-gradient(closest-side, rgb(var(--brand) / 0.5) 0%, transparent 70%)" }}
+          />
           <div className="px-6 py-12 md:px-14 md:py-16">
             <p className="font-display text-sm font-medium uppercase tracking-[0.2em] text-amber-400">
               After the storm
@@ -266,7 +270,7 @@ function ReviewCard({ r, fixed = true }: { r: (typeof site.reviews)[number]; fix
  * prefers-reduced-motion it falls back to a static grid, per WCAG and CLAUDE.md §5c.
  */
 export function Reviews() {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   if (site.reviews.length === 0) return null; // omit rather than invent (CLAUDE.md §0)
 
   return (

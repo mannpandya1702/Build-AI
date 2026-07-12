@@ -49,6 +49,24 @@ body {
   );
 }
 
+/* Living atmosphere (§5c): a brand glow that slowly drifts and breathes. Pure transform/opacity,
+   GPU-composited, zeroed by the global reduced-motion rule below. */
+@keyframes glow-drift {
+  0%,
+  100% {
+    transform: translate3d(-6%, -4%, 0) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(6%, 5%, 0) scale(1.18);
+    opacity: 1;
+  }
+}
+.glow-drift {
+  animation: glow-drift 16s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
 /* Review marquee: CSS-driven infinite track (never <marquee>). The track holds the list twice;
    -50% translate loops seamlessly. Pauses on hover so cards can be read (WCAG 2.2.2 pause intent). */
 @keyframes marquee-x {
