@@ -255,6 +255,7 @@ export async function builder(leadId: string): Promise<void> {
     city,
     state: lead.region ?? "",
     phone: lead.contact_phone ?? null,
+    niche: preset.id,
     primaryService: copy?.primaryService ?? "Roof Repair",
     heroSubline: copy?.heroSubline ?? null,
     services: copy?.services ?? DEFAULT_ROOFER_SERVICES,

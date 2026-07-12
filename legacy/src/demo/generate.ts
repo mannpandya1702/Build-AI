@@ -47,6 +47,7 @@ export interface DemoTheme {
   fontPair: "bricolage" | "archivo" | "grotesk";
   heroVariant: "photo" | "split" | "bold" | "frame" | "paper";
   heroSubline?: string | null;
+  niche?: string;
 }
 
 // Four curated looks (CLAUDE.md §5d: per-lead differentiation, same bones different skin).

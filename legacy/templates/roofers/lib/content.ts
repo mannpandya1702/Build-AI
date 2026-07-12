@@ -34,6 +34,7 @@ export interface DemoContent {
   phone: string | null;
   primaryService: string;
   heroSubline?: string | null;
+  niche?: string;
   services: { name: string; blurb: string }[];
   reviews: DemoReview[];
   photos: { src: string; alt: string }[];
