@@ -25,17 +25,42 @@ function useStagger() {
 
 type Tone = "dark" | "light";
 
+// Anchor nav (desktop): smooth-scroll section links give the single-page demo an app-like feel
+// (Website Mastery blueprint: navigation is part of perceived quality). Mobile stays clean — the
+// sticky call bar is the navigation priority there (§5b: one primary action).
+// Content-aware: a link only renders when its section will (a lead with no review texts has no
+// Reviews section — a dead anchor reads as broken, worse than no link).
+const NAV = [
+  { href: "#services", label: "Services", show: site.services.length > 0 },
+  { href: "#work", label: "Work", show: true },
+  { href: "#reviews", label: "Reviews", show: site.reviews.length > 0 },
+  { href: "#contact", label: "Contact", show: true },
+].filter((n) => n.show);
+
 function TopBar({ tone = "dark" }: { tone?: Tone }) {
   const href = telHref(site.phone);
   const light = tone === "light";
   return (
     <div className={`relative z-10 border-b backdrop-blur-md ${light ? "border-ink/10 bg-paper2/60" : "border-white/10 bg-white/5"}`}>
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-2.5 text-sm">
-        <span className={`font-semibold tracking-wide ${light ? "text-ink/70" : "text-white/80"}`}>
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-2.5 text-sm">
+        <span className={`shrink-0 font-semibold tracking-wide ${light ? "text-ink/70" : "text-white/80"}`}>
           Serving {site.city}, {site.state}
         </span>
+        <nav className="hidden gap-5 md:flex" aria-label="Sections">
+          {NAV.map((n) => (
+            <a
+              key={n.href}
+              href={n.href}
+              className={`font-medium underline-offset-4 transition-colors duration-150 hover:underline ${
+                light ? "text-ink/60 hover:text-ink" : "text-white/60 hover:text-white"
+              }`}
+            >
+              {n.label}
+            </a>
+          ))}
+        </nav>
         {href && (
-          <a href={href} className={`font-bold underline-offset-4 hover:underline ${light ? "text-ink" : "text-white"}`}>
+          <a href={href} className={`shrink-0 font-bold underline-offset-4 hover:underline ${light ? "text-ink" : "text-white"}`}>
             {site.phone}
           </a>
         )}

@@ -191,8 +191,10 @@ function GalleryPreview() {
             <Reveal
               key={i}
               delay={i * 0.04}
-              className={`texture-shingle-ink relative flex aspect-square items-center justify-center rounded-2xl border-2 border-dashed ${
-                i % 2 ? "border-ink/15 bg-gradient-to-br from-ink/[0.04] to-ink/[0.1]" : "border-brand/25 bg-gradient-to-br from-brand/[0.05] to-brand/[0.12]"
+              className={`texture-shingle-ink relative flex aspect-square items-center justify-center rounded-2xl border-2 border-dashed transition-colors duration-200 ${
+                i % 2
+                  ? "border-ink/15 bg-gradient-to-br from-ink/[0.04] to-ink/[0.1] hover:border-ink/30"
+                  : "border-brand/25 bg-gradient-to-br from-brand/[0.05] to-brand/[0.12] hover:border-brand/45"
               }`}
             >
               <span aria-hidden className={`font-display text-4xl font-extrabold ${i % 2 ? "text-ink/25" : "text-brand/35"}`}>+</span>
@@ -244,7 +246,7 @@ function ReviewCard({ r, fixed = true }: { r: (typeof site.reviews)[number]; fix
   // makes neighbors look empty. The clamp is visible truncation, not a rewrite.
   return (
     <figure
-      className={`relative flex ${fixed ? "h-[280px] w-[320px] md:w-[380px]" : "min-h-[240px] w-full"} shrink-0 flex-col rounded-2xl bg-white p-6 pt-8 shadow-card ring-1 ring-ink/5`}
+      className={`relative flex ${fixed ? "h-[280px] w-[320px] md:w-[380px]" : "min-h-[240px] w-full"} shrink-0 flex-col rounded-2xl bg-white p-6 pt-8 shadow-card ring-1 ring-ink/5 transition-all duration-200 hover:-translate-y-1 hover:shadow-cardhover hover:ring-brand/20`}
     >
       <span aria-hidden className="absolute right-5 top-2 font-display text-6xl font-extrabold leading-none text-brand/10">
         &rdquo;
