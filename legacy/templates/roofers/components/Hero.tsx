@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { site, telHref } from "../lib/content";
 import { Tilt, Parallax, CountUp, WordReveal, Magnetic, useReducedMotionSafe } from "./Motion";
@@ -25,6 +26,55 @@ function useStagger() {
 }
 
 type Tone = "dark" | "light";
+
+/** The business's mark: a brand-gradient monogram. Identity, everywhere (hero, pill nav). */
+export function BrandMark({ size = "h-9 w-9 text-base" }: { size?: string }) {
+  return (
+    <span className={`grid ${size} shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand to-branddeep font-display font-extrabold text-brandink shadow-cta`}>
+      {site.businessName.charAt(0)}
+    </span>
+  );
+}
+
+/** Floating glass pill nav (desktop): appears once the hero scrolls away — persistent app-grade
+ *  chrome with the mark, section links, and the call CTA always one glance away. */
+export function PillNav() {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const on = () => setShown(window.scrollY > 560);
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
+  const href = telHref(site.phone);
+  return (
+    <motion.div
+      className="pointer-events-none fixed inset-x-0 top-4 z-50 hidden justify-center md:flex"
+      initial={false}
+      animate={{ y: shown ? 0 : -90, opacity: shown ? 1 : 0 }}
+      transition={{ type: "spring", stiffness: 260, damping: 28 }}
+      aria-hidden={!shown}
+    >
+      <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-white/10 bg-ink/80 py-1.5 pl-2 pr-1.5 shadow-2xl backdrop-blur-xl">
+        <a href="#top" className="flex items-center gap-2.5 pr-2">
+          <BrandMark size="h-8 w-8 text-sm" />
+          <span className="max-w-[180px] truncate font-display text-sm font-extrabold text-white">{site.businessName}</span>
+        </a>
+        {NAV.map((n) => (
+          <a key={n.href} href={n.href} className="rounded-full px-3 py-1.5 text-sm font-medium text-white/65 transition-colors duration-150 hover:bg-white/10 hover:text-white">
+            {n.label}
+          </a>
+        ))}
+        <a
+          href={href ?? "#quote"}
+          className="ml-1 flex min-h-[38px] items-center rounded-full bg-gradient-to-b from-brand to-branddeep px-4 font-display text-sm font-extrabold text-brandink"
+        >
+          {href ? `Call ${site.phone}` : "Get a quote"}
+        </a>
+      </div>
+    </motion.div>
+  );
+}
 
 // Anchor nav (desktop): smooth-scroll section links give the single-page demo an app-like feel
 // (Website Mastery blueprint: navigation is part of perceived quality). Mobile stays clean — the
@@ -188,8 +238,8 @@ function HeroPhoto({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
         )}
       </div>
       <div className="relative z-10 mx-auto max-w-6xl px-5 pb-16 pt-12 md:pb-24 md:pt-20">
-        <motion.p {...stagger(0)} className="font-display text-sm font-medium uppercase tracking-[0.2em] text-white/70">
-          {site.businessName}
+        <motion.p {...stagger(0)} className="flex items-center gap-3 font-display text-sm font-semibold uppercase tracking-[0.2em] text-white/80">
+          <BrandMark /> {site.businessName}
         </motion.p>
         <motion.h1 {...stagger(1)} className="mt-4 max-w-4xl font-display text-5xl font-extrabold leading-[0.95] tracking-tight md:text-8xl">
           <WordReveal text={`${site.primaryService} in ${site.city}, ${site.state}`} delay={0.12} />
@@ -250,8 +300,8 @@ function HeroBold({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
         <GradientBackdrop />
       </div>
       <div className="relative z-10 mx-auto max-w-5xl px-5 pb-16 pt-14 text-center md:pb-24 md:pt-24">
-        <motion.p {...stagger(0)} className="font-display text-sm font-medium uppercase tracking-[0.3em] text-white/70">
-          {site.businessName}
+        <motion.p {...stagger(0)} className="flex items-center justify-center gap-3 font-display text-sm font-semibold uppercase tracking-[0.3em] text-white/80">
+          <BrandMark /> {site.businessName}
         </motion.p>
         <motion.h1 {...stagger(1)} className="mx-auto mt-5 max-w-4xl font-display text-5xl font-bold leading-[0.95] tracking-tight md:text-9xl">
           <WordReveal text={`${site.primaryService} in ${site.city}, ${site.state}`} delay={0.12} />
@@ -278,8 +328,8 @@ function HeroFrame({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
         <GradientBackdrop />
       </div>
       <div className="relative z-10 mx-auto max-w-6xl px-5 pb-10 pt-12 md:pb-14 md:pt-20">
-        <motion.p {...stagger(0)} className="font-display text-sm font-medium uppercase tracking-[0.2em] text-white/70">
-          {site.businessName}
+        <motion.p {...stagger(0)} className="flex items-center gap-3 font-display text-sm font-semibold uppercase tracking-[0.2em] text-white/80">
+          <BrandMark /> {site.businessName}
         </motion.p>
         <motion.h1 {...stagger(1)} className="mt-4 max-w-4xl font-display text-5xl font-extrabold leading-[0.95] tracking-tight md:text-8xl">
           <WordReveal text={`${site.primaryService} in ${site.city}, ${site.state}`} delay={0.12} />
@@ -322,8 +372,8 @@ function HeroPaper({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
       />
       <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 pb-14 pt-12 md:grid-cols-[1.15fr_1fr] md:pb-20 md:pt-16">
         <div>
-          <motion.p {...stagger(0)} className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-ink/60">
-            {site.businessName}
+          <motion.p {...stagger(0)} className="flex items-center gap-3 font-display text-sm font-semibold uppercase tracking-[0.2em] text-ink/70">
+            <BrandMark /> {site.businessName}
           </motion.p>
           <motion.h1 {...stagger(1)} className="mt-4 font-display text-5xl font-extrabold leading-[0.98] tracking-tight text-ink md:text-7xl">
             <WordReveal text={`${site.primaryService} in ${site.city}, ${site.state}`} delay={0.12} />
@@ -357,7 +407,7 @@ export default function Hero() {
   const variant = site.theme.heroVariant;
   const tone: Tone = variant === "paper" ? "light" : "dark";
   return (
-    <header className={`relative overflow-hidden ${tone === "light" ? "bg-paper text-ink" : "bg-ink text-white"}`}>
+    <header id="top" className={`relative overflow-hidden ${tone === "light" ? "bg-paper text-ink" : "bg-ink text-white"}`}>
       <TopBar tone={tone} />
       {variant === "split" ? (
         <HeroSplit stagger={stagger} />

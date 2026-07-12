@@ -124,3 +124,10 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Outlined monumental wordmark (footer): brand type as architecture, not decoration. */
+.wordmark-outline {
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgb(255 255 255 / 0.14);
+  letter-spacing: -0.02em;
+}

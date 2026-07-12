@@ -50,8 +50,7 @@ function SectionTitle({ kicker, title, index }: { kicker: string; title: string;
  * compact cards with a brand hairline. Asymmetry reads designed; sameness reads generated.
  */
 export function Services() {
-  const [first, ...rest] = site.services;
-  if (!first) return null;
+  if (!site.services.length) return null;
   return (
     <section
       id="services"
@@ -60,38 +59,27 @@ export function Services() {
     >
       <div className="mx-auto max-w-6xl px-5">
         <SectionTitle index="01" kicker="What we do" title="Roof work, done right" />
-        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Featured service: a full-width panel so the grid below always balances, whatever the
-              service count. Brand-tinted, its own quote link — the #1 service earns the emphasis. */}
-          <Reveal className="group relative col-span-full overflow-hidden rounded-3xl bg-brand/[0.08] p-7 ring-1 ring-brand/20 transition-all hover:-translate-y-0.5 md:p-9">
-            <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-[1.2fr_1fr]">
-              <div>
-                <span className="font-display text-sm font-extrabold tracking-wide text-brand">01</span>
-                <h3 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-ink md:text-4xl">{first.name}</h3>
-                <p className="mt-3 max-w-xl text-lg text-ink/70">{first.blurb}</p>
-              </div>
-              <div className="md:text-right">
-                <a href="#quote" className="inline-flex items-center gap-1.5 font-display text-lg font-extrabold text-brand underline-offset-4 hover:underline">
-                  Get a quote for this <span aria-hidden>→</span>
-                </a>
-              </div>
-            </div>
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -bottom-20 -right-16 h-56 w-56 rounded-full"
-              style={{ background: "radial-gradient(closest-side, rgb(var(--brand) / 0.14), transparent)" }}
-            />
-          </Reveal>
-          {rest.map((s, i) => (
-            <Reveal
-              key={s.name}
-              delay={(i + 1) * 0.05}
-              className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-card ring-1 ring-ink/5 transition-all hover:-translate-y-0.5 hover:shadow-cardhover hover:ring-brand/25"
-            >
-              <span aria-hidden className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand/60 to-transparent" />
-              <span className="font-display text-sm font-extrabold text-brand/50">{String(i + 2).padStart(2, "0")}</span>
-              <h3 className="mt-1 font-display text-xl font-extrabold text-ink">{s.name}</h3>
-              <p className="mt-2 text-ink/70">{s.blurb}</p>
+        <div className="mt-12 border-t border-ink/10">
+          {site.services.map((s, i) => (
+            <Reveal key={s.name} delay={i * 0.04}>
+              <a
+                href="#quote"
+                className="group grid grid-cols-[auto_1fr] items-baseline gap-x-5 gap-y-2 border-b border-ink/10 py-7 transition-colors duration-200 hover:bg-brand/[0.04] md:grid-cols-[4rem_1.1fr_1fr_auto] md:items-center md:gap-x-8 md:py-9"
+              >
+                <span className="font-display text-sm font-extrabold tracking-wide text-brand/60 transition-colors duration-200 group-hover:text-brand">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <h3 className="font-display text-2xl font-extrabold tracking-tight text-ink transition-transform duration-200 group-hover:translate-x-1 md:text-4xl">
+                  {s.name}
+                </h3>
+                <p className="col-start-2 max-w-md text-ink/60 md:col-start-3">{s.blurb}</p>
+                <span
+                  aria-hidden
+                  className="hidden font-display text-2xl font-extrabold text-ink/20 transition-all duration-200 group-hover:translate-x-1 group-hover:text-brand md:block"
+                >
+                  →
+                </span>
+              </a>
             </Reveal>
           ))}
         </div>
@@ -169,21 +157,17 @@ export function Process() {
     { t: "Done", d: "The work, finished and cleaned up. You see it before we leave." },
   ];
   return (
-    <section className="texture-shingle-ink bg-paper2 py-20 md:py-28">
+    <section className="texture-shingle-ink bg-paper2 py-20 md:py-32">
       <div className="mx-auto max-w-6xl px-5">
         <SectionTitle index="02" kicker="How it works" title="Three steps. That's it." />
-        <div className="relative mt-12 grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-4">
-          {/* the connecting line: the three steps read as one path, not three loose cards */}
-          <div aria-hidden className="absolute left-1/2 top-6 hidden h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-brand/30 to-transparent md:block" />
+        <div className="mt-14 grid grid-cols-1 gap-12 md:grid-cols-3 md:gap-8">
           {steps.map((s, i) => (
-            <Reveal key={s.t} delay={i * 0.08} className="relative">
-              <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-brand font-display text-xl font-extrabold text-brandink shadow-cta md:mx-auto">
+            <Reveal key={s.t} delay={i * 0.08} className="relative border-t-2 border-brand/25 pt-6">
+              <span aria-hidden className="absolute -top-9 right-0 font-display text-7xl font-extrabold leading-none text-brand/10 md:text-8xl">
                 {i + 1}
-              </div>
-              <div className="mt-4 rounded-2xl bg-white p-6 shadow-card ring-1 ring-ink/5 md:text-center">
-                <h3 className="font-display text-2xl font-extrabold text-ink">{s.t}</h3>
-                <p className="mt-2 text-ink/70">{s.d}</p>
-              </div>
+              </span>
+              <h3 className="font-display text-2xl font-extrabold tracking-tight text-ink md:text-3xl">{s.t}</h3>
+              <p className="mt-3 max-w-xs text-lg text-ink/60">{s.d}</p>
             </Reveal>
           ))}
         </div>
@@ -241,16 +225,21 @@ export function Gallery() {
     <section id="work" className="bg-paper2 py-20 md:py-28">
       <div className="mx-auto max-w-6xl px-5">
         <SectionTitle index="03" kicker="Recent work" title={`On roofs around ${site.city}`} />
-        <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-3">
+        <div className="mt-12 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {site.photos.map((p, i) => (
-            <ImageReveal key={`${i}-${p.src}`} delay={i * 0.06} className="photo-grade overflow-hidden rounded-xl">
+            <ImageReveal
+              key={`${i}-${p.src}`}
+              delay={i * 0.06}
+              className={`photo-grade overflow-hidden rounded-2xl ${i === 0 ? "col-span-2 row-span-2" : ""}`}
+            >
               {/* Real GBP photo. loading=lazy keeps the mobile speed budget (CLAUDE.md §5b). */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={p.src}
                 alt={p.alt}
                 loading="lazy"
-                className="aspect-square w-full object-cover transition-transform duration-500 hover:scale-105"
+                className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                style={{ aspectRatio: "1 / 1" }}
               />
             </ImageReveal>
           ))}

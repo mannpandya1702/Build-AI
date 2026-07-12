@@ -1,4 +1,4 @@
-import Hero, { StatsCard } from "../components/Hero";
+import Hero, { StatsCard, PillNav, BrandMark } from "../components/Hero";
 import { Services, StormBand, Process, Gallery, QuoteBand, Reviews, Faq, Contact } from "../components/Sections";
 import QuoteForm from "../components/QuoteForm";
 import { site, telHref } from "../lib/content";
@@ -11,6 +11,7 @@ import { site, telHref } from "../lib/content";
 export default function Page() {
   return (
     <main className="pb-24 md:pb-0">
+      <PillNav />
       <Hero />
       <StatsCard />
       <StormBand />
@@ -52,26 +53,50 @@ export default function Page() {
       <Faq />
       <Contact />
 
-      {/* Footer: composed close with full NAP (name, address, phone — §5b: consistent with GBP). */}
-      <footer className="border-t border-white/10 bg-ink py-12 text-center text-sm text-white/60">
-        <p className="mx-auto flex items-center justify-center gap-2.5">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand font-display text-base font-extrabold text-brandink">
-            {site.businessName.charAt(0)}
-          </span>
-          <span className="font-display text-lg font-extrabold tracking-tight text-white">{site.businessName}</span>
-        </p>
-        <p className="mt-3">
-          {site.address ? `${site.address} · ` : ""}
-          {site.city}, {site.state}
-        </p>
-        {site.phone && telHref(site.phone) && (
-          <p className="mt-1">
-            <a href={telHref(site.phone)!} className="font-bold text-white/85 underline-offset-4 hover:underline">
-              {site.phone}
-            </a>
+      {/* Footer as a destination, not an afterthought: the last close (giant type + the number),
+          structured NAP columns, then the business's own name at monumental outlined scale —
+          brand identity as architecture. */}
+      <footer className="relative overflow-hidden border-t border-white/10 bg-ink text-white/60">
+        <div className="mx-auto max-w-6xl px-5 pt-16 md:pt-24">
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-[1.4fr_1fr] md:items-end">
+            <div>
+              <p className="font-display text-sm font-semibold uppercase tracking-[0.22em] text-brand">One more leak is one too many</p>
+              <p className="mt-3 font-display text-4xl font-extrabold tracking-tight text-white md:text-6xl">
+                One tap away.
+              </p>
+              {site.phone && telHref(site.phone) && (
+                <a href={telHref(site.phone)!} className="mt-4 inline-block font-display text-2xl font-extrabold text-white/85 underline-offset-8 hover:underline md:text-4xl">
+                  {site.phone}
+                </a>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-8 text-sm md:justify-items-end">
+              <div>
+                <p className="mb-3 flex items-center gap-2 font-display font-extrabold text-white">
+                  <BrandMark size="h-7 w-7 text-xs" /> {site.businessName}
+                </p>
+                {site.address && <p>{site.address}</p>}
+                <p>
+                  {site.city}, {site.state}
+                </p>
+                <p className="mt-1">Serving {site.city} and nearby.</p>
+              </div>
+              <nav aria-label="Footer" className="space-y-2">
+                <a href="#services" className="block hover:text-white">Services</a>
+                <a href="#work" className="block hover:text-white">Our work</a>
+                <a href="#reviews" className="block hover:text-white">Reviews</a>
+                <a href="#quote" className="block hover:text-white">Free quote</a>
+                <a href="#contact" className="block hover:text-white">Contact</a>
+              </nav>
+            </div>
+          </div>
+          <p className="mt-12 border-t border-white/10 pt-6 text-xs text-white/40">
+            Roofing you can reach with one tap.
           </p>
-        )}
-        <p className="mt-4 border-t border-white/10 pt-4 text-xs text-white/40">Roofing you can reach with one tap.</p>
+        </div>
+        <p aria-hidden className="wordmark-outline pointer-events-none -mb-4 mt-6 select-none whitespace-nowrap text-center font-display text-[13vw] font-extrabold uppercase leading-[0.8] md:-mb-8">
+          {site.businessName}
+        </p>
       </footer>
     </main>
   );
