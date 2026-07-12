@@ -280,6 +280,37 @@ async function main(): Promise<void> {
     }
   }, 3000);
 
+  // Photo self-heal (2026-07-12 incident: a fleet rebuild burned the Places cap re-downloading
+  // photos, later builds shipped photo-less). Builds now emit build.no_photos when a lead HAS
+  // photos that could not be fetched; when the daily budget has headroom again, requeue those
+  // demos (unsent only, ≤5 per pass, ≥12h between attempts per lead — no churn while capped).
+  setInterval(async () => {
+    if (!workerEnabled) return;
+    try {
+      const caps2 = loadCaps();
+      const spent = await usedToday("places.call").catch(() => caps2.places_calls_per_day);
+      if (spent > caps2.places_calls_per_day - 30) return; // not enough headroom to bother
+      const debt = await pool.query<{ id: string; company_name: string }>(
+        `select l.id, l.company_name from leads l
+         where l.status in ('outreach_ready','awaiting_approval')
+           and not exists (select 1 from emails e where e.lead_id = l.id and e.status = 'sent')
+           and exists (
+             select 1 from agent_events np where np.lead_id = l.id and np.type = 'build.no_photos'
+               and np.created_at > coalesce((select max(rq.created_at) from agent_events rq
+                                             where rq.lead_id = l.id and rq.type = 'photo.requeue'), '1970-01-01'))
+           and not exists (select 1 from agent_events rq2 where rq2.lead_id = l.id
+                             and rq2.type = 'photo.requeue' and rq2.created_at > now() - interval '12 hours')
+         limit 5`,
+      );
+      for (const l of debt.rows) {
+        await emitEvent({ agent: "builder", leadId: l.id, type: "photo.requeue", message: "photo budget available again; rebuilding photo-less demo" });
+        await pool.query("update leads set status='demo_building' where id=$1 and status in ('outreach_ready','awaiting_approval')", [l.id]);
+      }
+    } catch (err) {
+      console.error("[photo-heal]", (err as Error).message);
+    }
+  }, 30 * 60 * 1000);
+
   await emitEvent({ agent: "worker", type: "worker.started", message: `worker online (mock=${MOCK})` });
   setInterval(() => {
     emitEvent({ agent: "worker", type: "worker.heartbeat", level: "debug" }).catch((e) =>

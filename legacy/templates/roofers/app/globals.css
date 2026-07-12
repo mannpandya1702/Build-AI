@@ -49,6 +49,33 @@ body {
   );
 }
 
+/* Photo color grade (§5b-bis "real photo with a color-graded overlay"): every photo gets a subtle
+   brand-hue wash + a grounding gradient, so mixed-quality GBP photos read as one art-directed set.
+   Pure CSS blend, zero bytes. */
+.photo-grade {
+  position: relative;
+}
+.photo-grade > img {
+  filter: grayscale(0.22) saturate(0.92) contrast(1.04);
+}
+.photo-grade::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgb(var(--brand));
+  mix-blend-mode: color;
+  opacity: 0.16;
+  pointer-events: none;
+}
+.photo-grade::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(to top, rgb(var(--ink) / 0.28) 0%, transparent 45%);
+  pointer-events: none;
+}
+
 /* Living atmosphere (§5c): a brand glow that slowly drifts and breathes. Pure transform/opacity,
    GPU-composited, zeroed by the global reduced-motion rule below. */
 @keyframes glow-drift {

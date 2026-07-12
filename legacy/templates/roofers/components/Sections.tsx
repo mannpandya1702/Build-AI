@@ -22,11 +22,21 @@ function Reveal({ children, className, delay = 0 }: { children: React.ReactNode;
   );
 }
 
-function SectionTitle({ kicker, title }: { kicker: string; title: string }) {
+// Editorial title: a giant ghost numeral sits behind each section heading — the oversized-index
+// rhythm of expensive editorial sites, in pure type (no assets).
+function SectionTitle({ kicker, title, index }: { kicker: string; title: string; index?: string }) {
   return (
-    <Reveal>
-      <p className="font-display text-sm font-medium uppercase tracking-[0.2em] text-brand">{kicker}</p>
-      <h2 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-ink md:text-5xl">{title}</h2>
+    <Reveal className="relative">
+      {index && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -left-3 -top-14 select-none font-display text-[8rem] font-extrabold leading-none text-ink/[0.05] md:-top-20 md:text-[12rem]"
+        >
+          {index}
+        </span>
+      )}
+      <p className="relative font-display text-sm font-semibold uppercase tracking-[0.22em] text-brand">{kicker}</p>
+      <h2 className="relative mt-2 font-display text-4xl font-extrabold tracking-tight text-ink md:text-6xl">{title}</h2>
     </Reveal>
   );
 }
@@ -49,7 +59,7 @@ export function Services() {
       style={{ background: "radial-gradient(70% 50% at 0% 0%, rgb(var(--brand) / 0.06) 0%, transparent 55%)" }}
     >
       <div className="mx-auto max-w-6xl px-5">
-        <SectionTitle kicker="What we do" title="Roof work, done right" />
+        <SectionTitle index="01" kicker="What we do" title="Roof work, done right" />
         <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {/* Featured service: a full-width panel so the grid below always balances, whatever the
               service count. Brand-tinted, its own quote link — the #1 service earns the emphasis. */}
@@ -161,7 +171,7 @@ export function Process() {
   return (
     <section className="texture-shingle-ink bg-paper2 py-20 md:py-28">
       <div className="mx-auto max-w-6xl px-5">
-        <SectionTitle kicker="How it works" title="Three steps. That's it." />
+        <SectionTitle index="02" kicker="How it works" title="Three steps. That's it." />
         <div className="relative mt-12 grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-4">
           {/* the connecting line: the three steps read as one path, not three loose cards */}
           <div aria-hidden className="absolute left-1/2 top-6 hidden h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-brand/30 to-transparent md:block" />
@@ -191,7 +201,7 @@ function GalleryPreview() {
   return (
     <section id="work" className="bg-paper2 py-20 md:py-28">
       <div className="mx-auto max-w-6xl px-5">
-        <SectionTitle kicker="Recent work" title={`Your jobs, front and center`} />
+        <SectionTitle index="03" kicker="Recent work" title={`Your jobs, front and center`} />
         <p className="mt-4 max-w-xl text-ink/70">
           This section fills with real photos of your work: before-and-afters, finished roofs, the
           crew on site. Send them over and they are live the same day.
@@ -230,10 +240,10 @@ export function Gallery() {
   return (
     <section id="work" className="bg-paper2 py-20 md:py-28">
       <div className="mx-auto max-w-6xl px-5">
-        <SectionTitle kicker="Recent work" title={`On roofs around ${site.city}`} />
+        <SectionTitle index="03" kicker="Recent work" title={`On roofs around ${site.city}`} />
         <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-3">
           {site.photos.map((p, i) => (
-            <ImageReveal key={`${i}-${p.src}`} delay={i * 0.06} className="overflow-hidden rounded-xl">
+            <ImageReveal key={`${i}-${p.src}`} delay={i * 0.06} className="photo-grade overflow-hidden rounded-xl">
               {/* Real GBP photo. loading=lazy keeps the mobile speed budget (CLAUDE.md §5b). */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -282,7 +292,7 @@ export function Reviews() {
   return (
     <section id="reviews" className="overflow-hidden py-20 md:py-28">
       <div className="mx-auto max-w-6xl px-5">
-        <SectionTitle kicker="Real reviews" title={`What ${site.city} says`} />
+        <SectionTitle index="04" kicker="Real reviews" title={`What ${site.city} says`} />
       </div>
 
       {reduce ? (
@@ -323,7 +333,7 @@ export function Faq() {
   return (
     <section className="bg-paper2 py-20 md:py-28">
       <div className="mx-auto max-w-3xl px-5">
-        <SectionTitle kicker="Questions" title="Before you call" />
+        <SectionTitle index="05" kicker="Questions" title="Before you call" />
         <Reveal className="mt-8">
           <FaqAccordion />
         </Reveal>
@@ -341,7 +351,7 @@ export function Contact() {
       style={{ background: "radial-gradient(60% 60% at 100% 100%, rgb(var(--brand) / 0.05) 0%, transparent 55%)" }}
     >
       <div className="mx-auto max-w-6xl px-5">
-        <SectionTitle kicker="Find us" title={`${site.city}, ${site.state}`} />
+        <SectionTitle index="06" kicker="Find us" title={`${site.city}, ${site.state}`} />
         <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-[1fr_1.3fr]">
           <Reveal className="flex flex-col justify-between rounded-3xl bg-white p-7 shadow-card ring-1 ring-ink/5 md:p-8">
             <div className="space-y-2.5 text-ink/80">
@@ -375,6 +385,36 @@ export function Contact() {
             />
           </Reveal>
         </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Full-bleed proof moment: one real job photo, color-graded, with the sharpest short REAL review
+ * quoted large over it. Renders only when both exist (never stock, never invented). The single
+ * most "designed" moment on the page after the hero.
+ */
+export function QuoteBand() {
+  const photo = site.photos[1] ?? site.photos[0];
+  const quote = [...site.reviews].filter((r) => r.rating >= 4).sort((a, b) => a.text.length - b.text.length)[0];
+  if (!photo || !quote) return null;
+  const text = quote.text.length > 190 ? quote.text.slice(0, 180).replace(/\s+\S*$/, "") + "..." : quote.text;
+  return (
+    <section aria-label="Customer quote" className="photo-grade relative overflow-hidden">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={photo.src} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+      <div aria-hidden className="absolute inset-0 z-[2]" style={{ background: "linear-gradient(100deg, rgb(var(--ink) / 0.92) 0%, rgb(var(--ink) / 0.55) 55%, rgb(var(--ink) / 0.25) 100%)" }} />
+      <div className="relative z-[3] mx-auto max-w-6xl px-5 py-24 md:py-36">
+        <Reveal>
+          <p className="text-amber-400" aria-label={`${quote.rating} out of 5 stars`}>{"★".repeat(Math.round(quote.rating))}</p>
+          <blockquote className="mt-5 max-w-3xl font-display text-3xl font-extrabold leading-tight tracking-tight text-white md:text-5xl">
+            &ldquo;{text}&rdquo;
+          </blockquote>
+          <figcaption className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-white/60">
+            {quote.author} · Google review
+          </figcaption>
+        </Reveal>
       </div>
     </section>
   );

@@ -49,16 +49,26 @@ function curateReviews(raw: unknown): Review[] {
     .map((r) => (r.text.length > 420 ? { ...r, text: r.text.slice(0, 400).replace(/\s+\S*$/, "").trimEnd() + "..." } : r));
 }
 
-async function downloadPhotos(photoNames: string[], destDir: string): Promise<{ src: string; alt: string }[]> {
+async function downloadPhotos(leadId: string, photoNames: string[], destDir: string): Promise<{ src: string; alt: string }[]> {
   const photos: { src: string; alt: string }[] = [];
   if (photoNames.length === 0) return photos;
   const photosDir = resolve(destDir, "public/photos");
   mkdirSync(photosDir, { recursive: true });
+  // Per-lead byte cache OUTSIDE the build dir. Rebuilds used to rmSync the build dir and re-fetch
+  // every photo from Places — one fleet rebuild burned the entire 200/day cap re-downloading the
+  // SAME photos, and later builds silently shipped photo-less (2026-07-12). Cached bytes survive
+  // every rebuild; Places is only touched for photos never fetched before.
+  const cacheDir = resolve(process.cwd(), "data", "photos", leadId);
+  mkdirSync(cacheDir, { recursive: true });
   for (let i = 0; i < Math.min(photoNames.length, MAX_PHOTOS); i++) {
+    const outName = `photo-${i + 1}.jpg`;
+    const cachePath = resolve(cacheDir, outName);
     try {
-      const bytes = await fetchPhotoBytes(photoNames[i], 1280);
-      const outName = `photo-${i + 1}.jpg`;
-      writeFileSync(resolve(photosDir, outName), bytes);
+      if (!existsSync(cachePath)) {
+        const bytes = await fetchPhotoBytes(photoNames[i], 1280);
+        writeFileSync(cachePath, bytes);
+      }
+      cpSync(cachePath, resolve(photosDir, outName));
       photos.push({ src: `/photos/${outName}`, alt: "Real photo of the team's work" });
     } catch {
       // cap hit or fetch failure: skip this photo. The template renders an honest empty-gallery
@@ -172,7 +182,12 @@ export async function builder(leadId: string): Promise<void> {
 
   const reviews = curateReviews(leadReviews);
   const photoNames = (Array.isArray(leadPhotos) ? leadPhotos : []).map((p: any) => (typeof p === "string" ? p : p?.name)).filter(Boolean);
-  const photos = await downloadPhotos(photoNames, destDir);
+  const photos = await downloadPhotos(leadId, photoNames, destDir);
+  if (photos.length === 0 && photoNames.length > 0) {
+    // marker for the self-heal loop: this demo shipped photo-less only because fetches failed
+    // (usually the daily Places cap); requeue it when headroom returns.
+    await emitEvent({ agent: "builder", leadId, level: "warn", type: "build.no_photos", message: `${photoNames.length} photos on the lead, none fetched (cap or fetch failure)` });
+  }
 
   const look = design.brand ?? {};
   const palette = look.palette ?? { brand: "180 56 13", brandInk: "255 255 255", ink: "16 24 31", paper: "250 247 242", paper2: "241 235 226" };

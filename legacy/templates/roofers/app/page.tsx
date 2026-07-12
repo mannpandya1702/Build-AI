@@ -1,5 +1,5 @@
-import Hero from "../components/Hero";
-import { Services, StormBand, Process, Gallery, Reviews, Faq, Contact } from "../components/Sections";
+import Hero, { StatsCard } from "../components/Hero";
+import { Services, StormBand, Process, Gallery, QuoteBand, Reviews, Faq, Contact } from "../components/Sections";
 import QuoteForm from "../components/QuoteForm";
 import { site, telHref } from "../lib/content";
 
@@ -12,10 +12,12 @@ export default function Page() {
   return (
     <main className="pb-24 md:pb-0">
       <Hero />
+      <StatsCard />
       <StormBand />
       <Services />
       <Process />
       <Gallery />
+      <QuoteBand />
       <Reviews />
 
       {/* The offer: the page's second dark anchor. The white form card pops on ink; a brand glow

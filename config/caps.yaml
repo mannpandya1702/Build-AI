@@ -1,5 +1,5 @@
 # Hard limits (spec §4.5). Hitting a cap pauses that resource and notifies; never silently drops.
-places_calls_per_day: 200
+places_calls_per_day: 400   # raised 2026-07-12: photo restore after cache-less rebuilds burned a day (photo media ~$7/1000 calls)
 # Operator decision 2026-07-11: mann@tradecraftsites.com (the MAIN domain mailbox) is the outreach
 # mailbox. Warm-up ramp protects the domain's reputation: 10/day now; raise toward 25 after ~2
 # clean weeks (watch bounces + complaints in the Resend dashboard before each raise).

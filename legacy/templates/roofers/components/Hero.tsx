@@ -104,17 +104,21 @@ function Ctas({ center = false, tone = "dark" }: { center?: boolean; tone?: Tone
   );
 }
 
-function StatsStrip({ stagger, tone = "dark" }: { stagger: ReturnType<typeof useStagger>; tone?: Tone }) {
+/** Floating glass trust card, rendered by page.tsx overlapping the hero's bottom edge — the
+ *  overlap composition that separates "designed" from "stacked bands". Tone follows the hero. */
+export function StatsCard() {
+  const stagger = useStagger();
   if (site.rating == null && site.reviewCount == null) return null;
-  const light = tone === "light";
+  const light = site.theme.heroVariant === "paper";
   const num = light ? "text-ink" : "text-white";
   const label = light ? "text-ink/50" : "text-white/50";
   return (
-    <motion.div
-      {...stagger(4)}
-      className={`relative z-10 border-t backdrop-blur-md ${light ? "border-ink/10 bg-paper2/80" : "border-white/10 bg-ink/60"}`}
-    >
-      <div className={`mx-auto grid max-w-6xl grid-cols-3 divide-x px-2 py-5 md:py-6 ${light ? "divide-ink/10" : "divide-white/10"}`}>
+    <div className="relative z-20 mx-auto -mt-10 max-w-4xl px-5 md:-mt-14">
+      <motion.div
+        {...stagger(4)}
+        className={`rounded-2xl border shadow-2xl backdrop-blur-xl ${light ? "border-ink/10 bg-paper/85" : "border-white/10 bg-ink/75"}`}
+      >
+      <div className={`grid grid-cols-3 divide-x px-2 py-5 md:py-7 ${light ? "divide-ink/10" : "divide-white/10"}`}>
         {site.rating != null && (
           <div className="px-3 text-center">
             <p className={`font-display text-2xl font-extrabold md:text-4xl ${num}`}>
@@ -137,7 +141,8 @@ function StatsStrip({ stagger, tone = "dark" }: { stagger: ReturnType<typeof use
           <p className={`mt-1 text-xs font-semibold uppercase tracking-wide md:text-sm ${label}`}>Local &amp; nearby</p>
         </div>
       </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }
 
@@ -186,7 +191,7 @@ function HeroPhoto({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
         <motion.p {...stagger(0)} className="font-display text-sm font-medium uppercase tracking-[0.2em] text-white/70">
           {site.businessName}
         </motion.p>
-        <motion.h1 {...stagger(1)} className="mt-4 max-w-3xl font-display text-5xl font-extrabold leading-[0.98] tracking-tight md:text-7xl">
+        <motion.h1 {...stagger(1)} className="mt-4 max-w-4xl font-display text-5xl font-extrabold leading-[0.95] tracking-tight md:text-8xl">
           <WordReveal text={`${site.primaryService} in ${site.city}, ${site.state}`} delay={0.12} />
         </motion.h1>
         <motion.p {...stagger(2)} className="mt-5 max-w-xl text-lg text-white/85 md:text-xl">
@@ -226,7 +231,7 @@ function HeroSplit({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
         </div>
         {site.heroPhoto && (
           <motion.div {...stagger(2)} className="hidden md:block">
-            <Tilt className="relative overflow-hidden rounded-3xl ring-1 ring-white/20">
+            <Tilt className="photo-grade relative overflow-hidden rounded-3xl ring-1 ring-white/20">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={site.heroPhoto} alt={`Work by ${site.businessName}`} className="aspect-[4/5] w-full object-cover" fetchPriority="high" />
             </Tilt>
@@ -248,7 +253,7 @@ function HeroBold({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
         <motion.p {...stagger(0)} className="font-display text-sm font-medium uppercase tracking-[0.3em] text-white/70">
           {site.businessName}
         </motion.p>
-        <motion.h1 {...stagger(1)} className="mx-auto mt-5 max-w-4xl font-display text-5xl font-bold leading-[0.98] tracking-tight md:text-8xl">
+        <motion.h1 {...stagger(1)} className="mx-auto mt-5 max-w-4xl font-display text-5xl font-bold leading-[0.95] tracking-tight md:text-9xl">
           <WordReveal text={`${site.primaryService} in ${site.city}, ${site.state}`} delay={0.12} />
         </motion.h1>
         <motion.p {...stagger(2)} className="mx-auto mt-6 max-w-xl text-lg text-white/85 md:text-xl">
@@ -276,7 +281,7 @@ function HeroFrame({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
         <motion.p {...stagger(0)} className="font-display text-sm font-medium uppercase tracking-[0.2em] text-white/70">
           {site.businessName}
         </motion.p>
-        <motion.h1 {...stagger(1)} className="mt-4 max-w-3xl font-display text-5xl font-extrabold leading-[0.98] tracking-tight md:text-7xl">
+        <motion.h1 {...stagger(1)} className="mt-4 max-w-4xl font-display text-5xl font-extrabold leading-[0.95] tracking-tight md:text-8xl">
           <WordReveal text={`${site.primaryService} in ${site.city}, ${site.state}`} delay={0.12} />
         </motion.h1>
         <motion.p {...stagger(2)} className="mt-5 max-w-xl text-lg text-white/85 md:text-xl">
@@ -288,7 +293,7 @@ function HeroFrame({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
         </motion.div>
         {site.heroPhoto && (
           <motion.div {...stagger(4)} className="mt-12">
-            <Tilt max={4} className="relative overflow-hidden rounded-3xl ring-1 ring-white/20 shadow-2xl">
+            <Tilt max={4} className="photo-grade relative overflow-hidden rounded-3xl ring-1 ring-white/20 shadow-2xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={site.heroPhoto}
@@ -365,7 +370,6 @@ export default function Hero() {
       ) : (
         <HeroPhoto stagger={stagger} />
       )}
-      <StatsStrip stagger={stagger} tone={tone} />
     </header>
   );
 }
