@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useReducedMotionSafe, ImageReveal } from "./Motion";
 import FaqAccordion from "./FaqAccordion";
+import { PropField, propIdByIndex } from "./Props";
 import { site, telHref, mapEmbedUrl } from "../lib/content";
 
 // A single scroll-reveal wrapper reused across sections. Respects reduced motion.
@@ -109,6 +110,10 @@ export function StormBand() {
               "linear-gradient(150deg, color-mix(in srgb, rgb(var(--ink)) 72%, rgb(var(--brand)) 28%) 0%, color-mix(in srgb, rgb(var(--ink)) 55%, rgb(8 6 5) 45%) 100%)",
           }}
         >
+          <PropField
+            tone="dark"
+            placements={[{ prop: propIdByIndex(4)!, at: { right: "4%", bottom: "-6%" }, size: 150, depth: 0.5, rotate: -6 }]}
+          />
           {/* storm glow, alive (§5c atmosphere) */}
           <div
             aria-hidden
@@ -167,8 +172,15 @@ function ProcessPinned() {
   const rail = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
   return (
     <div ref={ref} className="relative hidden md:block" style={{ height: "260vh" }}>
-      <div className="sticky top-0 flex h-screen flex-col justify-center">
-        <div className="mx-auto w-full max-w-6xl px-5">
+      <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
+        <PropField
+          tone="light"
+          placements={[
+            { prop: propIdByIndex(3)!, at: { left: "-2%", bottom: "8%" }, size: 150, depth: 0.4, rotate: 8 },
+            { prop: propIdByIndex(1)!, at: { right: "5%", top: "14%" }, size: 70, depth: 0.6, rotate: -22 },
+          ]}
+        />
+        <div className="relative mx-auto w-full max-w-6xl px-5">
           <SectionTitle index="02" kicker="How it works" title="Three steps. That's it." />
           <div className="mt-6 h-0.5 w-full overflow-hidden rounded-full bg-ink/10">
             <motion.div className="h-full rounded-full bg-brand" style={{ width: rail }} />

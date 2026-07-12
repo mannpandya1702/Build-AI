@@ -355,6 +355,24 @@ contract). Shipped in passes, each render-QA'd both motion modes, fleets rebuilt
 - Sales rebuild guard: leads re-entering outreach_ready with an existing Touch-1 restore their
   stage silently (no duplicate drafts/notifications on rebuilds).
 
+## Niche prop system (2026-07-12, operator directive: cula.tech floating-trucks analog)
+
+Operator: "similar like the trucks... with hammers nails and plywoods and other roofing related
+stuff for roofing niche and similar kind according to niche." Shipped:
+- 24 hand-authored SVG line-art props (workflow-verified, all 24 visually reviewed on a grid):
+  roofing (hammer, nail, shingle, plywood, gable, ladder), plumbing (wrench, pipe, droplet,
+  valve, plunger, gauge), hvac (fan, thermostat, flame, snowflake, duct, filter), dental (tooth,
+  toothbrush, mirror, shield, sparkle, floss). currentColor stroke so every look tints them free;
+  zero image bytes, zero WebGL — mobile 2.5s budget untouched.
+- `lib/props.ts` (server-safe: page.tsx imports it too) holds the sets + `propIdByIndex()` slot
+  mapper so placements are niche-agnostic: slot 0 is hammer for roofing, wrench for plumbing.
+- `components/Props.tsx` (client): `PropField` renders placements with scroll parallax by depth,
+  slow 3D tumble (rotateX/Y + drift, 9-14s), blur on far props, opacity 0.06-0.14. aria-hidden,
+  pointer-events-none, inert under reduced motion.
+- Fields live in the hero backdrop (both dark and paper variants), storm band, pinned process,
+  and quote band. Render-QA'd: props read as atmosphere behind content, never over it (§5c).
+- Deploys to live demos with the unified fleet rebuild once the Vercel daily deploy limit resets.
+
 ## INCIDENT 2026-07-10/11 (orphaned Outbox approvals) + structural fixes
 
 Fallout from the 07-10 pause leak: the two prematurely-drafted Touch-1 emails (James Kate

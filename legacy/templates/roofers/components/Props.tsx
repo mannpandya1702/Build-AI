@@ -8,12 +8,8 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useReducedMotionSafe } from "./Motion";
-import { site } from "../lib/content";
-import { PROP_SETS, type PropSpec } from "../lib/props";
-
-function setForNiche(): Record<string, PropSpec> {
-  return PROP_SETS[site.niche ?? "roofing"] ?? PROP_SETS.roofing;
-}
+import { setForNiche } from "../lib/props";
+export { propIdByIndex } from "../lib/props";
 
 export function Prop({ id, size = 64, className }: { id: string; size?: number; className?: string }) {
   const spec = setForNiche()[id];
@@ -67,7 +63,7 @@ function FloatingProp({ p, tone, i }: { p: Placement; tone: "dark" | "light"; i:
       style={{
         ...p.at,
         y: drift,
-        opacity: 0.05 + p.depth * 0.07,
+        opacity: 0.06 + p.depth * 0.08,
         filter: p.depth < 0.55 ? "blur(1.1px)" : undefined,
         rotate: p.rotate ?? 0,
       }}

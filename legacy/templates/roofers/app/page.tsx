@@ -1,6 +1,8 @@
 import Hero, { StatsCard, PillNav, BrandMark } from "../components/Hero";
 import { Services, StormBand, Process, Gallery, QuoteBand, Reviews, Faq, Contact } from "../components/Sections";
 import QuoteForm from "../components/QuoteForm";
+import { PropField } from "../components/Props";
+import { propIdByIndex } from "../lib/props";
 import { site, telHref } from "../lib/content";
 
 // Home follows the validated narrative order (CLAUDE.md §5b): hook (hero with the stats strip at
@@ -24,6 +26,10 @@ export default function Page() {
       {/* The offer: the page's second dark anchor. The white form card pops on ink; a brand glow
           keeps the band from reading flat (§5b-bis: this dark differs from the hero's). */}
       <section id="quote" className="texture-shingle relative overflow-hidden bg-ink py-20 text-white md:py-28">
+        <PropField
+          tone="dark"
+          placements={[{ prop: propIdByIndex(5)!, at: { right: "2%", top: "10%" }, size: 160, depth: 0.45, rotate: 6 }]}
+        />
         <div
           aria-hidden
           className="glow-drift absolute -right-1/4 -top-1/2 h-[160%] w-[80%]"

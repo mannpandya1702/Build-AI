@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { site, telHref } from "../lib/content";
 import { Tilt, Parallax, CountUp, WordReveal, Magnetic, useReducedMotionSafe } from "./Motion";
+import { PropField, propIdByIndex } from "./Props";
 
 // The one hero moment (CLAUDE.md §5c) in five structural variants (CLAUDE.md §5d: per-lead
 // differentiation). "photo"/"split"/"bold" are dark atmosphere heroes; "frame" presents the photo
@@ -212,6 +213,15 @@ function GradientBackdrop() {
         className="glow-drift absolute -left-1/4 -top-1/3 h-[120%] w-[90%]"
         style={{ background: "radial-gradient(closest-side, rgb(var(--brand) / 0.45) 0%, transparent 70%)" }}
       />
+      {/* the trade's own tools drift through the atmosphere (cula-style niche props, §5c) */}
+      <PropField
+        tone="dark"
+        placements={[
+          { prop: propIdByIndex(0)!, at: { left: "46%", top: "7%" }, size: 112, depth: 0.9, rotate: 10 },
+          { prop: propIdByIndex(2)!, at: { left: "7%", bottom: "7%" }, size: 84, depth: 0.5, rotate: -8 },
+          { prop: propIdByIndex(1)!, at: { left: "40%", top: "48%" }, size: 54, depth: 0.35, rotate: 24 },
+        ]}
+      />
     </div>
   );
 }
@@ -370,6 +380,13 @@ function HeroPaper({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
         aria-hidden
         className="absolute inset-0"
         style={{ background: "radial-gradient(80% 60% at 0% 0%, rgb(var(--brand) / 0.08) 0%, transparent 55%)" }}
+      />
+      <PropField
+        tone="light"
+        placements={[
+          { prop: propIdByIndex(0)!, at: { left: "44%", top: "10%" }, size: 96, depth: 0.55, rotate: 14 },
+          { prop: propIdByIndex(1)!, at: { left: "6%", bottom: "10%" }, size: 60, depth: 0.35, rotate: -18 },
+        ]}
       />
       <div className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 pb-14 pt-12 md:grid-cols-[1.15fr_1fr] md:pb-20 md:pt-16">
         <div>
