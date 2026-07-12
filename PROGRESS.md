@@ -337,6 +337,24 @@ Operator: demos shipped identical template text (same four service blurbs, same 
   business (Sercon: patio covers + HOA help; We Roof Dallas: commercial + multifamily; White
   Rock: gutters). Same accountability trail: copy.generated/copy.fallback events per build.
 
+## Premium visual layer (2026-07-12, operator directives from the Website Mastery blueprint)
+
+Operator supplied a 27-page blueprint; audited against the pipeline (section framework, factory
+model, skill+21st stack were already ours; SaaS aesthetics + invented pricing rejected per
+contract). Shipped in passes, each render-QA'd both motion modes, fleets rebuilt (0 failures):
+- Anchor nav in the hero top bar (content-aware links), testimonial hover lift, tile hovers.
+- Motion kit (Motion.tsx): 3D pointer tilt + glare on hero photos, scroll parallax, drifting
+  brand glows, count-up stats, word-by-word headline reveal, magnetic primary CTA, gallery image
+  wipes. GPU transforms only — no WebGL (mobile 2.5s budget), no new deps.
+  useReducedMotionSafe fixed a PRE-EXISTING hydration error for reduced-motion users.
+- 21st.dev FAQ accordion (Interactive Accordion, contract-restyled to per-lead tokens).
+- Color: uiux detects the business's OWN brand hue from their site screenshot (Sonnet vision) and
+  prefers the nearest free look (<=60deg; uniqueness still outranks); design records
+  brand_color_detected. Template: derived --brand-deep gradient CTAs; storm band dark now mixed
+  per look from ink+brand (was one hardcoded warm black, clashing on cool looks).
+- Sales rebuild guard: leads re-entering outreach_ready with an existing Touch-1 restore their
+  stage silently (no duplicate drafts/notifications on rebuilds).
+
 ## INCIDENT 2026-07-10/11 (orphaned Outbox approvals) + structural fixes
 
 Fallout from the 07-10 pause leak: the two prematurely-drafted Touch-1 emails (James Kate
