@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useReducedMotionSafe, ImageReveal } from "./Motion";
+import FaqAccordion from "./FaqAccordion";
 import { site, telHref, mapEmbedUrl } from "../lib/content";
 
 // A single scroll-reveal wrapper reused across sections. Respects reduced motion.
@@ -318,17 +319,9 @@ export function Faq() {
     <section className="bg-paper2 py-20 md:py-28">
       <div className="mx-auto max-w-3xl px-5">
         <SectionTitle kicker="Questions" title="Before you call" />
-        <div className="mt-8 divide-y divide-ink/10">
-          {site.faq.map((f) => (
-            <Reveal key={f.q} className="py-5 pl-5" >
-              <div className="relative">
-                <span aria-hidden className="absolute -left-5 top-1 h-4 w-1 rounded-full bg-brand/60" />
-                <h3 className="font-display text-lg font-extrabold text-ink">{f.q}</h3>
-                <p className="mt-2 text-ink/70">{f.a}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
+        <Reveal className="mt-8">
+          <FaqAccordion />
+        </Reveal>
       </div>
     </section>
   );
