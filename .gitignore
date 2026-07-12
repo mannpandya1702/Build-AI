@@ -31,3 +31,4 @@ templates/*/out/
 
 # TS incremental build info
 *.tsbuildinfo
+apps/worker/data/
