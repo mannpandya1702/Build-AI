@@ -292,8 +292,19 @@ export async function builder(leadId: string): Promise<void> {
   } catch (err) {
     await pool.query("update builds set status='failed' where id=$1", [buildId]);
     await emitEvent({ agent: "builder", leadId, level: "error", type: "build.failed", message: (err as Error).message });
+    // A REBUILD failing (deploy limit, transient Vercel outage) must never strand or churn the
+    // lead: the previous demo is still live, so fall back to it (sales' rebuild guard restores the
+    // exact prior stage). Observed 2026-07-12: the Vercel daily deploy cap turned 7 cosmetic
+    // rebuilds into a retry+notification storm that also re-burned copy LLM calls per attempt.
+    const previous = await pool.query<{ n: string }>(
+      "select count(*)::text n from builds where lead_id=$1 and kind=$2 and deploy_url like 'https://%'", [leadId, kind]);
+    if (kind === "demo" && Number(previous.rows[0].n) > 0) {
+      await advanceLead(leadId, "outreach_ready", { agent: "builder" });
+      await emitEvent({ agent: "builder", leadId, level: "warn", type: "build.deferred", message: "rebuild deploy failed; falling back to the existing live demo (will catch up on a later rebuild)" });
+      return;
+    }
     await notifyOperator({ type: "build_failed", title: `${lead.company_name}: ${kind} deploy failed`, leadId });
-    return; // stays in *_building; operator sees it. No retry storm.
+    return; // fresh build stays in *_building; operator sees it. No retry storm.
   }
 
   await pool.query("update builds set status='deployed', deploy_url=$2, vercel_deployment_id=$3 where id=$1", [buildId, deploy.url, deploy.deploymentId]);

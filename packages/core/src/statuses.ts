@@ -42,7 +42,7 @@ export const TRANSITIONS: Record<LeadStatus, readonly LeadStatus[]> = {
   analyzed: ["solution_ready"],
   solution_ready: ["design_ready"],
   design_ready: ["demo_building"],
-  demo_building: ["demo_qa"],
+  demo_building: ["demo_qa", "outreach_ready"], // outreach_ready = rebuild-deploy failure falls back to the live demo (builder)
   demo_qa: ["outreach_ready", "demo_building"], // QA fail loops back to builder
   outreach_ready: ["awaiting_approval", "contacted"], // review mode vs auto mode
   awaiting_approval: ["contacted", "outreach_ready"], // approve, or reject back to drafting
