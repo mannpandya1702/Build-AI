@@ -97,6 +97,75 @@ export function Parallax({ children, className, amount = 60 }: { children: React
   );
 }
 
+/** Word-by-word headline entrance: each word rises through an overflow mask, one orchestrated
+ *  moment (§5c). Constant tree; reduced motion renders words at rest via zero-duration spans. */
+export function WordReveal({ text, delay = 0 }: { text: string; delay?: number }) {
+  const reduce = useReducedMotionSafe();
+  const words = text.split(" ");
+  return (
+    <span aria-label={text}>
+      {words.map((w, i) => (
+        <span key={`${w}-${i}`} aria-hidden className="inline-block overflow-hidden pb-[0.08em] align-bottom">
+          <motion.span
+            className="inline-block"
+            initial={{ y: "105%" }}
+            animate={{ y: 0 }}
+            transition={reduce ? { duration: 0 } : { duration: 0.6, delay: delay + i * 0.07, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {w}
+            {i < words.length - 1 ? " " : ""}
+          </motion.span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** Magnetic pull: the element eases toward the cursor within a small radius and springs back.
+ *  The premium micro-interaction for the ONE primary CTA — never more than one per view. */
+export function Magnetic({ children, className, strength = 0.25 }: { children: React.ReactNode; className?: string; strength?: number }) {
+  const reduce = useReducedMotionSafe();
+  const ref = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const sx = useSpring(x, { stiffness: 220, damping: 18 });
+  const sy = useSpring(y, { stiffness: 220, damping: 18 });
+  function onMove(e: React.MouseEvent<HTMLDivElement>) {
+    if (reduce) return;
+    const el = ref.current;
+    if (!el) return;
+    const b = el.getBoundingClientRect();
+    x.set((e.clientX - (b.left + b.width / 2)) * strength);
+    y.set((e.clientY - (b.top + b.height / 2)) * strength);
+  }
+  function onLeave() {
+    x.set(0);
+    y.set(0);
+  }
+  return (
+    <motion.div ref={ref} onMouseMove={onMove} onMouseLeave={onLeave} style={{ x: sx, y: sy }} className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
+/** Cinematic image reveal: the photo wipes open (clip inset) with a settle-scale when it enters
+ *  view. Once, GPU-only, inert under reduced motion. */
+export function ImageReveal({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const reduce = useReducedMotionSafe();
+  return (
+    <motion.div
+      className={className}
+      initial={reduce ? false : { clipPath: "inset(12% 12% 12% 12% round 12px)", scale: 1.08, opacity: 0 }}
+      whileInView={{ clipPath: "inset(0% 0% 0% 0% round 12px)", scale: 1, opacity: 1 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={reduce ? { duration: 0 } : { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 /** Count-up number when it enters view (rating, review count). Static under reduced motion. */
 export function CountUp({ value, decimals = 0 }: { value: number; decimals?: number }) {
   const reduce = useReducedMotionSafe();

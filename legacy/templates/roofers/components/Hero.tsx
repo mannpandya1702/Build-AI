@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { site, telHref } from "../lib/content";
-import { Tilt, Parallax, CountUp, useReducedMotionSafe } from "./Motion";
+import { Tilt, Parallax, CountUp, WordReveal, Magnetic, useReducedMotionSafe } from "./Motion";
 
 // The one hero moment (CLAUDE.md §5c) in five structural variants (CLAUDE.md §5d: per-lead
 // differentiation). "photo"/"split"/"bold" are dark atmosphere heroes; "frame" presents the photo
@@ -76,12 +76,14 @@ function Ctas({ center = false, tone = "dark" }: { center?: boolean; tone?: Tone
   return (
     <div className={`flex flex-col gap-3 sm:flex-row ${center ? "sm:justify-center" : ""}`}>
       {href ? (
-        <a
-          href={href}
-          className="flex min-h-tap items-center justify-center rounded-full bg-brand px-8 py-3.5 font-display text-lg font-extrabold text-brandink shadow-cta transition-all hover:-translate-y-0.5 active:scale-95"
-        >
-          Call {site.phone}
-        </a>
+        <Magnetic>
+          <a
+            href={href}
+            className="flex min-h-tap items-center justify-center rounded-full bg-brand px-8 py-3.5 font-display text-lg font-extrabold text-brandink shadow-cta transition-all hover:-translate-y-0.5 active:scale-95"
+          >
+            Call {site.phone}
+          </a>
+        </Magnetic>
       ) : (
         <a
           href="#quote"
@@ -185,7 +187,7 @@ function HeroPhoto({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
           {site.businessName}
         </motion.p>
         <motion.h1 {...stagger(1)} className="mt-4 max-w-3xl font-display text-5xl font-extrabold leading-[0.98] tracking-tight md:text-7xl">
-          {site.primaryService} in {site.city}, {site.state}
+          <WordReveal text={`${site.primaryService} in ${site.city}, ${site.state}`} delay={0.12} />
         </motion.h1>
         <motion.p {...stagger(2)} className="mt-5 max-w-xl text-lg text-white/85 md:text-xl">
           {SUBLINE}
@@ -212,7 +214,7 @@ function HeroSplit({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
             {site.businessName}
           </motion.p>
           <motion.h1 {...stagger(1)} className="mt-4 font-display text-5xl font-extrabold leading-[0.98] tracking-tight md:text-6xl">
-            {site.primaryService} in {site.city}, {site.state}
+            <WordReveal text={`${site.primaryService} in ${site.city}, ${site.state}`} delay={0.12} />
           </motion.h1>
           <motion.p {...stagger(2)} className="mt-5 max-w-xl text-lg text-white/85">
             {SUBLINE}
@@ -247,7 +249,7 @@ function HeroBold({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
           {site.businessName}
         </motion.p>
         <motion.h1 {...stagger(1)} className="mx-auto mt-5 max-w-4xl font-display text-5xl font-bold leading-[0.98] tracking-tight md:text-8xl">
-          {site.primaryService} in {site.city}, {site.state}
+          <WordReveal text={`${site.primaryService} in ${site.city}, ${site.state}`} delay={0.12} />
         </motion.h1>
         <motion.p {...stagger(2)} className="mx-auto mt-6 max-w-xl text-lg text-white/85 md:text-xl">
           {SUBLINE}
@@ -275,7 +277,7 @@ function HeroFrame({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
           {site.businessName}
         </motion.p>
         <motion.h1 {...stagger(1)} className="mt-4 max-w-3xl font-display text-5xl font-extrabold leading-[0.98] tracking-tight md:text-7xl">
-          {site.primaryService} in {site.city}, {site.state}
+          <WordReveal text={`${site.primaryService} in ${site.city}, ${site.state}`} delay={0.12} />
         </motion.h1>
         <motion.p {...stagger(2)} className="mt-5 max-w-xl text-lg text-white/85 md:text-xl">
           {SUBLINE}
@@ -319,7 +321,7 @@ function HeroPaper({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
             {site.businessName}
           </motion.p>
           <motion.h1 {...stagger(1)} className="mt-4 font-display text-5xl font-extrabold leading-[0.98] tracking-tight text-ink md:text-7xl">
-            {site.primaryService} in {site.city}, {site.state}
+            <WordReveal text={`${site.primaryService} in ${site.city}, ${site.state}`} delay={0.12} />
           </motion.h1>
           <motion.div {...stagger(1)} aria-hidden className="mt-6 h-1 w-16 rounded-full bg-brand" />
           <motion.p {...stagger(2)} className="mt-6 max-w-xl text-lg text-ink/70 md:text-xl">

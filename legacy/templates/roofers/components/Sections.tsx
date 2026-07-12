@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useReducedMotionSafe } from "./Motion";
+import { useReducedMotionSafe, ImageReveal } from "./Motion";
 import { site, telHref, mapEmbedUrl } from "../lib/content";
 
 // A single scroll-reveal wrapper reused across sections. Respects reduced motion.
@@ -227,7 +227,7 @@ export function Gallery() {
         <SectionTitle kicker="Recent work" title={`On roofs around ${site.city}`} />
         <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-3">
           {site.photos.map((p, i) => (
-            <Reveal key={p.src} delay={i * 0.04} className="overflow-hidden rounded-xl">
+            <ImageReveal key={`${i}-${p.src}`} delay={i * 0.06} className="overflow-hidden rounded-xl">
               {/* Real GBP photo. loading=lazy keeps the mobile speed budget (CLAUDE.md §5b). */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -236,7 +236,7 @@ export function Gallery() {
                 loading="lazy"
                 className="aspect-square w-full object-cover transition-transform duration-500 hover:scale-105"
               />
-            </Reveal>
+            </ImageReveal>
           ))}
         </div>
         <p className="mt-4 text-sm text-ink/50">Photos from our Google Business Profile.</p>
