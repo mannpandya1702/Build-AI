@@ -85,7 +85,7 @@ export default function QuoteForm() {
       <button
         type="submit"
         disabled={status === "submitting"}
-        className="min-h-tap w-full rounded-full bg-brand py-3 font-display text-lg font-extrabold text-brandink shadow-lg transition-transform active:scale-95 disabled:opacity-60"
+        className="min-h-tap w-full rounded-full bg-gradient-to-b from-brand to-branddeep py-3 font-display text-lg font-extrabold text-brandink shadow-lg transition-transform active:scale-95 disabled:opacity-60"
       >
         {status === "submitting" ? "Sending..." : "Get my free quote"}
       </button>

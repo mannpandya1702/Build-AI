@@ -90,8 +90,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const displayVar = (t.displayFont && FONT_VARS[t.displayFont]) || legacy.display;
   const bodyVar = (t.bodyFont && FONT_VARS[t.bodyFont]) || legacy.body;
   // The whole look flows from these variables: palette channels + font pair (CLAUDE.md §5d).
+  // Derived depth shade: the same hue, darkened, for CTA gradients (one accent family, §5b-bis).
+  const brandDeep = t.palette.brand
+    .split(" ")
+    .map((c: string) => String(Math.max(0, Math.round(Number(c) * 0.68))))
+    .join(" ");
   const themeStyle = {
     ["--brand" as string]: t.palette.brand,
+    ["--brand-deep" as string]: brandDeep,
     ["--brand-ink" as string]: t.palette.brandInk,
     ["--ink" as string]: t.palette.ink,
     ["--paper" as string]: t.palette.paper,

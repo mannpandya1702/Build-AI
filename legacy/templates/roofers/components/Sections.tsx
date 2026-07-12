@@ -103,7 +103,12 @@ export function StormBand() {
       <Reveal className="mx-auto max-w-6xl">
         <div
           className="texture-shingle relative overflow-hidden rounded-3xl text-white ring-1 ring-white/10"
-          style={{ background: "linear-gradient(150deg, rgb(26 14 9) 0%, rgb(15 9 6) 100%)" }}
+          style={{
+            // per-look storm dark: the lead's ink warmed by its own brand (a DIFFERENT dark than
+            // the hero's, per §5b-bis section rhythm), falling to near-black
+            background:
+              "linear-gradient(150deg, color-mix(in srgb, rgb(var(--ink)) 72%, rgb(var(--brand)) 28%) 0%, color-mix(in srgb, rgb(var(--ink)) 55%, rgb(8 6 5) 45%) 100%)",
+          }}
         >
           {/* storm glow, alive (§5c atmosphere) */}
           <div
@@ -126,14 +131,14 @@ export function StormBand() {
               {href ? (
                 <a
                   href={href}
-                  className="inline-flex min-h-tap items-center justify-center rounded-full bg-brand px-8 py-3 font-display text-lg font-extrabold text-brandink shadow-cta transition-transform hover:-translate-y-0.5 active:scale-95"
+                  className="inline-flex min-h-tap items-center justify-center rounded-full bg-gradient-to-b from-brand to-branddeep px-8 py-3 font-display text-lg font-extrabold text-brandink shadow-cta transition-transform hover:-translate-y-0.5 active:scale-95"
                 >
                   Get an inspection first
                 </a>
               ) : (
                 <a
                   href="#quote"
-                  className="inline-flex min-h-tap items-center justify-center rounded-full bg-brand px-8 py-3 font-display text-lg font-extrabold text-brandink shadow-cta"
+                  className="inline-flex min-h-tap items-center justify-center rounded-full bg-gradient-to-b from-brand to-branddeep px-8 py-3 font-display text-lg font-extrabold text-brandink shadow-cta"
                 >
                   Get an inspection first
                 </a>
@@ -347,14 +352,14 @@ export function Contact() {
             {href ? (
               <a
                 href={href}
-                className="mt-7 inline-flex min-h-tap items-center justify-center rounded-full bg-brand px-7 py-3 font-display text-lg font-extrabold text-brandink shadow-cta transition-transform hover:-translate-y-0.5 active:scale-95"
+                className="mt-7 inline-flex min-h-tap items-center justify-center rounded-full bg-gradient-to-b from-brand to-branddeep px-7 py-3 font-display text-lg font-extrabold text-brandink shadow-cta transition-transform hover:-translate-y-0.5 active:scale-95"
               >
                 Call {site.phone}
               </a>
             ) : (
               <a
                 href="#quote"
-                className="mt-7 inline-flex min-h-tap items-center justify-center rounded-full bg-brand px-7 py-3 font-display text-lg font-extrabold text-brandink shadow-cta"
+                className="mt-7 inline-flex min-h-tap items-center justify-center rounded-full bg-gradient-to-b from-brand to-branddeep px-7 py-3 font-display text-lg font-extrabold text-brandink shadow-cta"
               >
                 Get a free quote
               </a>

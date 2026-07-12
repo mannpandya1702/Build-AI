@@ -3,7 +3,7 @@
 // design; locked once the demo is sent), then Sonnet writes the hero copy + section intent from
 // VERIFIED facts only. Produces the `designs` row: brand (palette/fonts/tone/hero copy), sitemap,
 // and page_specs (the block sequence with per-block copy/data-source), all from @autopilot/blocks.
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { advanceLead, emitEvent, getPool, notifyOperator } from "@autopilot/core";
@@ -29,11 +29,34 @@ interface LookRow {
 /**
  * Assign a look for this lead (contract §5d). Precedence:
  * 1. If the design already has a LOCKED look (demo was sent), keep it, never reshuffle.
- * 2. Otherwise pick, deterministically by lead-id hash, a look for the preset that is NOT already
- *    used by another active (non-dead) lead's design in the same metro. Probe forward if taken.
+ * 2. Otherwise pick among looks NOT already used by another active lead's design in the same
+ *    metro. When the business's own brand hue was detected (§5b-bis: "derive the accent from...
+ *    the business's own branding if they have one"), prefer the free look whose brand hue is
+ *    closest to theirs; otherwise pick deterministically by lead-id hash. Probe forward if taken.
  * 3. Only when every look in the preset is taken in this metro is a reuse allowed (hash pick).
  */
-async function assignLook(leadId: string, preset: Preset, city: string | null): Promise<LookRow> {
+function hueOf(rgbTriplet: string): number | null {
+  const [r, g, b] = rgbTriplet.split(" ").map((v) => Number(v) / 255);
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+  if (d < 0.08) return null; // achromatic: no meaningful hue
+  let h: number;
+  if (max === r) h = ((g - b) / d) % 6;
+  else if (max === g) h = (b - r) / d + 2;
+  else h = (r - g) / d + 4;
+  return ((h * 60) + 360) % 360;
+}
+function hueDist(a: number, b: number): number {
+  const d = Math.abs(a - b);
+  return Math.min(d, 360 - d);
+}
+function hexToTriplet(hex: string): string | null {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  return `${(n >> 16) & 255} ${(n >> 8) & 255} ${n & 255}`;
+}
+
+async function assignLook(leadId: string, preset: Preset, city: string | null, preferredHue: number | null = null): Promise<LookRow> {
   const pool = getPool();
 
   const existing = await pool.query<{ look_id: string | null; look_locked: boolean }>(
@@ -60,12 +83,53 @@ async function assignLook(leadId: string, preset: Preset, city: string | null): 
   );
   const taken = new Set(takenRows.rows.map((r) => r.look_id));
 
+  const free = looks.filter((l) => !taken.has(l.id));
+  // Brand-hue preference: among FREE looks only (uniqueness always outranks brand matching).
+  if (preferredHue != null && free.length) {
+    const scored = free
+      .map((l) => ({ l, h: hueOf(l.palette.brand) }))
+      .filter((x): x is { l: LookRow; h: number } => x.h != null)
+      .sort((a, b) => hueDist(a.h, preferredHue) - hueDist(b.h, preferredHue));
+    if (scored.length && hueDist(scored[0].h, preferredHue) <= 60) return scored[0].l;
+  }
+
   const start = hashString(leadId) % looks.length;
   for (let step = 0; step < looks.length; step++) {
     const cand = looks[(start + step) % looks.length];
     if (!taken.has(cand.id)) return cand;
   }
   return looks[start]; // all taken in this metro: reuse is the only option
+}
+
+/** Detect the business's OWN brand accent color from their current site's rendered screenshot
+ *  (logo, header, buttons — not photos or backgrounds). Vision inference for a design choice,
+ *  never a factual claim on the page. Null when no screenshot, no distinct brand color, or mock. */
+async function detectBrandHue(leadId: string): Promise<{ hue: number; hex: string } | null> {
+  if (MOCK()) return null;
+  const shot = ["desktop.png", "mobile.png"]
+    .map((f) => resolve(process.cwd(), "data", "screenshots", leadId, f))
+    .find((p) => existsSync(p));
+  if (!shot) return null;
+  try {
+    const raw = await llm({
+      tier: "sonnet",
+      agent: "uiux",
+      leadId,
+      maxTokens: 120,
+      images: [shot],
+      system: `You identify a business's brand accent color from a screenshot of their website. Look at their logo, header, and buttons — NOT photos, backgrounds, or browser chrome. Return ONLY JSON: {"hex": "#rrggbb"} for a clearly distinct brand color, or {"hex": null} if the site is generic white/gray/black with no owned accent, or if the page shows an error/security screen.`,
+      prompt: "The attached image is the business's current website. What is their brand accent color?",
+      mockResponse: '{"hex": null}',
+    });
+    const hex = (safeJson(raw) as { hex?: string | null })?.hex;
+    if (!hex) return null;
+    const triplet = hexToTriplet(hex);
+    if (!triplet) return null;
+    const hue = hueOf(triplet);
+    return hue == null ? null : { hue, hex };
+  } catch {
+    return null;
+  }
 }
 
 export async function uiux(leadId: string): Promise<void> {
@@ -88,7 +152,10 @@ export async function uiux(leadId: string): Promise<void> {
     await notifyOperator({ type: "preset_not_live", title: `${lead.company_name}: ${preset.label} template not built yet`, leadId });
   }
 
-  const look = await assignLook(leadId, preset, lead.city);
+  // §5b-bis: prefer a look in the business's OWN brand color family when one is detectable from
+  // their current site. Uniqueness in the metro still outranks the match (free looks only).
+  const brandColor = await detectBrandHue(leadId);
+  const look = await assignLook(leadId, preset, lead.city, brandColor?.hue ?? null);
 
   // Ground the design in the ui-ux-pro-max skill (CLAUDE.md §9): product reasoning, the landing
   // conversion pattern, and UX guidelines for this niche. The skill INFORMS the copy + section
@@ -169,6 +236,8 @@ export async function uiux(leadId: string): Promise<void> {
     preset_live: preset.live,
     // provenance: whether this design was grounded in the ui-ux-pro-max skill (CLAUDE.md §9).
     skill_grounded: skillGrounded,
+    // their own brand color, when detected from their current site (drives the look-family match)
+    brand_color_detected: brandColor?.hex ?? null,
   };
   const sitemap = ["Home", "Services", "About", "Contact"];
 
@@ -177,7 +246,7 @@ export async function uiux(leadId: string): Promise<void> {
      values ($1,$2,$3,$4,$5,false)`,
     [leadId, JSON.stringify(brand), JSON.stringify(sitemap), JSON.stringify([{ page: "Home", blocks }]), look.id],
   );
-  await emitEvent({ agent: "uiux", leadId, type: "design.ready", message: `look '${look.name}' + ${blocks.length} blocks${skillGrounded ? " (skill-grounded)" : ""}${MOCK() ? " (mock)" : ""}`, payload: { look: look.name, preset: preset.id, skill_grounded: skillGrounded } });
+  await emitEvent({ agent: "uiux", leadId, type: "design.ready", message: `look '${look.name}' + ${blocks.length} blocks${skillGrounded ? " (skill-grounded)" : ""}${brandColor ? ` (matched to their brand ${brandColor.hex})` : ""}${MOCK() ? " (mock)" : ""}`, payload: { look: look.name, preset: preset.id, skill_grounded: skillGrounded } });
   await advanceLead(leadId, "design_ready", { agent: "uiux" });
 }
 

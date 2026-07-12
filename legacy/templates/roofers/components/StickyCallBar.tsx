@@ -19,7 +19,7 @@ export default function StickyCallBar() {
         {href ? (
           <a
             href={href}
-            className="flex min-h-tap items-center justify-center rounded-full bg-brand px-6 font-display text-base font-extrabold text-brandink shadow-cta active:scale-95"
+            className="flex min-h-tap items-center justify-center rounded-full bg-gradient-to-b from-brand to-branddeep px-6 font-display text-base font-extrabold text-brandink shadow-cta active:scale-95"
             aria-label={`Call ${site.businessName} now`}
           >
             Call now
@@ -27,7 +27,7 @@ export default function StickyCallBar() {
         ) : (
           <a
             href="#quote"
-            className="flex min-h-tap items-center justify-center rounded-full bg-brand px-6 font-display text-base font-extrabold text-brandink shadow-cta"
+            className="flex min-h-tap items-center justify-center rounded-full bg-gradient-to-b from-brand to-branddeep px-6 font-display text-base font-extrabold text-brandink shadow-cta"
           >
             Get a quote
           </a>

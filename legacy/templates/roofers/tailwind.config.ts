@@ -7,6 +7,7 @@ const config: Config = {
       colors: {
         // <alpha-value> wiring makes Tailwind opacity modifiers (bg-ink/80) work with the CSS vars.
         brand: "rgb(var(--brand) / <alpha-value>)",
+        branddeep: "rgb(var(--brand-deep) / <alpha-value>)",
         brandink: "rgb(var(--brand-ink) / <alpha-value>)",
         ink: "rgb(var(--ink) / <alpha-value>)",
         paper: "rgb(var(--paper) / <alpha-value>)",

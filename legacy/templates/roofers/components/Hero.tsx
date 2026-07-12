@@ -79,7 +79,7 @@ function Ctas({ center = false, tone = "dark" }: { center?: boolean; tone?: Tone
         <Magnetic>
           <a
             href={href}
-            className="flex min-h-tap items-center justify-center rounded-full bg-brand px-8 py-3.5 font-display text-lg font-extrabold text-brandink shadow-cta transition-all hover:-translate-y-0.5 active:scale-95"
+            className="flex min-h-tap items-center justify-center rounded-full bg-gradient-to-b from-brand to-branddeep px-8 py-3.5 font-display text-lg font-extrabold text-brandink shadow-cta transition-all hover:-translate-y-0.5 active:scale-95"
           >
             Call {site.phone}
           </a>
@@ -87,7 +87,7 @@ function Ctas({ center = false, tone = "dark" }: { center?: boolean; tone?: Tone
       ) : (
         <a
           href="#quote"
-          className="flex min-h-tap items-center justify-center rounded-full bg-brand px-8 py-3.5 font-display text-lg font-extrabold text-brandink shadow-cta"
+          className="flex min-h-tap items-center justify-center rounded-full bg-gradient-to-b from-brand to-branddeep px-8 py-3.5 font-display text-lg font-extrabold text-brandink shadow-cta"
         >
           Get a free quote
         </a>
