@@ -158,6 +158,7 @@ Current best-in-class stack (2026), used with intent, never as decoration:
 - **Mobile gets a lighter version.** Heavy WebGL is desktop-only or gets a static/reduced fallback on phones. Never let an animation blow the 2.5s mobile budget or tank Core Web Vitals.
 - **Respect `prefers-reduced-motion`.** Always.
 - If a plumber's customer just wants to tap-call at 11pm with a burst pipe, the animation must never stand between them and that button.
+- **The scroll-craft bar (operator reference, 2026-07-12: cula.tech).** Every demo ships reference-grade scroll choreography: Lenis inertial scroll (desktop fine-pointer only), a scroll-exit hero (content recedes as the page takes over), one pinned scroll-story scene (process steps light with progress), Ken Burns motion on their REAL photos (the video-feel without video, and without fabricating footage), plus the interactive 3D layer (pointer tilt + glare, magnetic CTA). Mechanics note: that reference site is built with Framer — the same motion engine this template ships — so matching it is choreography, not new technology. WebGL stays a deliberate exception, never the default.
 
 ### 5d. Tech + delivery
 

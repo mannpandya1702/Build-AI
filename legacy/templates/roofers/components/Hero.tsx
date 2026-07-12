@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
 import { site, telHref } from "../lib/content";
 import { Tilt, Parallax, CountUp, WordReveal, Magnetic, useReducedMotionSafe } from "./Motion";
 
@@ -226,7 +227,7 @@ function HeroPhoto({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
         {site.heroPhoto ? (
           <>
             {/* parallax depth: the photo drifts slower than the scroll (§5c, cinematic layer) */}
-            <Parallax className="absolute -inset-y-8 inset-x-0" amount={70}>
+            <Parallax className="kenburns absolute -inset-y-8 inset-x-0" amount={70}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={site.heroPhoto} alt="" className="h-full w-full object-cover" fetchPriority="high" />
             </Parallax>
@@ -404,22 +405,29 @@ function HeroPaper({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
 
 export default function Hero() {
   const stagger = useStagger();
+  const reduce = useReducedMotionSafe();
   const variant = site.theme.heroVariant;
   const tone: Tone = variant === "paper" ? "light" : "dark";
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const exitScale = useTransform(scrollYProgress, [0, 1], [1, reduce ? 1 : 0.95]);
+  const exitOpacity = useTransform(scrollYProgress, [0, 1], [1, reduce ? 1 : 0.55]);
   return (
-    <header id="top" className={`relative overflow-hidden ${tone === "light" ? "bg-paper text-ink" : "bg-ink text-white"}`}>
+    <header id="top" ref={ref} className={`relative overflow-hidden ${tone === "light" ? "bg-paper text-ink" : "bg-ink text-white"}`}>
       <TopBar tone={tone} />
-      {variant === "split" ? (
-        <HeroSplit stagger={stagger} />
-      ) : variant === "bold" ? (
-        <HeroBold stagger={stagger} />
-      ) : variant === "frame" ? (
-        <HeroFrame stagger={stagger} />
-      ) : variant === "paper" ? (
-        <HeroPaper stagger={stagger} />
-      ) : (
-        <HeroPhoto stagger={stagger} />
-      )}
+      <motion.div style={{ scale: exitScale, opacity: exitOpacity, transformOrigin: "50% 20%" }}>
+        {variant === "split" ? (
+          <HeroSplit stagger={stagger} />
+        ) : variant === "bold" ? (
+          <HeroBold stagger={stagger} />
+        ) : variant === "frame" ? (
+          <HeroFrame stagger={stagger} />
+        ) : variant === "paper" ? (
+          <HeroPaper stagger={stagger} />
+        ) : (
+          <HeroPhoto stagger={stagger} />
+        )}
+      </motion.div>
     </header>
   );
 }

@@ -6,6 +6,7 @@ import {
 import "./globals.css";
 import { site, isDemo, watermarkText, isNoindex } from "../lib/content";
 import StickyCallBar from "../components/StickyCallBar";
+import SmoothScroll from "../components/SmoothScroll";
 import Watermark from "../components/Watermark";
 
 // Distinctive font families (CLAUDE.md §5b-bis: never system fonts). All are declared statically
@@ -110,6 +111,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={fontVars}>
       <body style={themeStyle} className="font-body">
+        <SmoothScroll />
         {/* JSON-LD structured data. Serialized from our own schema object; no user input. */}
         <script
           type="application/ld+json"

@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useReducedMotionSafe, ImageReveal } from "./Motion";
 import FaqAccordion from "./FaqAccordion";
 import { site, telHref, mapEmbedUrl } from "../lib/content";
@@ -150,26 +151,73 @@ export function StormBand() {
 }
 
 /** Three steps, not five: kills the "what happens if I call" hesitation (CLAUDE.md §5b). */
-export function Process() {
-  const steps = [
-    { t: "Look", d: `We inspect the roof and show you photos of exactly what we find.` },
-    { t: "Quote", d: "One clear number. No surprise line items, no pressure." },
-    { t: "Done", d: "The work, finished and cleaned up. You see it before we leave." },
-  ];
+const STEPS = [
+  { t: "Look", d: "We inspect the roof and show you photos of exactly what we find." },
+  { t: "Quote", d: "One clear number. No surprise line items, no pressure." },
+  { t: "Done", d: "The work, finished and cleaned up. You see it before we leave." },
+];
+
+/** Pinned scroll story (reference bar: cula.tech): the section holds while scroll progress lights
+ *  each step in turn. Desktop only — mobile scrolls the plain typographic stack. */
+function ProcessPinned() {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const [active, setActive] = useState(0);
+  useEffect(() => scrollYProgress.on("change", (v) => setActive(Math.min(2, Math.floor(v * 3)))), [scrollYProgress]);
+  const rail = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
   return (
-    <section className="texture-shingle-ink bg-paper2 py-20 md:py-32">
-      <div className="mx-auto max-w-6xl px-5">
-        <SectionTitle index="02" kicker="How it works" title="Three steps. That's it." />
-        <div className="mt-14 grid grid-cols-1 gap-12 md:grid-cols-3 md:gap-8">
-          {steps.map((s, i) => (
-            <Reveal key={s.t} delay={i * 0.08} className="relative border-t-2 border-brand/25 pt-6">
-              <span aria-hidden className="absolute -top-9 right-0 font-display text-7xl font-extrabold leading-none text-brand/10 md:text-8xl">
-                {i + 1}
-              </span>
-              <h3 className="font-display text-2xl font-extrabold tracking-tight text-ink md:text-3xl">{s.t}</h3>
-              <p className="mt-3 max-w-xs text-lg text-ink/60">{s.d}</p>
-            </Reveal>
-          ))}
+    <div ref={ref} className="relative hidden md:block" style={{ height: "260vh" }}>
+      <div className="sticky top-0 flex h-screen flex-col justify-center">
+        <div className="mx-auto w-full max-w-6xl px-5">
+          <SectionTitle index="02" kicker="How it works" title="Three steps. That's it." />
+          <div className="mt-6 h-0.5 w-full overflow-hidden rounded-full bg-ink/10">
+            <motion.div className="h-full rounded-full bg-brand" style={{ width: rail }} />
+          </div>
+          <div className="mt-14 grid grid-cols-3 gap-8">
+            {STEPS.map((s, i) => (
+              <motion.div
+                key={s.t}
+                className="relative border-t-2 pt-6"
+                animate={{
+                  opacity: active >= i ? 1 : 0.25,
+                  y: active >= i ? 0 : 14,
+                  borderColor: active >= i ? "rgb(var(--brand) / 0.6)" : "rgb(var(--ink) / 0.1)",
+                }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <span aria-hidden className="absolute -top-9 right-0 font-display text-8xl font-extrabold leading-none text-brand/10">
+                  {i + 1}
+                </span>
+                <h3 className="font-display text-3xl font-extrabold tracking-tight text-ink">{s.t}</h3>
+                <p className="mt-3 max-w-xs text-lg text-ink/60">{s.d}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function Process() {
+  return (
+    <section className="texture-shingle-ink bg-paper2">
+      <ProcessPinned />
+      {/* mobile: the plain typographic stack (pinned scenes fight touch scrolling) */}
+      <div className="py-20 md:hidden">
+        <div className="mx-auto max-w-6xl px-5">
+          <SectionTitle index="02" kicker="How it works" title="Three steps. That's it." />
+          <div className="mt-12 grid grid-cols-1 gap-12">
+            {STEPS.map((s, i) => (
+              <Reveal key={s.t} delay={i * 0.08} className="relative border-t-2 border-brand/25 pt-6">
+                <span aria-hidden className="absolute -top-9 right-0 font-display text-7xl font-extrabold leading-none text-brand/10">
+                  {i + 1}
+                </span>
+                <h3 className="font-display text-2xl font-extrabold tracking-tight text-ink">{s.t}</h3>
+                <p className="mt-3 max-w-xs text-lg text-ink/60">{s.d}</p>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -390,7 +438,7 @@ export function QuoteBand() {
   if (!photo || !quote) return null;
   const text = quote.text.length > 190 ? quote.text.slice(0, 180).replace(/\s+\S*$/, "") + "..." : quote.text;
   return (
-    <section aria-label="Customer quote" className="photo-grade relative overflow-hidden">
+    <section aria-label="Customer quote" className="photo-grade kenburns relative overflow-hidden">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={photo.src} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
       <div aria-hidden className="absolute inset-0 z-[2]" style={{ background: "linear-gradient(100deg, rgb(var(--ink) / 0.92) 0%, rgb(var(--ink) / 0.55) 55%, rgb(var(--ink) / 0.25) 100%)" }} />
