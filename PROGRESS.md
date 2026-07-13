@@ -397,6 +397,15 @@ typeset text on beige under a photo grade so dark the real photos read as mud. S
 - Render-QA'd on Pioneer's real data: hero photo fully readable, services alive with photos,
   process legible at rest. Ships to live demos with the queued unified fleet rebuild when the
   Vercel daily deploy limit resets.
+- FLEET REBUILT 2026-07-13 (09:03–11:45 UTC): all 34 demo-bearing leads redeployed on the new
+  stack — 34 deployed, 0 deferred, 0 failed, 34/34 QA green, 33/34 personalized copy (Swan
+  Roofing fell back to trade defaults on an LLM JSON parse error; requeued for a copy retry).
+  Vercel's limit is a ROLLING 24h window (not a daily reset): ran ~20 in the morning headroom,
+  the watcher auto-queued the last 14 at 11:26 when yesterday's deploys aged out. Live-verified
+  post-deploy: James Kate (branded-truck hero) and Pioneer (readable aerial photo). Worker had
+  been paused (operator stop, 07-12 15:52); resumed 09:01 with the operator's fleet directive —
+  bridge propagated the toggle to hosted over the Neon HTTPS driver (raw :5432 is blocked in
+  this container per RUNBOOK §2b, so psql-to-Neon always times out; not an outage).
 
 ## INCIDENT 2026-07-10/11 (orphaned Outbox approvals) + structural fixes
 
