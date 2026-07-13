@@ -6,7 +6,7 @@
 // zero image bytes, zero WebGL. Restraint per §5c: props are atmosphere behind content, never
 // clutter over it; every field is aria-hidden and inert under reduced motion.
 import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform } from "motion/react";
 import { useReducedMotionSafe } from "./Motion";
 import { setForNiche } from "../lib/props";
 export { propIdByIndex } from "../lib/props";

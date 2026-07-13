@@ -373,6 +373,31 @@ stuff for roofing niche and similar kind according to niche." Shipped:
   and quote band. Render-QA'd: props read as atmosphere behind content, never over it (§5c).
 - Deploys to live demos with the unified fleet rebuild once the Vercel daily deploy limit resets.
 
+## Design fix pass (2026-07-13, operator: "fix all" after the appeal audit)
+
+Live-audit of Pioneer found the real gap: only the hero was designed; the middle of the page was
+typeset text on beige under a photo grade so dark the real photos read as mud. Shipped:
+- Photo grade lightened everywhere (.photo-grade: grayscale 0.22→0.08, brand wash 0.16→0.10,
+  grounding gradient 0.28→0.18) and the photo-hero double scrim cut (90/80→55/35 vertical,
+  80→75/30 horizontal). Their real photography now IS the design (§5b-bis), text still protected.
+- Services rows carry real cached GBP photo thumbnails (structure adapted from 21st.dev "Blog 8"
+  rows-with-image + "Team Showcase" grayscale-to-color hover, contract-restyled). Text-only rows
+  remain the honest fallback below 3 photos.
+- Pinned process: steps rest at 0.55 opacity (readable to fast scrollers and screenshots), pin cut
+  260vh→220vh, each step gets its niche prop icon in brand (hammer/nail/shingle for roofing).
+- Brand moments in light bands: ghost numerals brand-tinted, brand signature rule under every
+  section title. Quote-band scrim lightened (0.92/0.55/0.25→0.88/0.45/0.18).
+- Font retirement: Archivo retired as a roofing DISPLAY face (traced to the "looks basic" read).
+  steel-modern → Barlow Condensed, ember-storm → Alfa Slab One (both registry + DB re-seeded,
+  layout font registry extended). NEW assignments only: designs snapshot their look at assign
+  time, so locked/sent demos render exactly as before.
+- framer-motion v11 → motion v12 (motion/react imports, template package.json + lockfile; v12's
+  framer-motion is now only motion's internal dep). Typecheck + render QA clean in both motion
+  modes (reduced-motion verified, zero console errors).
+- Render-QA'd on Pioneer's real data: hero photo fully readable, services alive with photos,
+  process legible at rest. Ships to live demos with the queued unified fleet rebuild when the
+  Vercel daily deploy limit resets.
+
 ## INCIDENT 2026-07-10/11 (orphaned Outbox approvals) + structural fixes
 
 Fallout from the 07-10 pause leak: the two prematurely-drafted Touch-1 emails (James Kate

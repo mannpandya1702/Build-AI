@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform } from "motion/react";
 import { useReducedMotionSafe, ImageReveal } from "./Motion";
 import FaqAccordion from "./FaqAccordion";
-import { PropField, propIdByIndex } from "./Props";
+import { Prop, PropField, propIdByIndex } from "./Props";
 import { site, telHref, mapEmbedUrl } from "../lib/content";
 
 // A single scroll-reveal wrapper reused across sections. Respects reduced motion.
@@ -32,13 +32,15 @@ function SectionTitle({ kicker, title, index }: { kicker: string; title: string;
       {index && (
         <span
           aria-hidden
-          className="pointer-events-none absolute -left-3 -top-14 select-none font-display text-[8rem] font-extrabold leading-none text-ink/[0.05] md:-top-20 md:text-[12rem]"
+          className="pointer-events-none absolute -left-3 -top-14 select-none font-display text-[8rem] font-extrabold leading-none text-brand/[0.07] md:-top-20 md:text-[12rem]"
         >
           {index}
         </span>
       )}
       <p className="relative font-display text-sm font-semibold uppercase tracking-[0.22em] text-brand">{kicker}</p>
       <h2 className="relative mt-2 font-display text-4xl font-extrabold tracking-tight text-ink md:text-6xl">{title}</h2>
+      {/* brand signature rule: a small owned-color moment so the light bands never read unbranded */}
+      <div aria-hidden className="relative mt-5 h-1 w-14 rounded-full bg-brand" />
     </Reveal>
   );
 }
@@ -53,6 +55,11 @@ function SectionTitle({ kicker, title, index }: { kicker: string; title: string;
  */
 export function Services() {
   if (!site.services.length) return null;
+  // Their real photos ride the rows (structure adapted from 21st.dev "Blog 8" row-with-image +
+  // "Team Showcase" grayscale-to-color hover, contract-restyled): each service gets a cached GBP
+  // photo that colorizes on hover. Offset past the hero/quote-band picks so the page never opens
+  // on a repeat. Text-only rows remain the honest fallback when a lead has too few photos.
+  const thumbs = site.photos.length >= 3;
   return (
     <section
       id="services"
@@ -66,15 +73,28 @@ export function Services() {
             <Reveal key={s.name} delay={i * 0.04}>
               <a
                 href="#quote"
-                className="group grid grid-cols-[auto_1fr] items-baseline gap-x-5 gap-y-2 border-b border-ink/10 py-7 transition-colors duration-200 hover:bg-brand/[0.04] md:grid-cols-[4rem_1.1fr_1fr_auto] md:items-center md:gap-x-8 md:py-9"
+                className={`group grid grid-cols-[auto_1fr] items-baseline gap-x-5 gap-y-2 border-b border-ink/10 py-7 transition-colors duration-200 hover:bg-brand/[0.04] md:items-center md:gap-x-8 md:py-8 ${
+                  thumbs ? "md:grid-cols-[3.5rem_7rem_1.1fr_1fr_auto]" : "md:grid-cols-[4rem_1.1fr_1fr_auto]"
+                }`}
               >
                 <span className="font-display text-sm font-extrabold tracking-wide text-brand/60 transition-colors duration-200 group-hover:text-brand">
                   {String(i + 1).padStart(2, "0")}
                 </span>
+                {thumbs && (
+                  <span className="relative hidden h-[4.5rem] overflow-hidden rounded-xl ring-1 ring-ink/10 md:block">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={site.photos[(i + 2) % site.photos.length].src}
+                      alt=""
+                      loading="lazy"
+                      className="h-full w-full object-cover grayscale-[45%] transition-all duration-300 group-hover:scale-105 group-hover:grayscale-0"
+                    />
+                  </span>
+                )}
                 <h3 className="font-display text-2xl font-extrabold tracking-tight text-ink transition-transform duration-200 group-hover:translate-x-1 md:text-4xl">
                   {s.name}
                 </h3>
-                <p className="col-start-2 max-w-md text-ink/60 md:col-start-3">{s.blurb}</p>
+                <p className={`col-start-2 max-w-md text-ink/60 ${thumbs ? "md:col-start-4" : "md:col-start-3"}`}>{s.blurb}</p>
                 <span
                   aria-hidden
                   className="hidden font-display text-2xl font-extrabold text-ink/20 transition-all duration-200 group-hover:translate-x-1 group-hover:text-brand md:block"
@@ -171,7 +191,10 @@ function ProcessPinned() {
   useEffect(() => scrollYProgress.on("change", (v) => setActive(Math.min(2, Math.floor(v * 3)))), [scrollYProgress]);
   const rail = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
   return (
-    <div ref={ref} className="relative hidden md:block" style={{ height: "260vh" }}>
+    // 220vh (not longer): enough travel for the three beats without a dead-scroll stretch. Steps
+    // rest at 0.55 opacity — the section must read complete to a fast scroller or a screenshot;
+    // the scroll story brightens it, it never hides it.
+    <div ref={ref} className="relative hidden md:block" style={{ height: "220vh" }}>
       <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
         <PropField
           tone="light"
@@ -191,8 +214,8 @@ function ProcessPinned() {
                 key={s.t}
                 className="relative border-t-2 pt-6"
                 animate={{
-                  opacity: active >= i ? 1 : 0.25,
-                  y: active >= i ? 0 : 14,
+                  opacity: active >= i ? 1 : 0.55,
+                  y: active >= i ? 0 : 8,
                   borderColor: active >= i ? "rgb(var(--brand) / 0.6)" : "rgb(var(--ink) / 0.1)",
                 }}
                 transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
@@ -200,7 +223,10 @@ function ProcessPinned() {
                 <span aria-hidden className="absolute -top-9 right-0 font-display text-8xl font-extrabold leading-none text-brand/10">
                   {i + 1}
                 </span>
-                <h3 className="font-display text-3xl font-extrabold tracking-tight text-ink">{s.t}</h3>
+                <div className="flex items-center gap-3">
+                  <Prop id={propIdByIndex(i)!} size={30} className="shrink-0 text-brand/70" />
+                  <h3 className="font-display text-3xl font-extrabold tracking-tight text-ink">{s.t}</h3>
+                </div>
                 <p className="mt-3 max-w-xs text-lg text-ink/60">{s.d}</p>
               </motion.div>
             ))}
@@ -225,7 +251,10 @@ export function Process() {
                 <span aria-hidden className="absolute -top-9 right-0 font-display text-7xl font-extrabold leading-none text-brand/10">
                   {i + 1}
                 </span>
-                <h3 className="font-display text-2xl font-extrabold tracking-tight text-ink">{s.t}</h3>
+                <div className="flex items-center gap-3">
+                  <Prop id={propIdByIndex(i)!} size={26} className="shrink-0 text-brand/70" />
+                  <h3 className="font-display text-2xl font-extrabold tracking-tight text-ink">{s.t}</h3>
+                </div>
                 <p className="mt-3 max-w-xs text-lg text-ink/60">{s.d}</p>
               </Reveal>
             ))}
@@ -453,7 +482,7 @@ export function QuoteBand() {
     <section aria-label="Customer quote" className="photo-grade kenburns relative overflow-hidden">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={photo.src} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
-      <div aria-hidden className="absolute inset-0 z-[2]" style={{ background: "linear-gradient(100deg, rgb(var(--ink) / 0.92) 0%, rgb(var(--ink) / 0.55) 55%, rgb(var(--ink) / 0.25) 100%)" }} />
+      <div aria-hidden className="absolute inset-0 z-[2]" style={{ background: "linear-gradient(100deg, rgb(var(--ink) / 0.88) 0%, rgb(var(--ink) / 0.45) 55%, rgb(var(--ink) / 0.18) 100%)" }} />
       <div className="relative z-[3] mx-auto max-w-6xl px-5 py-24 md:py-36">
         <Reveal>
           <p className="text-amber-400" aria-label={`${quote.rating} out of 5 stars`}>{"★".repeat(Math.round(quote.rating))}</p>

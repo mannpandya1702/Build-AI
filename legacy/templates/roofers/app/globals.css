@@ -56,7 +56,7 @@ body {
   position: relative;
 }
 .photo-grade > img {
-  filter: grayscale(0.22) saturate(0.92) contrast(1.04);
+  filter: grayscale(0.08) saturate(1.02) contrast(1.05);
 }
 .photo-grade::after {
   content: "";
@@ -64,7 +64,7 @@ body {
   inset: 0;
   background: rgb(var(--brand));
   mix-blend-mode: color;
-  opacity: 0.16;
+  opacity: 0.1;
   pointer-events: none;
 }
 .photo-grade::before {
@@ -72,7 +72,7 @@ body {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(to top, rgb(var(--ink) / 0.28) 0%, transparent 45%);
+  background: linear-gradient(to top, rgb(var(--ink) / 0.18) 0%, transparent 45%);
   pointer-events: none;
 }
 

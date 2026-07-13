@@ -14,7 +14,7 @@ import {
   useScroll,
   useSpring,
   useTransform,
-} from "framer-motion";
+} from "motion/react";
 
 /** Hydration-safe reduced-motion flag: SSR cannot know the user's media query, so the first
  *  client render must match the server (false); the real preference applies right after mount.

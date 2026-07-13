@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import {
   Bricolage_Grotesque, Source_Sans_3, Archivo, IBM_Plex_Sans, Space_Grotesk, Work_Sans,
   Anton, Bebas_Neue, Outfit, Sora, Hanken_Grotesk, Chivo, Rubik, Manrope,
+  Barlow_Condensed, Alfa_Slab_One,
 } from "next/font/google";
 import "./globals.css";
 import { site, isDemo, watermarkText, isNoindex } from "../lib/content";
@@ -28,8 +29,11 @@ const hanken = Hanken_Grotesk({ subsets: ["latin"], weight: ["400", "600", "700"
 const chivo = Chivo({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--f-chivo", display: "swap", preload: false });
 const rubik = Rubik({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--f-rubik", display: "swap", preload: false });
 const manrope = Manrope({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--f-manrope", display: "swap", preload: false });
+// 2026-07-13: trade-signage faces replacing retired Archivo-display pairings (looks registry).
+const barlowcond = Barlow_Condensed({ subsets: ["latin"], weight: ["500", "700", "800"], variable: "--f-barlowcond", display: "swap", preload: false });
+const alfaslab = Alfa_Slab_One({ subsets: ["latin"], weight: "400", variable: "--f-alfaslab", display: "swap", preload: false });
 
-const ALL_FONTS = [bricolage, sourcesans, archivo, plex, grotesk, work, anton, bebas, outfit, sora, hanken, chivo, rubik, manrope];
+const ALL_FONTS = [bricolage, sourcesans, archivo, plex, grotesk, work, anton, bebas, outfit, sora, hanken, chivo, rubik, manrope, barlowcond, alfaslab];
 
 // Font NAME (as stored in the looks registry) -> its CSS variable. A look carries its own display
 // and body font names; whatever it names resolves here.
@@ -40,6 +44,7 @@ const FONT_VARS: Record<string, string> = {
   "Anton": "var(--f-anton)", "Bebas Neue": "var(--f-bebas)", "Outfit": "var(--f-outfit)",
   "Sora": "var(--f-sora)", "Hanken Grotesk": "var(--f-hanken)", "Chivo": "var(--f-chivo)",
   "Rubik": "var(--f-rubik)", "Manrope": "var(--f-manrope)",
+  "Barlow Condensed": "var(--f-barlowcond)", "Alfa Slab One": "var(--f-alfaslab)",
 };
 
 // Legacy fallback: the original three fontPair keys, for content.json written before displayFont/

@@ -5,7 +5,7 @@
 // the active number, brand underline sweep, plus-to-X indicator. Springs are inert under reduced
 // motion. Copy stays exactly the builder's fact-safe FAQ — this changes presentation only.
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { useReducedMotionSafe } from "./Motion";
 import { site } from "../lib/content";
 

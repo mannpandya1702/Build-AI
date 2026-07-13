@@ -35,9 +35,13 @@ export interface Look {
 // engine (already deployed to real prospects), plus their type pairings made explicit.
 const ROOFING: Look[] = [
   { name: "brick-classic", preset: "roofing", palette: { brand: "180 56 13", brandInk: "255 255 255", ink: "16 24 31", paper: "250 247 242", paper2: "241 235 226" }, typePairing: { display: "Bricolage Grotesque", body: "Source Sans 3" }, heroVariant: "photo" },
-  { name: "steel-modern", preset: "roofing", palette: { brand: "29 78 216", brandInk: "255 255 255", ink: "15 23 42", paper: "247 250 252", paper2: "233 239 246" }, typePairing: { display: "Archivo", body: "IBM Plex Sans" }, heroVariant: "split" },
+  // 2026-07-13: Archivo retired as a DISPLAY face for roofing (it reads closest to a generic bold
+  // sans — the operator's "still looks basic" was traced partly to it). steel-modern and ember-storm
+  // now carry trade-signage faces instead. Applies to NEW assignments only: designs snapshot their
+  // look at assign time, so locked/sent demos render exactly as they did.
+  { name: "steel-modern", preset: "roofing", palette: { brand: "29 78 216", brandInk: "255 255 255", ink: "15 23 42", paper: "247 250 252", paper2: "233 239 246" }, typePairing: { display: "Barlow Condensed", body: "IBM Plex Sans" }, heroVariant: "split" },
   { name: "moss-craft", preset: "roofing", palette: { brand: "21 128 61", brandInk: "255 255 255", ink: "18 26 20", paper: "249 248 242", paper2: "237 236 225" }, typePairing: { display: "Space Grotesk", body: "Source Sans 3" }, heroVariant: "bold" },
-  { name: "ember-storm", preset: "roofing", palette: { brand: "202 96 6", brandInk: "255 255 255", ink: "26 20 14", paper: "251 248 243", paper2: "243 236 226" }, typePairing: { display: "Archivo", body: "IBM Plex Sans" }, heroVariant: "photo" },
+  { name: "ember-storm", preset: "roofing", palette: { brand: "202 96 6", brandInk: "255 255 255", ink: "26 20 14", paper: "251 248 243", paper2: "243 236 226" }, typePairing: { display: "Alfa Slab One", body: "Source Sans 3" }, heroVariant: "photo" },
   // Skill-grounded (ui-ux-pro-max) + anti-slop-verified additions (CLAUDE.md §9). More distinct
   // looks so the §5d "no two prospects in a metro share a look" rule always has free options.
   { name: "oxblood-barn", preset: "roofing", palette: { brand: "163 45 30", brandInk: "253 246 242", ink: "28 18 16", paper: "249 243 239", paper2: "242 233 228" }, typePairing: { display: "Bricolage Grotesque", body: "Hanken Grotesk" }, heroVariant: "split" },

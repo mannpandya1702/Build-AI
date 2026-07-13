@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
 import { site, telHref } from "../lib/content";
 import { Tilt, Parallax, CountUp, WordReveal, Magnetic, useReducedMotionSafe } from "./Motion";
@@ -241,8 +241,10 @@ function HeroPhoto({ stagger }: { stagger: ReturnType<typeof useStagger> }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={site.heroPhoto} alt="" className="h-full w-full object-cover" fetchPriority="high" />
             </Parallax>
-            <div className="absolute inset-0 bg-gradient-to-b from-ink/90 via-ink/80 to-ink" />
-            <div className="absolute inset-0 bg-gradient-to-r from-ink/80 via-ink/40 to-transparent" />
+            {/* Light-handed scrim: the photo IS the design (§5b-bis); protect the text column on
+                the left, keep the bottom anchored to the dark base, let the rest of the photo read. */}
+            <div className="absolute inset-0 bg-gradient-to-b from-ink/55 via-ink/35 to-ink" />
+            <div className="absolute inset-0 bg-gradient-to-r from-ink/75 via-ink/30 to-transparent" />
           </>
         ) : (
           <GradientBackdrop />
