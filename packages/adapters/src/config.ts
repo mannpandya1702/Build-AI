@@ -23,6 +23,7 @@ export interface CapsConfig {
   concurrent_demo_builds: number;
   anthropic_usd_per_lead_demo_phase: number;
   anthropic_usd_per_day: number;
+  build_budget: { usd_per_lead: number; usd_per_day: number };
   crawl: { per_domain_min_interval_ms: number; max_pages_per_site: number };
 }
 
@@ -61,3 +62,13 @@ export function isUnconfirmed(v: unknown): boolean {
 }
 
 export const MOCK = (): boolean => process.env.MOCK_MODE !== "false";
+
+// Build mode (MASTER_SPEC §2): `review` (default, permanent) queues every lead for operator approval
+// before any paid build; `auto` builds top-scored leads within budget without a per-lead click. Env
+// override first (BUILD_MODE), else the settings row, else review. `auto` is meant to be a deliberate
+// per-session operator opt-in, never the resting default.
+export type BuildMode = "review" | "auto";
+export function resolveBuildMode(settingValue?: unknown): BuildMode {
+  const raw = String(process.env.BUILD_MODE ?? settingValue ?? "review").toLowerCase();
+  return raw === "auto" ? "auto" : "review";
+}

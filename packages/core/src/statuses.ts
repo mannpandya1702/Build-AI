@@ -6,6 +6,7 @@ export const LEAD_STATUSES = [
   "discovered",
   "enriched",
   "qualified",
+  "awaiting_build_approval", // spend gate (MASTER_SPEC §2/§8.4): operator approves before paid build
   "disqualified",
   "analyzed",
   "solution_ready",
@@ -37,7 +38,11 @@ export type LeadStatus = (typeof LEAD_STATUSES)[number];
 export const TRANSITIONS: Record<LeadStatus, readonly LeadStatus[]> = {
   discovered: ["enriched", "disqualified"],
   enriched: ["qualified", "disqualified"],
-  qualified: ["analyzed", "disqualified"],
+  // Spend gate: qualified leads park at awaiting_build_approval; the operator approves before any
+  // paid analysis/build. The direct qualified->analyzed edge stays legal until the scheduler is
+  // routed through the gate (next slice), so this addition is non-breaking.
+  qualified: ["awaiting_build_approval", "analyzed", "disqualified"],
+  awaiting_build_approval: ["analyzed", "disqualified"],
   disqualified: [],
   analyzed: ["solution_ready"],
   solution_ready: ["design_ready"],

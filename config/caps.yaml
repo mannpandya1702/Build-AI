@@ -8,6 +8,13 @@ total_daily_sends: 10
 concurrent_demo_builds: 2
 anthropic_usd_per_lead_demo_phase: 3
 anthropic_usd_per_day: 15
+# Spend gate (MASTER_SPEC §2, §5). No paid build runs without operator approval (BUILD_MODE=review,
+# the permanent default). usd_per_lead is the projected demo-build cost shown on the Shortlist before
+# approval; usd_per_day pauses the build pipeline (and notifies) when the day's approved-build spend
+# reaches it — never silently drops work.
+build_budget:
+  usd_per_lead: 6
+  usd_per_day: 30
 crawl:
   per_domain_min_interval_ms: 2000   # 1 req / 2s (spec §4.6)
   max_pages_per_site: 6

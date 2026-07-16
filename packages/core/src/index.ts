@@ -1,4 +1,5 @@
 export * from "./statuses.js";
+export * from "./buildGate.js";
 export * from "./advanceLead.js";
 export * from "./events.js";
 export * from "./db.js";
