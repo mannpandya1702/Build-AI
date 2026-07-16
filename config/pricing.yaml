@@ -1,0 +1,57 @@
+# The offer ladder (MASTER_SPEC §4 + Amendment A premium tier). All USD. The contract generator
+# validates every generated agreement against these numbers — a contract whose pricing contradicts
+# this ladder is impossible to generate.
+currency: USD
+products:
+  website:
+    name: "Website"
+    setup: 1500
+    monthly: 99
+    monthly_label: "care plan"
+    includes: "5-10 page site, 48h delivery, hosting, edits, uptime monitoring, monthly report"
+  chatbot:
+    name: "Chatbot"
+    setup: 297
+    setup_waived_with_website: true
+    monthly: 197
+    includes: "Embedded AI assistant, lead capture, booking, KB refresh, transcripts"
+  voice_single:
+    name: "Voice — single assistant"
+    setup: 497
+    monthly: 397
+    included_minutes: 500
+    overage_per_minute: 0.35
+    includes: "One assistant, number, KB, SLA report"
+  automation_pack:
+    name: "Automation pack"
+    setup: 297
+    monthly: 247
+    includes: "Missed-call text-back + review requests + quote follow-up, A2P registration handled"
+  ai_front_desk:
+    name: "AI Front Desk"
+    setup: 997
+    monthly: 797
+    included_minutes: 500
+    includes: "Voice (500 min) + chatbot + automation pack"
+  growth_system:
+    name: "Growth System"
+    setup: 2997
+    monthly: 1297
+    included_minutes: 1000
+    includes: "All four assistants + chatbot + automations + 10-mile exclusivity + SLA guarantee"
+  high_ticket_niche:
+    name: "High-Ticket Niche"
+    setup_min: 5000
+    setup_max: 10000
+    monthly_min: 1000
+    monthly_max: 2500
+    includes: "High-LTV niche (dental/med spa/etc.): automated delivery + white-glove onboarding; compliance profile required"
+contract:
+  # Client owns THEIR deliverables; the AGENCY owns the platform/templates/skills. Never the
+  # ClinicPro clause that assigns platform IP to the client (MASTER_SPEC §4).
+  ip_clause: client_owns_deliverables_agency_owns_platform
+  guarantees:
+    uptime_pct: 99.5
+    speed_to_lead_seconds: 60
+  termination_notice_days: 60
+  setup_nonrefundable_after_delivery: true
