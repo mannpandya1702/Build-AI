@@ -1,3 +1,4 @@
+import { MOCK, anthropicSpendToday, llm, loadCaps, sendsToday, usedToday } from "@autopilot/adapters";
 // Monitoring Agent (spec §6.10). Hourly: anomaly checks (lead stuck >6h in a non-terminal status,
 // error spike >5/hour, cap exhaustion, worker heartbeat missing) -> operator notification, deduped
 // so the same anomaly does not re-alert every hour. Daily (09:00 IST): a digest into daily_reports
@@ -7,9 +8,13 @@
 // and the single top blocker. Numbers come from SQL, never the model; Haiku only phrases the
 // narrative line and falls back to a deterministic sentence, so the digest never fabricates.
 import { emitEvent, getPool, notifyOperator } from "@autopilot/core";
-import { llm, loadCaps, usedToday, anthropicSpendToday, sendsToday, MOCK } from "@autopilot/adapters";
 
-interface Anomaly { kind: string; detail: string; leadId?: string; leadIds?: string[] }
+interface Anomaly {
+  kind: string;
+  detail: string;
+  leadId?: string;
+  leadIds?: string[];
+}
 
 /** Detect anomalies. Pure read; the caller decides notification/dedupe. */
 export async function detectAnomalies(): Promise<Anomaly[]> {
@@ -30,12 +35,20 @@ export async function detectAnomalies(): Promise<Anomaly[]> {
   );
   if (stuck.rows.length === 1) {
     const l = stuck.rows[0];
-    out.push({ kind: "lead_stuck", detail: `${l.company_name} stuck in ${l.status} for ${l.hours}h`, leadId: l.id, leadIds: [l.id] });
+    out.push({
+      kind: "lead_stuck",
+      detail: `${l.company_name} stuck in ${l.status} for ${l.hours}h`,
+      leadId: l.id,
+      leadIds: [l.id],
+    });
   } else if (stuck.rows.length > 1) {
     const byStatus = new Map<string, number>();
     for (const l of stuck.rows) byStatus.set(l.status, (byStatus.get(l.status) ?? 0) + 1);
     const statuses = [...byStatus.entries()].map(([s, n]) => `${s} ${n}`).join(", ");
-    const oldest = stuck.rows.slice(0, 3).map((l) => `${l.company_name} (${l.status} ${l.hours}h)`).join("; ");
+    const oldest = stuck.rows
+      .slice(0, 3)
+      .map((l) => `${l.company_name} (${l.status} ${l.hours}h)`)
+      .join("; ");
     out.push({
       kind: "lead_stuck",
       detail: `${stuck.rows.length} leads stuck past their bar (${statuses}). Oldest: ${oldest}`,
@@ -47,22 +60,36 @@ export async function detectAnomalies(): Promise<Anomaly[]> {
   const errs = await pool.query<{ n: string }>(
     "select count(*)::text n from agent_events where level='error' and created_at > now() - interval '1 hour'",
   );
-  if (parseInt(errs.rows[0].n, 10) > 5) out.push({ kind: "error_spike", detail: `${errs.rows[0].n} error events in the last hour` });
+  if (Number.parseInt(errs.rows[0].n, 10) > 5)
+    out.push({ kind: "error_spike", detail: `${errs.rows[0].n} error events in the last hour` });
 
   // Cap exhaustion (Places / sends / Anthropic budget).
   const caps = loadCaps();
   const places = await usedToday("places.call");
-  if (places >= caps.places_calls_per_day) out.push({ kind: "cap_exhausted", detail: `Places daily cap spent (${places}/${caps.places_calls_per_day})` });
+  if (places >= caps.places_calls_per_day)
+    out.push({
+      kind: "cap_exhausted",
+      detail: `Places daily cap spent (${places}/${caps.places_calls_per_day})`,
+    });
   const sends = await sendsToday();
-  if (sends >= caps.total_daily_sends) out.push({ kind: "cap_exhausted", detail: `daily send cap reached (${sends}/${caps.total_daily_sends})` });
+  if (sends >= caps.total_daily_sends)
+    out.push({
+      kind: "cap_exhausted",
+      detail: `daily send cap reached (${sends}/${caps.total_daily_sends})`,
+    });
   const spend = await anthropicSpendToday();
-  if (spend >= caps.anthropic_usd_per_day) out.push({ kind: "cap_exhausted", detail: `Anthropic daily budget spent ($${spend.toFixed(2)}/$${caps.anthropic_usd_per_day})` });
+  if (spend >= caps.anthropic_usd_per_day)
+    out.push({
+      kind: "cap_exhausted",
+      detail: `Anthropic daily budget spent ($${spend.toFixed(2)}/$${caps.anthropic_usd_per_day})`,
+    });
 
   // Worker heartbeat missing (>5 min since the last one; heartbeats fire every 60s).
   const hb = await pool.query<{ n: string }>(
     "select count(*)::text n from agent_events where type='worker.heartbeat' and created_at > now() - interval '5 minutes'",
   );
-  if (hb.rows[0].n === "0") out.push({ kind: "heartbeat_missing", detail: "no worker heartbeat in 5+ minutes" });
+  if (hb.rows[0].n === "0")
+    out.push({ kind: "heartbeat_missing", detail: "no worker heartbeat in 5+ minutes" });
 
   return out;
 }
@@ -74,16 +101,31 @@ export async function hourly(): Promise<void> {
   const pool = getPool();
   const anomalies = await detectAnomalies();
   for (const a of anomalies) {
-    const dedupeKey = a.kind === "lead_stuck" ? `lead_stuck:${a.leadIds?.length ?? 1}:${a.leadId ?? ""}` : `${a.kind}:${a.detail.replace(/\d+/g, "#")}`;
+    const dedupeKey =
+      a.kind === "lead_stuck"
+        ? `lead_stuck:${a.leadIds?.length ?? 1}:${a.leadId ?? ""}`
+        : `${a.kind}:${a.detail.replace(/\d+/g, "#")}`;
     const dupe = await pool.query<{ n: string }>(
       "select count(*)::text n from agent_events where type='anomaly' and payload->>'dedupe_key'=$1 and created_at > now() - interval '12 hours'",
       [dedupeKey],
     );
     if (dupe.rows[0].n !== "0") continue;
-    await emitEvent({ agent: "monitor", leadId: a.leadId ?? null, level: "warn", type: "anomaly", message: `${a.kind}: ${a.detail}`, payload: { dedupe_key: dedupeKey, lead_ids: a.leadIds ?? [] } });
+    await emitEvent({
+      agent: "monitor",
+      leadId: a.leadId ?? null,
+      level: "warn",
+      type: "anomaly",
+      message: `${a.kind}: ${a.detail}`,
+      payload: { dedupe_key: dedupeKey, lead_ids: a.leadIds ?? [] },
+    });
     await notifyOperator({ type: "anomaly", title: a.detail, leadId: a.leadId });
   }
-  await emitEvent({ agent: "monitor", level: "debug", type: "monitor.hourly", message: `${anomalies.length} anomalies` });
+  await emitEvent({
+    agent: "monitor",
+    level: "debug",
+    type: "monitor.hourly",
+    message: `${anomalies.length} anomalies`,
+  });
 }
 
 /** Build + store the daily digest. Idempotent per date (re-running a day updates it). */
@@ -91,44 +133,87 @@ export async function dailyDigest(dateISO?: string): Promise<string> {
   const pool = getPool();
   const day = dateISO ?? new Date().toISOString().slice(0, 10);
 
-  const funnel = (await pool.query<{ status: string; n: number }>(
-    "select status::text, count(*)::int n from leads group by status order by count(*) desc",
-  )).rows;
-  const emailsSent = (await pool.query<{ n: string }>(
-    "select count(*)::text n from emails where direction='outbound' and status='sent' and sent_at::date = $1::date", [day],
-  )).rows[0].n;
-  const replies = (await pool.query<{ n: string }>(
-    "select count(*)::text n from emails where direction='inbound' and created_at::date = $1::date", [day],
-  )).rows[0].n;
-  const callsDue = (await pool.query<{ n: string }>("select count(*)::text n from leads where status='contacted'")).rows[0].n;
-  const callsLogged = (await pool.query<{ n: string }>(
-    "select count(*)::text n from agent_events where type='call.logged' and created_at::date = $1::date", [day],
-  )).rows[0].n;
-  const meetings = (await pool.query<{ n: string }>("select count(*)::text n from meetings where created_at::date = $1::date", [day])).rows[0].n;
-  const demos = (await pool.query<{ n: string }>(
-    "select count(*)::text n from builds where kind='demo' and status='deployed' and created_at::date = $1::date", [day],
-  )).rows[0].n;
+  const funnel = (
+    await pool.query<{ status: string; n: number }>(
+      "select status::text, count(*)::int n from leads group by status order by count(*) desc",
+    )
+  ).rows;
+  const emailsSent = (
+    await pool.query<{ n: string }>(
+      "select count(*)::text n from emails where direction='outbound' and status='sent' and sent_at::date = $1::date",
+      [day],
+    )
+  ).rows[0].n;
+  const replies = (
+    await pool.query<{ n: string }>(
+      "select count(*)::text n from emails where direction='inbound' and created_at::date = $1::date",
+      [day],
+    )
+  ).rows[0].n;
+  const callsDue = (
+    await pool.query<{ n: string }>("select count(*)::text n from leads where status='contacted'")
+  ).rows[0].n;
+  const callsLogged = (
+    await pool.query<{ n: string }>(
+      "select count(*)::text n from agent_events where type='call.logged' and created_at::date = $1::date",
+      [day],
+    )
+  ).rows[0].n;
+  const meetings = (
+    await pool.query<{ n: string }>(
+      "select count(*)::text n from meetings where created_at::date = $1::date",
+      [day],
+    )
+  ).rows[0].n;
+  const demos = (
+    await pool.query<{ n: string }>(
+      "select count(*)::text n from builds where kind='demo' and status='deployed' and created_at::date = $1::date",
+      [day],
+    )
+  ).rows[0].n;
   // Spend reconciles 1:1 with agent_events.cost_usd (Phase 6 acceptance).
-  const spendDay = (await pool.query<{ s: string }>(
-    "select coalesce(sum(cost_usd),0)::text s from agent_events where cost_usd is not null and created_at::date = $1::date", [day],
-  )).rows[0].s;
+  const spendDay = (
+    await pool.query<{ s: string }>(
+      "select coalesce(sum(cost_usd),0)::text s from agent_events where cost_usd is not null and created_at::date = $1::date",
+      [day],
+    )
+  ).rows[0].s;
   const anomalies = await detectAnomalies();
 
   // The single highest-value lead right now: best actionable lead, weighted by pipeline depth.
-  const hv = (await pool.query<{ company_name: string; status: string; score: number | null; review_count: number | null }>(
-    `select company_name, status, score, review_count from leads
+  const hv = (
+    await pool.query<{
+      company_name: string;
+      status: string;
+      score: number | null;
+      review_count: number | null;
+    }>(
+      `select company_name, status, score, review_count from leads
      where status in ('outreach_ready','awaiting_approval','replied','negotiating','meeting_booked','solution_ready','design_ready')
      order by case status when 'meeting_booked' then 6 when 'negotiating' then 5 when 'replied' then 4
                           when 'awaiting_approval' then 3 when 'outreach_ready' then 3 else 1 end desc,
               coalesce(score,0) desc, coalesce(review_count,0) desc limit 1`,
-  )).rows[0];
+    )
+  ).rows[0];
 
   // The single top blocker: prefer a hard anomaly, else the known operator gate.
-  const blocker = anomalies.find((a) => a.kind !== "lead_stuck")?.detail
-    ?? anomalies[0]?.detail
-    ?? "outreach mailboxes not set up; sends stay in mock until the outreach domain + warmed mailboxes exist";
+  const blocker =
+    anomalies.find((a) => a.kind !== "lead_stuck")?.detail ??
+    anomalies[0]?.detail ??
+    "outreach mailboxes not set up; sends stay in mock until the outreach domain + warmed mailboxes exist";
 
-  const facts = { day, funnel, emailsSent, replies, callsDue, callsLogged, meetings, demos, spendDay, anomalyCount: anomalies.length };
+  const facts = {
+    day,
+    funnel,
+    emailsSent,
+    replies,
+    callsDue,
+    callsLogged,
+    meetings,
+    demos,
+    spendDay,
+    anomalyCount: anomalies.length,
+  };
   const deterministic =
     `Sent ${emailsSent} emails, ${replies} replies, ${demos} demos shipped, ${meetings} meetings booked. ` +
     `Spend $${Number(spendDay).toFixed(2)}. ${callsDue} calls due, ${callsLogged} logged. ${anomalies.length} anomalies.`;
@@ -137,24 +222,31 @@ export async function dailyDigest(dateISO?: string): Promise<string> {
   let narrative = deterministic;
   try {
     const raw = await llm({
-      tier: "haiku", agent: "monitor", maxTokens: 120,
-      system: "Write ONE plain sentence summarizing the day for a solo web-studio founder. Concise, technical, no fluff, no emojis, no em dashes. Use ONLY the numbers given; do not invent any.",
+      tier: "haiku",
+      agent: "monitor",
+      maxTokens: 120,
+      system:
+        "Write ONE plain sentence summarizing the day for a solo web-studio founder. Concise, technical, no fluff, no emojis, no em dashes. Use ONLY the numbers given; do not invent any.",
       prompt: JSON.stringify(facts),
       mockResponse: deterministic,
     });
     if (raw.trim() && !/[—–]/.test(raw)) narrative = raw.trim();
-  } catch { /* deterministic fallback stands */ }
+  } catch {
+    /* deterministic fallback stands */
+  }
 
   const summary = [
     `# EOD ${day}`,
-    ``,
+    "",
     narrative,
-    ``,
+    "",
     `Funnel: ${funnel.map((f) => `${f.status} ${f.n}`).join(", ")}.`,
     `Emails: ${emailsSent} sent, ${replies} replies. Calls: ${callsDue} due, ${callsLogged} logged. Meetings: ${meetings}. Demos: ${demos}. Spend: $${Number(spendDay).toFixed(2)}.`,
-    anomalies.length ? `Anomalies: ${anomalies.map((a) => a.detail).join("; ")}.` : `Anomalies: none.`,
-    ``,
-    hv ? `Highest-value lead: ${hv.company_name} (${hv.status}, score ${hv.score ?? "?"}, ${hv.review_count ?? "?"} reviews). Act on this one first.` : `Highest-value lead: none actionable.`,
+    anomalies.length ? `Anomalies: ${anomalies.map((a) => a.detail).join("; ")}.` : "Anomalies: none.",
+    "",
+    hv
+      ? `Highest-value lead: ${hv.company_name} (${hv.status}, score ${hv.score ?? "?"}, ${hv.review_count ?? "?"} reviews). Act on this one first.`
+      : "Highest-value lead: none actionable.",
     `Top blocker: ${blocker}`,
   ].join("\n");
 
@@ -162,8 +254,18 @@ export async function dailyDigest(dateISO?: string): Promise<string> {
     `insert into daily_reports (date, funnel, costs, anomalies, summary_md)
      values ($1,$2,$3,$4,$5)
      on conflict (date) do update set funnel=excluded.funnel, costs=excluded.costs, anomalies=excluded.anomalies, summary_md=excluded.summary_md`,
-    [day, JSON.stringify(funnel), JSON.stringify({ day_usd: Number(spendDay) }), JSON.stringify(anomalies), summary],
+    [
+      day,
+      JSON.stringify(funnel),
+      JSON.stringify({ day_usd: Number(spendDay) }),
+      JSON.stringify(anomalies),
+      summary,
+    ],
   );
-  await emitEvent({ agent: "monitor", type: "digest.generated", message: `EOD ${day}${MOCK() ? " (mock)" : ""}` });
+  await emitEvent({
+    agent: "monitor",
+    type: "digest.generated",
+    message: `EOD ${day}${MOCK() ? " (mock)" : ""}`,
+  });
   return summary;
 }

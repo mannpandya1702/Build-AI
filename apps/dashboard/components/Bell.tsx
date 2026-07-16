@@ -1,9 +1,9 @@
 "use client";
 
+import { Icon } from "@/components/icons";
 // Notification bell (spec §8): unread count + dropdown, poll-based locally. Icon button with a
 // count badge (skill: tab-badge used sparingly, cleared on visit; aria-label on icon-only button).
 import { useEffect, useRef, useState } from "react";
-import { Icon } from "@/components/icons";
 
 interface Note {
   id: string;

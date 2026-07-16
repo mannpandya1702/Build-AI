@@ -32,3 +32,8 @@ templates/*/out/
 # TS incremental build info
 *.tsbuildinfo
 apps/worker/data/
+
+# PII — prospect data lives only in Postgres (MASTER_SPEC §9); full history purge in Phase 1
+data/leads.json
+data/research/
+drafts/

@@ -6,10 +6,10 @@
 // @neondatabase/serverless (Pool-compatible: query, connect, transactions). Same SQL, same seams;
 // Vercel-deployed apps use the identical URL. Secrets come from env only (spec §4.7).
 import { createRequire } from "node:module";
-import pg from "pg";
-import { config } from "dotenv";
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { config } from "dotenv";
+import pg from "pg";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 config({ path: resolve(repoRoot, ".env.local") });

@@ -5,8 +5,18 @@ import Sidebar from "@/components/Sidebar";
 
 // Typography per the skill's design system for data-dense dashboards: Fira Code (display/data:
 // technical, tabular by nature) + Fira Sans (body). Loaded via next/font: self-hosted, no FOIT.
-const display = Fira_Code({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-display", display: "swap" });
-const body = Fira_Sans({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"], variable: "--font-body", display: "swap" });
+const display = Fira_Code({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-display",
+  display: "swap",
+});
+const body = Fira_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-body",
+  display: "swap",
+});
 
 export const metadata: Metadata = { title: "Agency Autopilot" };
 

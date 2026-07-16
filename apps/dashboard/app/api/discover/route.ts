@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -11,15 +11,20 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
 
-  const count = Math.min(Math.max(parseInt(String(body.count ?? "25"), 10) || 25, 1), 200);
-  const vertical = typeof body.vertical === "string" && body.vertical.trim() ? body.vertical.trim().toLowerCase() : null;
+  const count = Math.min(Math.max(Number.parseInt(String(body.count ?? "25"), 10) || 25, 1), 200);
+  const vertical =
+    typeof body.vertical === "string" && body.vertical.trim() ? body.vertical.trim().toLowerCase() : null;
   const country = typeof body.country === "string" && body.country.trim() ? body.country.trim() : null;
   const cities: string[] = Array.isArray(body.cities)
-    ? body.cities.map((c: unknown) => String(c).trim()).filter(Boolean).slice(0, 25)
+    ? body.cities
+        .map((c: unknown) => String(c).trim())
+        .filter(Boolean)
+        .slice(0, 25)
     : [];
 
   if (!vertical) return NextResponse.json({ error: "vertical (niche) is required" }, { status: 400 });
-  if (cities.length === 0) return NextResponse.json({ error: "at least one city is required" }, { status: 400 });
+  if (cities.length === 0)
+    return NextResponse.json({ error: "at least one city is required" }, { status: 400 });
   if (!country) return NextResponse.json({ error: "country is required" }, { status: 400 });
 
   // Persist as the active targeting so scoring + future runs match what the operator picked.
@@ -34,7 +39,10 @@ export async function POST(req: Request) {
   const r = await db().query(
     `insert into agent_events (agent, level, type, message, payload)
      values ('dashboard','info','research.requested',$1,$2) returning id`,
-    [`discover ${count} ${vertical} leads in ${cities.join("; ")} (${country})`, JSON.stringify({ count, vertical, cities, country })],
+    [
+      `discover ${count} ${vertical} leads in ${cities.join("; ")} (${country})`,
+      JSON.stringify({ count, vertical, cities, country }),
+    ],
   );
   return NextResponse.json({ requestId: r.rows[0].id, count, vertical, cities, country });
 }

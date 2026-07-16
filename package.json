@@ -11,10 +11,14 @@
     "typecheck": "turbo run typecheck",
     "migrate": "pnpm --filter @autopilot/core migrate",
     "seed-event": "pnpm --filter @autopilot/worker seed-event",
-    "legacy": "npm --prefix legacy run"
+    "legacy": "npm --prefix legacy run",
+    "lint": "biome check .",
+    "lint:ci": "biome ci .",
+    "format": "biome format --write ."
   },
   "devDependencies": {
     "turbo": "^2.0.6",
-    "typescript": "^5.5.0"
+    "typescript": "^5.5.0",
+    "@biomejs/biome": "1.9.4"
   }
 }

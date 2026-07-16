@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -11,8 +11,12 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const [flag, hb, batchRow] = await Promise.all([
     db().query<{ value: unknown }>("select value from settings where key='worker_enabled'"),
-    db().query<{ t: string | null }>("select max(created_at)::text t from agent_events where type in ('worker.heartbeat','worker.started')"),
-    db().query<{ value: { size?: number; started_at?: string } }>("select value from settings where key='demo_batch'"),
+    db().query<{ t: string | null }>(
+      "select max(created_at)::text t from agent_events where type in ('worker.heartbeat','worker.started')",
+    ),
+    db().query<{ value: { size?: number; started_at?: string } }>(
+      "select value from settings where key='demo_batch'",
+    ),
   ]);
   const enabled = String(flag.rows[0]?.value ?? "false").replace(/"/g, "") === "true";
   const lastBeat = hb.rows[0]?.t ? new Date(hb.rows[0].t) : null;
@@ -26,10 +30,12 @@ export async function GET() {
   let demo_batch: { size: number; used: number; remaining: number; started_at: string | null } | null = null;
   if (bv && Number.isFinite(size) && size > 0) {
     const used = Number(
-      (await db().query<{ n: string }>(
-        "select count(distinct lead_id)::text n from agent_events where type in ('design.admitted','design.ready') and created_at > $1",
-        [bv.started_at ?? "1970-01-01T00:00:00Z"],
-      )).rows[0].n,
+      (
+        await db().query<{ n: string }>(
+          "select count(distinct lead_id)::text n from agent_events where type in ('design.admitted','design.ready') and created_at > $1",
+          [bv.started_at ?? "1970-01-01T00:00:00Z"],
+        )
+      ).rows[0].n,
     );
     demo_batch = { size, used, remaining: Math.max(0, size - used), started_at: bv.started_at ?? null };
   }
@@ -42,7 +48,10 @@ export async function POST(req: Request) {
   const hasEnabled = typeof body.enabled === "boolean";
   const hasBatch = "batch_size" in body;
   if (!hasEnabled && !hasBatch) {
-    return NextResponse.json({ error: "enabled (boolean) or batch_size (integer 1-100, null to clear) required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "enabled (boolean) or batch_size (integer 1-100, null to clear) required" },
+      { status: 400 },
+    );
   }
 
   if (hasEnabled) {
@@ -61,11 +70,16 @@ export async function POST(req: Request) {
     const raw = body.batch_size;
     const clearing = raw === null || raw === 0;
     if (!clearing && (!Number.isInteger(raw) || raw < 1 || raw > 100)) {
-      return NextResponse.json({ error: "batch_size must be an integer 1-100, or null to clear" }, { status: 400 });
+      return NextResponse.json(
+        { error: "batch_size must be an integer 1-100, or null to clear" },
+        { status: 400 },
+      );
     }
     // Clearing writes size 0 instead of deleting the row: the worker bridge's two-way settings
     // merge has no delete tombstone, so a deleted hosted row would be resurrected from local.
-    const value = clearing ? { size: 0, started_at: new Date().toISOString() } : { size: raw, started_at: new Date().toISOString() };
+    const value = clearing
+      ? { size: 0, started_at: new Date().toISOString() }
+      : { size: raw, started_at: new Date().toISOString() };
     await db().query(
       `insert into settings (key, value) values ('demo_batch', $1)
        on conflict (key) do update set value = excluded.value`,
@@ -73,7 +87,10 @@ export async function POST(req: Request) {
     );
     await db().query(
       "insert into agent_events (agent, type, level, message, payload) values ('dashboard','worker.batch_set','info',$1,$2)",
-      [clearing ? "operator cleared the demo batch limit" : `operator set demo batch: top ${raw} by score`, JSON.stringify(value)],
+      [
+        clearing ? "operator cleared the demo batch limit" : `operator set demo batch: top ${raw} by score`,
+        JSON.stringify(value),
+      ],
     );
   }
 

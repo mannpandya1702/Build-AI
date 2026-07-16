@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start -p 3100",
     "typecheck": "tsc --noEmit",
-    "test": "echo 'dashboard e2e lands in Phase 5'"
+    "test": "vitest run"
   },
   "dependencies": {
     "next": "^14.2.5",
@@ -26,6 +26,7 @@
     "postcss": "^8.4.39",
     "tailwindcss": "^3.4.6",
     "typescript": "^5.5.0",
-    "@types/ws": "^8.5.10"
+    "@types/ws": "^8.5.10",
+    "vitest": "^2.0.0"
   }
 }

@@ -1,10 +1,10 @@
 // Anthropic adapter (spec §3 model map): Haiku for extraction/scoring/classification, Sonnet for
 // analysis/solution/design/codegen/QA. Every call's cost lands in agent_events.cost_usd (§9).
 // MOCK_MODE returns canned responses with zero spend.
-import { readFileSync, existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { emitEvent } from "@autopilot/core";
-import { MOCK } from "./config.js";
 import { anthropicSpendToday } from "./caps.js";
+import { MOCK } from "./config.js";
 import { loadCaps } from "./config.js";
 
 export type ModelTier = "haiku" | "sonnet";

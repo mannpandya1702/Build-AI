@@ -1,3 +1,4 @@
+import { llm, voiceLint } from "@autopilot/adapters";
 // Per-business site copy (contract §5a "design to the business, not to a template" + §5d Content:
 // auto-fill copy from THEIR data, plain voice). The generic-template failure this fixes (operator,
 // 2026-07-11): every demo shipped the same four service blurbs, hero subline, and FAQ.
@@ -9,7 +10,6 @@
 // (any number in the copy must appear in the evidence or be the city/phone/rating), length caps.
 // Any failure returns null and the builder falls back to the safe defaults, never blocking a build.
 import { z } from "zod";
-import { llm, voiceLint } from "@autopilot/adapters";
 
 export interface CopyEvidence {
   companyName: string;
@@ -39,14 +39,23 @@ export interface GeneratedCopy {
 const Schema = z.object({
   primary_service: z.string().min(3),
   hero_subline: z.string().min(10),
-  services: z.array(z.object({ name: z.string().min(3), blurb: z.string().min(10) })).min(3).max(6),
-  faq: z.array(z.object({ q: z.string().min(5), a: z.string().min(5) })).min(2).max(4),
+  services: z
+    .array(z.object({ name: z.string().min(3), blurb: z.string().min(10) }))
+    .min(3)
+    .max(6),
+  faq: z
+    .array(z.object({ q: z.string().min(5), a: z.string().min(5) }))
+    .min(2)
+    .max(4),
   unknowns: z.array(z.string()).max(8).default([]),
 });
 
 function clamp(s: string, max: number): string {
   if (s.length <= max) return s;
-  const cut = s.slice(0, max).replace(/\s+\S*$/, "").replace(/[,.;:]$/, "");
+  const cut = s
+    .slice(0, max)
+    .replace(/\s+\S*$/, "")
+    .replace(/[,.;:]$/, "");
   return cut.length >= 10 ? cut : s.slice(0, max);
 }
 
@@ -85,7 +94,20 @@ function inventedNumbers(copyText: string, evidenceText: string): string[] {
 /** Claim words that promise something on the owner's behalf (§5b: service/pricing claims are
  *  gated behind evidence). Caught live: "Free-look inspections" with no "free" anywhere in the
  *  evidence. The template's own standard offer copy is separate; this guards GENERATED text. */
-const CLAIM_WORDS = ["free", "warranty", "warranties", "guarantee", "guaranteed", "licensed", "insured", "certified", "24/7", "emergency", "same-day", "same day"];
+const CLAIM_WORDS = [
+  "free",
+  "warranty",
+  "warranties",
+  "guarantee",
+  "guaranteed",
+  "licensed",
+  "insured",
+  "certified",
+  "24/7",
+  "emergency",
+  "same-day",
+  "same day",
+];
 function unevidencedClaims(copyText: string, evidenceText: string): string[] {
   const lc = copyText.toLowerCase();
   const le = evidenceText.toLowerCase();
@@ -108,7 +130,10 @@ Return ONLY JSON: {"primary_service": string, "hero_subline": string (<=110 char
 
 /** Em/en dashes are a mechanical fix, not a regeneration: replace with ", " then re-check. */
 function sanitize(s: string): string {
-  return s.replace(/\s*[—–]\s*/g, ", ").replace(/\s+,/g, ",").trim();
+  return s
+    .replace(/\s*[—–]\s*/g, ", ")
+    .replace(/\s+,/g, ",")
+    .trim();
 }
 
 export type CopyResult = { ok: true; copy: GeneratedCopy } | { ok: false; reason: string };
@@ -122,10 +147,16 @@ export async function generatePersonalizedCopy(leadId: string, ev: CopyEvidence)
       ? `Their real Google reviews (verbatim):\n${ev.reviews.map((r) => `- (${r.rating}★) ${r.text}`).join("\n")}`
       : "No review texts available.",
     ev.auditSummary ? `Our audit of their CURRENT website: ${ev.auditSummary}` : "",
-    ev.auditFindings.length ? `Audit findings on their current site:\n${ev.auditFindings.map((f) => `- ${f}`).join("\n")}` : "",
-    ev.siteText ? `Visible text of their current website (truncated):\n"""${ev.siteText}"""` : "Their current website text could not be read.",
+    ev.auditFindings.length
+      ? `Audit findings on their current site:\n${ev.auditFindings.map((f) => `- ${f}`).join("\n")}`
+      : "",
+    ev.siteText
+      ? `Visible text of their current website (truncated):\n"""${ev.siteText}"""`
+      : "Their current website text could not be read.",
     ev.pitchAngle ? `Sales angle we identified: ${ev.pitchAngle}` : "",
-  ].filter(Boolean).join("\n\n");
+  ]
+    .filter(Boolean)
+    .join("\n\n");
   const evidenceText = `${evidenceBundle} ${ev.rating ?? ""} ${ev.reviewCount ?? ""} ${ev.phone ?? ""} 24 7 24/7 1 2 3`;
 
   let feedback = "";
@@ -161,7 +192,10 @@ export async function generatePersonalizedCopy(leadId: string, ev: CopyEvidence)
       ...parsed,
       primary_service: clamp(sanitize(parsed.primary_service), 40),
       hero_subline: clamp(sanitize(parsed.hero_subline), 110),
-      services: parsed.services.map((s) => ({ name: clamp(sanitize(s.name), 48), blurb: clamp(sanitize(s.blurb), 140) })),
+      services: parsed.services.map((s) => ({
+        name: clamp(sanitize(s.name), 48),
+        blurb: clamp(sanitize(s.blurb), 140),
+      })),
       faq: parsed.faq.map((f) => ({ q: clamp(sanitize(f.q), 90), a: clamp(sanitize(f.a), 220) })),
     };
     const allText = [

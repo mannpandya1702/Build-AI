@@ -2,7 +2,7 @@
 // SAFETY: refuses to run while the worker is enabled — the test swaps settings.demo_batch around,
 // and a running scheduler reading a transient value could admit real leads. It snapshots the
 // operator's batch setting and restores it on exit. Dev tool, not part of the worker runtime.
-import { getPool, closePool } from "@autopilot/core";
+import { closePool, getPool } from "@autopilot/core";
 import { demoBatchRemaining } from "./batch.js";
 
 const pool = getPool();
@@ -14,16 +14,22 @@ function check(name: string, got: unknown, want: unknown) {
 }
 
 async function main() {
-  const enabled = await pool.query<{ value: unknown }>("select value from settings where key='worker_enabled'");
+  const enabled = await pool.query<{ value: unknown }>(
+    "select value from settings where key='worker_enabled'",
+  );
   if (String(enabled.rows[0]?.value ?? "false").replace(/"/g, "") === "true") {
-    console.error("REFUSING to run: worker is ENABLED. Pause it first (the test mutates settings.demo_batch).");
+    console.error(
+      "REFUSING to run: worker is ENABLED. Pause it first (the test mutates settings.demo_batch).",
+    );
     process.exit(1);
   }
   const saved = await pool.query<{ value: unknown }>("select value from settings where key='demo_batch'");
   const savedValue = saved.rows[0]?.value;
 
   // clean slate for ZZ rows
-  await pool.query("delete from agent_events where lead_id in (select id from leads where company_name like 'ZZ %')");
+  await pool.query(
+    "delete from agent_events where lead_id in (select id from leads where company_name like 'ZZ %')",
+  );
   await pool.query("delete from leads where company_name like 'ZZ %'");
   await pool.query("delete from settings where key='demo_batch'");
 
@@ -31,15 +37,16 @@ async function main() {
   check("no batch row", await demoBatchRemaining(pool), null);
 
   // 2. size 0 (cleared) -> null
-  await pool.query(`insert into settings (key, value) values ('demo_batch', '{"size":0,"started_at":"2026-07-10T00:00:00Z"}')`);
+  await pool.query(
+    `insert into settings (key, value) values ('demo_batch', '{"size":0,"started_at":"2026-07-10T00:00:00Z"}')`,
+  );
   check("size 0 = cleared", await demoBatchRemaining(pool), null);
 
   // 3. size 5, nothing used -> 5
   const startedAt = new Date(Date.now() - 60_000).toISOString();
-  await pool.query(
-    `update settings set value = $1 where key='demo_batch'`,
-    [JSON.stringify({ size: 5, started_at: startedAt })],
-  );
+  await pool.query(`update settings set value = $1 where key='demo_batch'`, [
+    JSON.stringify({ size: 5, started_at: startedAt }),
+  ]);
   check("size 5, 0 used", await demoBatchRemaining(pool), 5);
 
   // 4. two ZZ leads reach design.ready after started_at -> 3 left
@@ -81,14 +88,15 @@ async function main() {
   check("admit->ready single count", await demoBatchRemaining(pool), 2);
 
   // 8. events BEFORE started_at do not count: restart the batch now -> back to full
-  await pool.query(
-    `update settings set value = $1 where key='demo_batch'`,
-    [JSON.stringify({ size: 2, started_at: new Date(Date.now() + 1_000).toISOString() })],
-  );
+  await pool.query(`update settings set value = $1 where key='demo_batch'`, [
+    JSON.stringify({ size: 2, started_at: new Date(Date.now() + 1_000).toISOString() }),
+  ]);
   check("new batch restarts count", await demoBatchRemaining(pool), 2);
 
   // cleanup + restore the operator's batch setting
-  await pool.query("delete from agent_events where lead_id in (select id from leads where company_name like 'ZZ %') or message like 'ZZ test%'");
+  await pool.query(
+    "delete from agent_events where lead_id in (select id from leads where company_name like 'ZZ %') or message like 'ZZ test%'",
+  );
   await pool.query("delete from leads where company_name like 'ZZ %'");
   if (savedValue === undefined) {
     await pool.query("delete from settings where key='demo_batch'");
@@ -104,4 +112,7 @@ async function main() {
   process.exit(failures ? 1 : 0);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

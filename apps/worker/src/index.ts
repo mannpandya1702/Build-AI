@@ -4,12 +4,30 @@
 // the scheduler notices the new status and enqueues the next agent. Illegal transitions throw
 // inside advanceLead and surface as error events.
 
+import { loadCaps, usedToday } from "@autopilot/adapters";
+import {
+  AGENTS,
+  AGENT_BY_TRIGGER,
+  STUB_HANDLERS,
+  approveAndSend,
+  dailyDigest,
+  ingestBooking,
+  ingestReply,
+  monitorHourly,
+  realAnalyzer,
+  realBuilder,
+  realQa,
+  realQualify,
+  realSales,
+  realScrape,
+  realSolution,
+  realUiux,
+  research,
+} from "@autopilot/agents";
+import { type LeadStatus, emitEvent, getPool } from "@autopilot/core";
 import PgBoss from "pg-boss";
-import { emitEvent, getPool, type LeadStatus } from "@autopilot/core";
-import { AGENTS, AGENT_BY_TRIGGER, STUB_HANDLERS, research, realScrape, realQualify, realAnalyzer, realSolution, realUiux, realBuilder, realQa, realSales, approveAndSend, ingestReply, ingestBooking, monitorHourly, dailyDigest } from "@autopilot/agents";
-import { bridgeCycle } from "./bridge.js";
 import { readDemoBatch } from "./batch.js";
-import { usedToday, loadCaps } from "@autopilot/adapters";
+import { bridgeCycle } from "./bridge.js";
 
 const MOCK = process.env.MOCK_MODE !== "false";
 
@@ -22,7 +40,9 @@ async function main(): Promise<void> {
   // stale code twice caused retry storms and fixture contamination). The lock is session-scoped on a
   // dedicated client held for the process lifetime; a second worker exits instead of double-running.
   const lockClient = await pool.connect();
-  const lock = await lockClient.query<{ ok: boolean }>("select pg_try_advisory_lock(hashtext('autopilot_worker')) as ok");
+  const lock = await lockClient.query<{ ok: boolean }>(
+    "select pg_try_advisory_lock(hashtext('autopilot_worker')) as ok",
+  );
   if (!lock.rows[0].ok) {
     console.error("[worker] another worker already holds the advisory lock for this database. Exiting.");
     lockClient.release();
@@ -39,8 +59,7 @@ async function main(): Promise<void> {
     );
     if (real.rows[0].n !== "0") {
       console.error(
-        `[worker] REFUSING to run MOCK stubs: this database holds ${real.rows[0].n} real leads. ` +
-          `Use MOCK_MODE=false, or point DATABASE_URL at a scratch database, or set MOCK_ON_REAL_DB=allow if you really mean it.`,
+        `[worker] REFUSING to run MOCK stubs: this database holds ${real.rows[0].n} real leads. Use MOCK_MODE=false, or point DATABASE_URL at a scratch database, or set MOCK_ON_REAL_DB=allow if you really mean it.`,
       );
       lockClient.release();
       process.exit(1);
@@ -80,7 +99,11 @@ async function main(): Promise<void> {
     const next = String(r.rows[0]?.value ?? "false").replace(/"/g, "") === "true";
     if (next !== workerEnabled) {
       workerEnabled = next;
-      await emitEvent({ agent: "worker", type: next ? "worker.resumed" : "worker.paused", message: `processing ${next ? "resumed" : "paused"} by operator` });
+      await emitEvent({
+        agent: "worker",
+        type: next ? "worker.resumed" : "worker.paused",
+        message: `processing ${next ? "resumed" : "paused"} by operator`,
+      });
       console.log(`[worker] processing ${next ? "RESUMED" : "PAUSED"}`);
     }
   }
@@ -127,7 +150,13 @@ async function main(): Promise<void> {
     // skip scrape scheduling once the Places budget is spent for the day (no retry churn)
     const placesSpent = await usedToday("places.call").catch(() => 0);
     const buildingNow = Number(
-      (await pool.query<{ n: string }>(`select count(*)::text n from leads where status in ('demo_building','final_building')`).catch(() => ({ rows: [{ n: "0" }] }))).rows[0].n,
+      (
+        await pool
+          .query<{ n: string }>(
+            `select count(*)::text n from leads where status in ('demo_building','final_building')`,
+          )
+          .catch(() => ({ rows: [{ n: "0" }] }))
+      ).rows[0].n,
     );
     for (const [status, agent] of handledTriggers) {
       if (agent.name === "scrape" && placesSpent >= placesCap) continue;
@@ -139,11 +168,14 @@ async function main(): Promise<void> {
         // updated_at, so oldest-first let 12 of them pin all 10 slots and starve every email lead
         // behind them (observed live 2026-07-11: 17 drafts stuck for 30+ min). Everything else is
         // oldest-first.
-        let orderBy =
-          agent.name === "builder" ? "coalesce(score,0) desc, updated_at asc"
-          : agent.name === "sales" ? "(contact_email is not null) desc, updated_at asc"
-          : "updated_at asc";
-        let limit = agent.name === "builder" && FRESH_BUILD.includes(status) ? Math.max(0, buildCap - buildingNow) : 10;
+        const orderBy =
+          agent.name === "builder"
+            ? "coalesce(score,0) desc, updated_at asc"
+            : agent.name === "sales"
+              ? "(contact_email is not null) desc, updated_at asc"
+              : "updated_at asc";
+        const limit =
+          agent.name === "builder" && FRESH_BUILD.includes(status) ? Math.max(0, buildCap - buildingNow) : 10;
         // Demo batch (operator: "build the top N demos first"): admission is gated at the uiux
         // trigger, best scores first. Accounting is ADMISSION-time (design.admitted emitted at
         // enqueue; see batch.ts) — completion-only counting let newly qualified high scorers slip
@@ -158,7 +190,12 @@ async function main(): Promise<void> {
               boss.send(
                 agent.queue,
                 { leadId },
-                { singletonKey: `${leadId}:${status}`, singletonSeconds: 300, retryLimit: 3, retryBackoff: true },
+                {
+                  singletonKey: `${leadId}:${status}`,
+                  singletonSeconds: 300,
+                  retryLimit: 3,
+                  retryBackoff: true,
+                },
               );
             const admitted = await pool.query<{ id: string }>(
               `select l.id from leads l
@@ -204,7 +241,12 @@ async function main(): Promise<void> {
             // singletonSeconds must EXCEED the slowest job (analyzer: PageSpeed up to ~90s +
             // screenshots + Sonnet vision). A shorter window re-enqueues a lead that is still
             // being processed, piling up thousands of duplicate jobs (PROGRESS.md incident).
-            { singletonKey: `${lead.id}:${status}`, singletonSeconds: 300, retryLimit: 3, retryBackoff: true },
+            {
+              singletonKey: `${lead.id}:${status}`,
+              singletonSeconds: 300,
+              retryLimit: 3,
+              retryBackoff: true,
+            },
           );
         }
       } catch (err) {
@@ -215,22 +257,27 @@ async function main(): Promise<void> {
 
   // operator-triggered research requests ride the event stream (research.requested -> started).
   // The payload carries the discover panel's targeting (vertical, cities, country).
-  await boss.work<{ requestId: string; count: number; vertical?: string; cities?: string[]; country?: string }>(
-    "agent:research-run",
-    { teamSize: 1 },
-    async (job) => {
-      if (!workerEnabled) return; // no-op; the poll re-finds the request on resume
-      await research(job.data.requestId, job.data.count, {
-        vertical: job.data.vertical,
-        cities: job.data.cities,
-        country: job.data.country,
-      });
-    },
-  );
+  await boss.work<{
+    requestId: string;
+    count: number;
+    vertical?: string;
+    cities?: string[];
+    country?: string;
+  }>("agent:research-run", { teamSize: 1 }, async (job) => {
+    if (!workerEnabled) return; // no-op; the poll re-finds the request on resume
+    await research(job.data.requestId, job.data.count, {
+      vertical: job.data.vertical,
+      cities: job.data.cities,
+      country: job.data.country,
+    });
+  });
   setInterval(async () => {
     if (!workerEnabled) return;
     try {
-      const r = await pool.query<{ id: string; payload: { count?: number; vertical?: string; cities?: string[]; country?: string } }>(
+      const r = await pool.query<{
+        id: string;
+        payload: { count?: number; vertical?: string; cities?: string[]; country?: string };
+      }>(
         `select e.id, e.payload from agent_events e
          where e.type = 'research.requested'
            and not exists (select 1 from agent_events s where s.type = 'research.started' and s.payload->>'request_id' = e.id::text)
@@ -239,7 +286,13 @@ async function main(): Promise<void> {
       for (const req of r.rows) {
         await boss.send(
           "agent:research-run",
-          { requestId: req.id, count: req.payload?.count ?? 50, vertical: req.payload?.vertical, cities: req.payload?.cities, country: req.payload?.country },
+          {
+            requestId: req.id,
+            count: req.payload?.count ?? 50,
+            vertical: req.payload?.vertical,
+            cities: req.payload?.cities,
+            country: req.payload?.country,
+          },
           { singletonKey: req.id, retryLimit: 2 },
         );
       }
@@ -255,25 +308,55 @@ async function main(): Promise<void> {
     if (!workerEnabled) return; // paused: approvals/replies/bookings stay queued, processed on resume
     try {
       const approved = await pool.query<{ idempotency_key: string }>(
-        "select idempotency_key from emails where status='approved' and idempotency_key is not null limit 5");
-      for (const e of approved.rows) await approveAndSend(e.idempotency_key).catch((err) => console.error("[approve]", (err as Error).message));
+        "select idempotency_key from emails where status='approved' and idempotency_key is not null limit 5",
+      );
+      for (const e of approved.rows)
+        await approveAndSend(e.idempotency_key).catch((err) =>
+          console.error("[approve]", (err as Error).message),
+        );
 
-      const replies = await pool.query<{ id: string; payload: { leadId: string; text?: string; classification?: string } }>(
+      const replies = await pool.query<{
+        id: string;
+        payload: { leadId: string; text?: string; classification?: string };
+      }>(
         `select id, payload from agent_events e where e.type='dev.reply_requested'
-           and not exists (select 1 from agent_events s where s.type='dev.reply_processed' and s.payload->>'request_id'=e.id::text) limit 5`);
+           and not exists (select 1 from agent_events s where s.type='dev.reply_processed' and s.payload->>'request_id'=e.id::text) limit 5`,
+      );
       for (const req of replies.rows) {
-        await ingestReply(req.payload.leadId, req.payload.text ?? "interested, tell me more", req.payload.classification).catch((err) => console.error("[reply]", (err as Error).message));
-        await emitEvent({ agent: "sales", type: "dev.reply_processed", level: "debug", payload: { request_id: req.id } });
+        await ingestReply(
+          req.payload.leadId,
+          req.payload.text ?? "interested, tell me more",
+          req.payload.classification,
+        ).catch((err) => console.error("[reply]", (err as Error).message));
+        await emitEvent({
+          agent: "sales",
+          type: "dev.reply_processed",
+          level: "debug",
+          payload: { request_id: req.id },
+        });
       }
 
       // bookings arrive from the dev panel (dev.booking_requested) or the real Cal.com webhook
       // (booking.received, inserted by the dashboard's /api/webhooks/calcom after HMAC verification)
-      const bookings = await pool.query<{ id: string; payload: { leadId: string; title?: string; startTime?: string; attendee?: unknown } }>(
+      const bookings = await pool.query<{
+        id: string;
+        payload: { leadId: string; title?: string; startTime?: string; attendee?: unknown };
+      }>(
         `select id, payload from agent_events e where e.type in ('dev.booking_requested','booking.received')
-           and not exists (select 1 from agent_events s where s.type='dev.booking_processed' and s.payload->>'request_id'=e.id::text) limit 5`);
+           and not exists (select 1 from agent_events s where s.type='dev.booking_processed' and s.payload->>'request_id'=e.id::text) limit 5`,
+      );
       for (const req of bookings.rows) {
-        await ingestBooking(req.payload.leadId, { title: req.payload.title, startTime: req.payload.startTime, attendee: req.payload.attendee }).catch((err) => console.error("[booking]", (err as Error).message));
-        await emitEvent({ agent: "sales", type: "dev.booking_processed", level: "debug", payload: { request_id: req.id } });
+        await ingestBooking(req.payload.leadId, {
+          title: req.payload.title,
+          startTime: req.payload.startTime,
+          attendee: req.payload.attendee,
+        }).catch((err) => console.error("[booking]", (err as Error).message));
+        await emitEvent({
+          agent: "sales",
+          type: "dev.booking_processed",
+          level: "debug",
+          payload: { request_id: req.id },
+        });
       }
     } catch (err) {
       console.error("[outbox-poll]", (err as Error).message);
@@ -284,14 +367,15 @@ async function main(): Promise<void> {
   // photos, later builds shipped photo-less). Builds now emit build.no_photos when a lead HAS
   // photos that could not be fetched; when the daily budget has headroom again, requeue those
   // demos (unsent only, ≤5 per pass, ≥12h between attempts per lead — no churn while capped).
-  setInterval(async () => {
-    if (!workerEnabled) return;
-    try {
-      const caps2 = loadCaps();
-      const spent = await usedToday("places.call").catch(() => caps2.places_calls_per_day);
-      if (spent > caps2.places_calls_per_day - 30) return; // not enough headroom to bother
-      const debt = await pool.query<{ id: string; company_name: string }>(
-        `select l.id, l.company_name from leads l
+  setInterval(
+    async () => {
+      if (!workerEnabled) return;
+      try {
+        const caps2 = loadCaps();
+        const spent = await usedToday("places.call").catch(() => caps2.places_calls_per_day);
+        if (spent > caps2.places_calls_per_day - 30) return; // not enough headroom to bother
+        const debt = await pool.query<{ id: string; company_name: string }>(
+          `select l.id, l.company_name from leads l
          where l.status in ('outreach_ready','awaiting_approval')
            and not exists (select 1 from emails e where e.lead_id = l.id and e.status = 'sent')
            and exists (
@@ -301,15 +385,25 @@ async function main(): Promise<void> {
            and not exists (select 1 from agent_events rq2 where rq2.lead_id = l.id
                              and rq2.type = 'photo.requeue' and rq2.created_at > now() - interval '12 hours')
          limit 5`,
-      );
-      for (const l of debt.rows) {
-        await emitEvent({ agent: "builder", leadId: l.id, type: "photo.requeue", message: "photo budget available again; rebuilding photo-less demo" });
-        await pool.query("update leads set status='demo_building' where id=$1 and status in ('outreach_ready','awaiting_approval')", [l.id]);
+        );
+        for (const l of debt.rows) {
+          await emitEvent({
+            agent: "builder",
+            leadId: l.id,
+            type: "photo.requeue",
+            message: "photo budget available again; rebuilding photo-less demo",
+          });
+          await pool.query(
+            "update leads set status='demo_building' where id=$1 and status in ('outreach_ready','awaiting_approval')",
+            [l.id],
+          );
+        }
+      } catch (err) {
+        console.error("[photo-heal]", (err as Error).message);
       }
-    } catch (err) {
-      console.error("[photo-heal]", (err as Error).message);
-    }
-  }, 30 * 60 * 1000);
+    },
+    30 * 60 * 1000,
+  );
 
   await emitEvent({ agent: "worker", type: "worker.started", message: `worker online (mock=${MOCK})` });
   setInterval(() => {

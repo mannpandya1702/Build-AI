@@ -8,8 +8,8 @@
 //
 // Usage: node scripts/set-worker-enabled.cjs true|false
 //   env: DATABASE_URL (defaults to local dev), DATABASE_URL_NEON (hosted; skipped if unset)
-const path = require("path");
-const { createRequire } = require("module");
+const path = require("node:path");
+const { createRequire } = require("node:module");
 // Resolve drivers from @autopilot/core's dependency tree regardless of where this script lives.
 const coreRequire = createRequire(path.join(__dirname, "..", "packages", "core", "package.json"));
 
@@ -19,7 +19,8 @@ if (value !== "true" && value !== "false") {
   process.exit(2);
 }
 const SQL = "update settings set value=$1::jsonb, updated_at=now() where key='worker_enabled'";
-const localUrl = process.env.DATABASE_URL ?? "postgres://autopilot:autopilot_local_dev@localhost:5432/agency_autopilot";
+const localUrl =
+  process.env.DATABASE_URL ?? "postgres://autopilot:autopilot_local_dev@localhost:5432/agency_autopilot";
 const neonUrl = process.env.DATABASE_URL_NEON;
 
 (async () => {

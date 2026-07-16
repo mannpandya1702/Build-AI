@@ -1,6 +1,6 @@
 // State machine unit tests (spec §12): legal transitions, illegal transitions, suppression rules.
-import { describe, it, expect } from "vitest";
-import { canTransition, isTerminal, LEAD_STATUSES, TRANSITIONS, type LeadStatus } from "../src/statuses.js";
+import { describe, expect, it } from "vitest";
+import { LEAD_STATUSES, type LeadStatus, TRANSITIONS, canTransition, isTerminal } from "../src/statuses.js";
 
 describe("lead state machine", () => {
   it("covers every status in the transition map", () => {

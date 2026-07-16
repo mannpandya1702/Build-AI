@@ -4,18 +4,27 @@
 // cost-per-close, and PRICING FLOORS (min setup + retainer at target margin). Nothing invisible:
 // every number is tagged measured | allocated | estimated.
 import { readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parse } from "yaml";
 import { getPool } from "@autopilot/core";
+import { parse } from "yaml";
 
 const CONFIG = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../config/unit-costs.yaml");
 
 interface UnitCosts {
   api_prices_usd: { places_search: number; places_details: number; pagespeed: number };
   infra_monthly_usd: Record<string, number>;
-  automation_usage_usd: { twilio_sms_each: number; est_sms_per_client_month: number; email_per_client_month: number };
-  operator: { hourly_rate_usd: number; est_hours_demo: number; est_hours_close: number; est_hours_maintenance_month: number };
+  automation_usage_usd: {
+    twilio_sms_each: number;
+    est_sms_per_client_month: number;
+    email_per_client_month: number;
+  };
+  operator: {
+    hourly_rate_usd: number;
+    est_hours_demo: number;
+    est_hours_close: number;
+    est_hours_maintenance_month: number;
+  };
   targets: { gross_margin: number; funnel_reply_rate: number; funnel_close_rate: number };
 }
 
@@ -46,10 +55,10 @@ export async function costOfLead(leadId: string): Promise<LeadCost> {
     [leadId],
   );
   // research-phase search calls are not lead-attributed; allocate the average share below instead
-  const llmUsd = parseFloat(llm.rows[0].s ?? "0");
+  const llmUsd = Number.parseFloat(llm.rows[0].s ?? "0");
   const placesUsd =
-    parseInt(places.rows[0].details, 10) * u.api_prices_usd.places_details +
-    parseInt(places.rows[0].searches, 10) * u.api_prices_usd.places_search;
+    Number.parseInt(places.rows[0].details, 10) * u.api_prices_usd.places_details +
+    Number.parseInt(places.rows[0].searches, 10) * u.api_prices_usd.places_search;
   const operatorUsd = u.operator.est_hours_demo * u.operator.hourly_rate_usd;
   return {
     leadId,
@@ -97,16 +106,16 @@ export async function funnelEconomics(windowDays = 30): Promise<FunnelEconomics>
            count(*) filter (where type='places.call' and message like 'details%')::text as details
     from agent_events where created_at >= ${since}
   `);
-  const llmUsd = parseFloat(spend.rows[0].llm);
+  const llmUsd = Number.parseFloat(spend.rows[0].llm);
   const placesUsd =
-    parseInt(spend.rows[0].searches, 10) * u.api_prices_usd.places_search +
-    parseInt(spend.rows[0].details, 10) * u.api_prices_usd.places_details;
+    Number.parseInt(spend.rows[0].searches, 10) * u.api_prices_usd.places_search +
+    Number.parseInt(spend.rows[0].details, 10) * u.api_prices_usd.places_details;
 
-  const contacted = parseInt(c.contacted, 10);
-  const replied = parseInt(c.replied, 10);
-  const closed = parseInt(c.closed, 10);
-  const qualified = parseInt(c.qualified, 10);
-  const demos = parseInt(c.demos, 10);
+  const contacted = Number.parseInt(c.contacted, 10);
+  const replied = Number.parseInt(c.replied, 10);
+  const closed = Number.parseInt(c.closed, 10);
+  const qualified = Number.parseInt(c.qualified, 10);
+  const demos = Number.parseInt(c.demos, 10);
 
   // measured rates only when the sample is honest (contract §9: never dress it up)
   const replyRate =
@@ -130,7 +139,7 @@ export async function funnelEconomics(windowDays = 30): Promise<FunnelEconomics>
 
   return {
     window_days: windowDays,
-    leads_discovered: parseInt(c.discovered, 10),
+    leads_discovered: Number.parseInt(c.discovered, 10),
     leads_qualified: qualified,
     demos_built: demos,
     contacted,
@@ -148,9 +157,9 @@ export async function funnelEconomics(windowDays = 30): Promise<FunnelEconomics>
 export interface PricingFloors {
   monthly_cost_to_serve_site_usd: number;
   monthly_cost_to_serve_full_stack_usd: number;
-  retainer_floor_site_usd: number;       // cost-to-serve / (1 - margin)
+  retainer_floor_site_usd: number; // cost-to-serve / (1 - margin)
   retainer_floor_full_stack_usd: number;
-  setup_floor_usd: number | null;         // recover acquisition + build at margin
+  setup_floor_usd: number | null; // recover acquisition + build at margin
   assumptions: string[];
 }
 
@@ -170,7 +179,8 @@ export async function pricingFloors(): Promise<PricingFloors> {
     monthly_cost_to_serve_full_stack_usd: round2(fullServe),
     retainer_floor_site_usd: round2(siteServe / (1 - margin)),
     retainer_floor_full_stack_usd: round2(fullServe / (1 - margin)),
-    setup_floor_usd: f.est_cost_per_close_usd != null ? round2(f.est_cost_per_close_usd / (1 - margin)) : null,
+    setup_floor_usd:
+      f.est_cost_per_close_usd != null ? round2(f.est_cost_per_close_usd / (1 - margin)) : null,
     assumptions: [
       `gross margin target ${margin * 100}%`,
       `operator rate $${u.operator.hourly_rate_usd}/h (config/unit-costs.yaml)`,

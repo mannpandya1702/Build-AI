@@ -2,7 +2,7 @@
 // per domain (spec §4.6). ENV ADAPTATION (logged in PROGRESS.md): headless browsers cannot reach
 // external sites directly in this container, so crawling uses Node fetch (which routes through
 // the proxy); the Phase 3 screenshot adapter reuses the legacy request-interception technique.
-import { loadCaps, MOCK } from "./config.js";
+import { MOCK, loadCaps } from "./config.js";
 
 const UA = "AgencyAutopilotBot/0.1 (+website audit for outreach; contact: operator)";
 const lastHit = new Map<string, number>();
@@ -13,7 +13,11 @@ async function politeFetch(url: string): Promise<Response> {
   const wait = (lastHit.get(host) ?? 0) + caps.crawl.per_domain_min_interval_ms - Date.now();
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   lastHit.set(host, Date.now());
-  return fetch(url, { headers: { "User-Agent": UA }, redirect: "follow", signal: AbortSignal.timeout(15000) });
+  return fetch(url, {
+    headers: { "User-Agent": UA },
+    redirect: "follow",
+    signal: AbortSignal.timeout(15000),
+  });
 }
 
 async function allowedByRobots(base: URL, path: string): Promise<boolean> {
@@ -47,7 +51,13 @@ export interface CrawledPage {
 /** Crawl homepage + likely contact/about pages, max N pages (spec §6.2). */
 export async function crawlSite(siteUrl: string): Promise<CrawledPage[]> {
   if (MOCK()) {
-    return [{ url: siteUrl, status: 200, html: "<html><body>Mock page. Email us: owner@mock.test or call (214) 555-0100.</body></html>" }];
+    return [
+      {
+        url: siteUrl,
+        status: 200,
+        html: "<html><body>Mock page. Email us: owner@mock.test or call (214) 555-0100.</body></html>",
+      },
+    ];
   }
   const caps = loadCaps();
   const base = new URL(siteUrl.startsWith("http") ? siteUrl : `https://${siteUrl}`);

@@ -7,7 +7,7 @@
     "dev": "tsx src/index.ts",
     "seed-event": "tsx src/seed-event.ts",
     "typecheck": "tsc --noEmit",
-    "test": "echo 'no worker tests yet'",
+    "test": "vitest run",
     "import-legacy": "tsx src/import-legacy.ts",
     "finance": "tsx src/finance-report.ts"
   },
@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
-    "typescript": "^5.5.0"
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
   }
 }

@@ -29,10 +29,14 @@ export async function deployDir(dir: string, slug: string, opts: DeployOpts): Pr
   if (!process.env.VERCEL_TOKEN) throw new Error("VERCEL_TOKEN is not set");
   const childEnv = { ...process.env, VERCEL_TOKEN: process.env.VERCEL_TOKEN };
 
-  const { stdout } = await exec("vercel", ["deploy", "--prod", "--yes", "--scope", opts.scope, "--cwd", dir], {
-    maxBuffer: 1024 * 1024 * 32,
-    env: childEnv,
-  });
+  const { stdout } = await exec(
+    "vercel",
+    ["deploy", "--prod", "--yes", "--scope", opts.scope, "--cwd", dir],
+    {
+      maxBuffer: 1024 * 1024 * 32,
+      env: childEnv,
+    },
+  );
   const match = stdout.match(/https:\/\/[^\s]+\.vercel\.app/);
   if (!match) throw new Error(`deploy finished but no URL parsed:\n${stdout.slice(-400)}`);
   const deploymentUrl = match[0];
@@ -43,7 +47,9 @@ export async function deployDir(dir: string, slug: string, opts: DeployOpts): Pr
 
   // Try a clean flat alias; fall back to the deployment URL if it is taken / plan-limited.
   const flatAlias = `${slug}-${opts.aliasBase}.vercel.app`.toLowerCase();
-  const aliased = await exec("vercel", ["alias", "set", deploymentUrl, flatAlias, "--scope", opts.scope], { env: childEnv })
+  const aliased = await exec("vercel", ["alias", "set", deploymentUrl, flatAlias, "--scope", opts.scope], {
+    env: childEnv,
+  })
     .then(() => true)
     .catch(() => false);
   const url = aliased ? `https://${flatAlias}` : deploymentUrl;

@@ -2,7 +2,16 @@
 // Hand-rolled Lucide-style outlines; no runtime dependency.
 export function Icon({ name, className = "h-4 w-4" }: { name: keyof typeof PATHS; className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       {PATHS[name]}
     </svg>
   );
@@ -67,7 +76,9 @@ const PATHS = {
   ),
   check: <path d="M4 12.5l5 5L20 6.5" />,
   x: <path d="M6 6l12 12M18 6L6 18" />,
-  phone: <path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" />,
+  phone: (
+    <path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" />
+  ),
   lead: (
     <>
       <circle cx="12" cy="8" r="4" />

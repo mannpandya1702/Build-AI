@@ -35,10 +35,17 @@ export async function screenshotSite(url: string, slug: string): Promise<Shot[]>
       await page.setRequestInterception(true);
       page.on("request", async (req: HTTPRequest) => {
         try {
-          const res = await fetch(req.url(), { method: req.method(), headers: req.headers(), body: req.postData(), redirect: "follow" });
+          const res = await fetch(req.url(), {
+            method: req.method(),
+            headers: req.headers(),
+            body: req.postData(),
+            redirect: "follow",
+          });
           const body = Buffer.from(await res.arrayBuffer());
           const headers: Record<string, string> = {};
-          res.headers.forEach((val, k) => { if (!/^(content-encoding|transfer-encoding)$/i.test(k)) headers[k] = val; });
+          res.headers.forEach((val, k) => {
+            if (!/^(content-encoding|transfer-encoding)$/i.test(k)) headers[k] = val;
+          });
           await req.respond({ status: res.status, headers, body });
         } catch {
           await req.abort().catch(() => undefined);

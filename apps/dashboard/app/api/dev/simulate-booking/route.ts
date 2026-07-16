@@ -1,13 +1,14 @@
-import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { devToolsEnabled } from "@/lib/devtools";
+import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 // Dev panel (spec §11): inject a simulated Cal.com booking. The worker runs the real booking handler
 // (meeting row + meeting_booked + operator notification).
 export async function POST(req: Request) {
-  if (!devToolsEnabled()) return NextResponse.json({ error: "dev tools are disabled on hosted deployments" }, { status: 403 });
+  if (!devToolsEnabled())
+    return NextResponse.json({ error: "dev tools are disabled on hosted deployments" }, { status: 403 });
   const { leadId } = await req.json();
   if (!leadId) return NextResponse.json({ error: "leadId required" }, { status: 400 });
   await db().query(

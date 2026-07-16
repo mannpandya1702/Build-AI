@@ -1,8 +1,8 @@
+import { LOOKS } from "@autopilot/blocks";
 // Seed the `looks` table from the @autopilot/blocks registry (spec §5 data model). Idempotent:
 // upserts on (preset, name) so re-running never duplicates. Run once after migrate; re-run when the
 // looks registry changes.
-import { getPool, closePool } from "@autopilot/core";
-import { LOOKS } from "@autopilot/blocks";
+import { closePool, getPool } from "@autopilot/core";
 
 const pool = getPool();
 let n = 0;
@@ -16,7 +16,9 @@ for (const l of LOOKS) {
   );
   n++;
 }
-const r = await pool.query<{ preset: string; c: string }>("select preset, count(*)::text c from looks group by preset order by preset");
+const r = await pool.query<{ preset: string; c: string }>(
+  "select preset, count(*)::text c from looks group by preset order by preset",
+);
 console.log(`seeded ${n} looks:`);
 console.table(r.rows);
 await closePool();

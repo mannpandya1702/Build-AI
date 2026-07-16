@@ -4,13 +4,20 @@
 // demos, and deploys via the Vercel adapter. Enforces the per-lead demo-phase budget. Every fact
 // comes from the lead's verified data or agency-facts.yaml; unknowns are omitted, never invented
 // (CLAUDE.md §0.1, system rule §1: a deployed demo never shows a placeholder).
-import { cpSync, existsSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  MOCK,
+  deployDir,
+  fetchPhotoBytes,
+  loadAgencyFacts,
+  loadCaps,
+  placeDetails,
+} from "@autopilot/adapters";
+import { PRESET_BY_ID, type Preset, presetForIndustry } from "@autopilot/blocks";
 import { advanceLead, emitEvent, getPool, notifyOperator } from "@autopilot/core";
-import { deployDir, loadAgencyFacts, loadCaps, fetchPhotoBytes, placeDetails, MOCK } from "@autopilot/adapters";
-import { presetForIndustry, PRESET_BY_ID, type Preset } from "@autopilot/blocks";
-import { generatePersonalizedCopy, fetchSiteText, type GeneratedCopy } from "./copy.js";
+import { type GeneratedCopy, fetchSiteText, generatePersonalizedCopy } from "./copy.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../..");
@@ -18,7 +25,10 @@ const BUILDS_DIR = resolve(process.cwd(), "data", "builds");
 const MAX_PHOTOS = 6;
 
 const DEFAULT_ROOFER_SERVICES = [
-  { name: "Roof Repair", blurb: "Leaks, missing shingles, flashing. Fixed before small problems become big ones." },
+  {
+    name: "Roof Repair",
+    blurb: "Leaks, missing shingles, flashing. Fixed before small problems become big ones.",
+  },
   { name: "Roof Replacement", blurb: "A full tear-off and a new roof, done once and done right." },
   { name: "Storm & Hail Damage", blurb: "Damage checked and documented properly after the weather hits." },
   { name: "Roof Inspections", blurb: "A straight answer on what your roof needs, with photos to prove it." },
@@ -34,22 +44,50 @@ function fontPairKey(displayFont: string): "bricolage" | "archivo" | "grotesk" {
 }
 
 function slugify(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "demo";
+  return (
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 48) || "demo"
+  );
 }
 
-interface Review { author: string; rating: number; text: string }
+interface Review {
+  author: string;
+  rating: number;
+  text: string;
+}
 
 function curateReviews(raw: unknown): Review[] {
   const arr = Array.isArray(raw) ? raw : [];
   return arr
-    .map((r: any) => ({ author: r.author ?? r.authorAttribution?.displayName ?? "Google reviewer", rating: r.rating ?? 5, text: String(r.text?.text ?? r.text ?? "").trim() }))
+    .map((r: any) => ({
+      author: r.author ?? r.authorAttribution?.displayName ?? "Google reviewer",
+      rating: r.rating ?? 5,
+      text: String(r.text?.text ?? r.text ?? "").trim(),
+    }))
     .filter((r) => r.text.length > 0 && r.rating >= 4)
     .sort((a, b) => b.rating - a.rating || a.text.length - b.text.length)
     .slice(0, 4)
-    .map((r) => (r.text.length > 420 ? { ...r, text: r.text.slice(0, 400).replace(/\s+\S*$/, "").trimEnd() + "..." } : r));
+    .map((r) =>
+      r.text.length > 420
+        ? {
+            ...r,
+            text: `${r.text
+              .slice(0, 400)
+              .replace(/\s+\S*$/, "")
+              .trimEnd()}...`,
+          }
+        : r,
+    );
 }
 
-async function downloadPhotos(leadId: string, photoNames: string[], destDir: string): Promise<{ src: string; alt: string }[]> {
+async function downloadPhotos(
+  leadId: string,
+  photoNames: string[],
+  destDir: string,
+): Promise<{ src: string; alt: string }[]> {
   const photos: { src: string; alt: string }[] = [];
   if (photoNames.length === 0) return photos;
   const photosDir = resolve(destDir, "public/photos");
@@ -89,20 +127,38 @@ export async function builder(leadId: string): Promise<void> {
   const FRESH = new Set(["design_ready", "closed_won"]);
   const REENTRY = new Set(["demo_building", "final_building"]);
   if (!FRESH.has(lead.status) && !REENTRY.has(lead.status)) {
-    await emitEvent({ agent: "builder", leadId, level: "debug", type: "builder.skipped", message: `lead at ${lead.status}` });
+    await emitEvent({
+      agent: "builder",
+      leadId,
+      level: "debug",
+      type: "builder.skipped",
+      message: `lead at ${lead.status}`,
+    });
     return;
   }
   const isFinal = lead.status === "closed_won" || lead.status === "final_building";
   const kind: "demo" | "final" = isFinal ? "final" : "demo";
   const buildingStatus = isFinal ? "final_building" : "demo_building";
 
-  const design = (await pool.query("select * from designs where lead_id = $1 order by created_at desc limit 1", [leadId])).rows[0];
+  const design = (
+    await pool.query("select * from designs where lead_id = $1 order by created_at desc limit 1", [leadId])
+  ).rows[0];
   if (!design) throw new Error(`no design for lead ${leadId}`);
 
   const preset: Preset = PRESET_BY_ID.get(design.brand?.preset) ?? presetForIndustry(lead.industry);
   if (!preset.live || !preset.templateDir) {
-    await notifyOperator({ type: "preset_not_live", title: `${lead.company_name}: no ${preset.label} template yet, cannot build`, leadId });
-    await emitEvent({ agent: "builder", leadId, level: "warn", type: "build.blocked", message: `preset ${preset.id} has no rendered template` });
+    await notifyOperator({
+      type: "preset_not_live",
+      title: `${lead.company_name}: no ${preset.label} template yet, cannot build`,
+      leadId,
+    });
+    await emitEvent({
+      agent: "builder",
+      leadId,
+      level: "warn",
+      type: "build.blocked",
+      message: `preset ${preset.id} has no rendered template`,
+    });
     return; // hold at design_ready; never ship a half-built demo
   }
 
@@ -112,10 +168,20 @@ export async function builder(leadId: string): Promise<void> {
     `select coalesce(sum(cost_usd),0)::text s from agent_events where lead_id = $1 and cost_usd is not null and agent in ('analyzer','solution','uiux','builder')`,
     [leadId],
   );
-  const spent = parseFloat(spentRow.rows[0].s);
+  const spent = Number.parseFloat(spentRow.rows[0].s);
   if (spent >= caps.anthropic_usd_per_lead_demo_phase) {
-    await emitEvent({ agent: "builder", leadId, level: "warn", type: "budget.exceeded", message: `demo-phase spend $${spent.toFixed(2)} >= $${caps.anthropic_usd_per_lead_demo_phase}` });
-    await notifyOperator({ type: "budget_exceeded", title: `${lead.company_name}: demo-phase budget hit ($${spent.toFixed(2)})`, leadId });
+    await emitEvent({
+      agent: "builder",
+      leadId,
+      level: "warn",
+      type: "budget.exceeded",
+      message: `demo-phase spend $${spent.toFixed(2)} >= $${caps.anthropic_usd_per_lead_demo_phase}`,
+    });
+    await notifyOperator({
+      type: "budget_exceeded",
+      title: `${lead.company_name}: demo-phase budget hit ($${spent.toFixed(2)})`,
+      leadId,
+    });
     return;
   }
 
@@ -146,7 +212,13 @@ export async function builder(leadId: string): Promise<void> {
     [leadId, kind, destDir],
   );
   if (claim.rowCount === 0) {
-    await emitEvent({ agent: "builder", leadId, level: "debug", type: "builder.skipped", message: "a build is already in flight for this lead" });
+    await emitEvent({
+      agent: "builder",
+      leadId,
+      level: "debug",
+      type: "builder.skipped",
+      message: "a build is already in flight for this lead",
+    });
     return;
   }
   const buildId = claim.rows[0].id;
@@ -157,7 +229,10 @@ export async function builder(leadId: string): Promise<void> {
 
   if (existsSync(destDir)) rmSync(destDir, { recursive: true, force: true });
   mkdirSync(BUILDS_DIR, { recursive: true });
-  cpSync(templateDir, destDir, { recursive: true, filter: (src) => !/node_modules|\.next|[/\\]out([/\\]|$)/.test(src) });
+  cpSync(templateDir, destDir, {
+    recursive: true,
+    filter: (src) => !/node_modules|\.next|[/\\]out([/\\]|$)/.test(src),
+  });
 
   // Evidence refresh: legacy-imported leads carry empty reviews/photos even though their Google
   // profile has both (Places returns them; the old import skipped them). One Details call fills
@@ -172,25 +247,53 @@ export async function builder(leadId: string): Promise<void> {
       if (reviewsEmpty && fresh.reviews?.length) leadReviews = fresh.reviews;
       if (photosEmpty && fresh.photos?.length) leadPhotos = fresh.photos;
       await pool.query("update leads set reviews=$2, photos=$3 where id=$1", [
-        leadId, JSON.stringify(leadReviews ?? []), JSON.stringify(leadPhotos ?? []),
+        leadId,
+        JSON.stringify(leadReviews ?? []),
+        JSON.stringify(leadPhotos ?? []),
       ]);
-      await emitEvent({ agent: "builder", leadId, level: "debug", type: "evidence.refreshed", message: `Places details: ${fresh.reviews?.length ?? 0} reviews, ${fresh.photos?.length ?? 0} photos` });
+      await emitEvent({
+        agent: "builder",
+        leadId,
+        level: "debug",
+        type: "evidence.refreshed",
+        message: `Places details: ${fresh.reviews?.length ?? 0} reviews, ${fresh.photos?.length ?? 0} photos`,
+      });
     } catch (err) {
-      await emitEvent({ agent: "builder", leadId, level: "debug", type: "evidence.refresh_failed", message: (err as Error).message });
+      await emitEvent({
+        agent: "builder",
+        leadId,
+        level: "debug",
+        type: "evidence.refresh_failed",
+        message: (err as Error).message,
+      });
     }
   }
 
   const reviews = curateReviews(leadReviews);
-  const photoNames = (Array.isArray(leadPhotos) ? leadPhotos : []).map((p: any) => (typeof p === "string" ? p : p?.name)).filter(Boolean);
+  const photoNames = (Array.isArray(leadPhotos) ? leadPhotos : [])
+    .map((p: any) => (typeof p === "string" ? p : p?.name))
+    .filter(Boolean);
   const photos = await downloadPhotos(leadId, photoNames, destDir);
   if (photos.length === 0 && photoNames.length > 0) {
     // marker for the self-heal loop: this demo shipped photo-less only because fetches failed
     // (usually the daily Places cap); requeue it when headroom returns.
-    await emitEvent({ agent: "builder", leadId, level: "warn", type: "build.no_photos", message: `${photoNames.length} photos on the lead, none fetched (cap or fetch failure)` });
+    await emitEvent({
+      agent: "builder",
+      leadId,
+      level: "warn",
+      type: "build.no_photos",
+      message: `${photoNames.length} photos on the lead, none fetched (cap or fetch failure)`,
+    });
   }
 
   const look = design.brand ?? {};
-  const palette = look.palette ?? { brand: "180 56 13", brandInk: "255 255 255", ink: "16 24 31", paper: "250 247 242", paper2: "241 235 226" };
+  const palette = look.palette ?? {
+    brand: "180 56 13",
+    brandInk: "255 255 255",
+    ink: "16 24 31",
+    paper: "250 247 242",
+    paper2: "241 235 226",
+  };
   const heroVariant = look.hero_variant ?? "photo";
   const theme = {
     id: `${preset.id}-${heroVariant}`,
@@ -206,7 +309,8 @@ export async function builder(leadId: string): Promise<void> {
   const city = lead.city || "your area";
   const needs: string[] = [];
   if (!lead.contact_phone) needs.push("[NEEDS: phone] no phone on the GBP; tap-to-call not wired");
-  if (photos.length === 0) needs.push("[NEEDS: photos] no GBP photos downloaded; gallery shows an honest preview state");
+  if (photos.length === 0)
+    needs.push("[NEEDS: photos] no GBP photos downloaded; gallery shows an honest preview state");
   if (reviews.length === 0) needs.push("[NEEDS: reviews] no positive review text available");
 
   // Personalized copy from THIS business's evidence (contract §5a; operator directive 2026-07-11:
@@ -215,10 +319,18 @@ export async function builder(leadId: string): Promise<void> {
   // defaults on any failure — a build never blocks on copy.
   let copy: GeneratedCopy | null = null;
   if (!MOCK()) {
-    const audit = (await pool.query(
-      "select summary, findings from audits where lead_id=$1 order by created_at desc limit 1", [leadId])).rows[0];
-    const solution = (await pool.query(
-      "select pitch_angle from solutions where lead_id=$1 order by created_at desc limit 1", [leadId])).rows[0];
+    const audit = (
+      await pool.query(
+        "select summary, findings from audits where lead_id=$1 order by created_at desc limit 1",
+        [leadId],
+      )
+    ).rows[0];
+    const solution = (
+      await pool.query(
+        "select pitch_angle from solutions where lead_id=$1 order by created_at desc limit 1",
+        [leadId],
+      )
+    ).rows[0];
     const siteText = await fetchSiteText(lead.website_url ?? null);
     const result = await generatePersonalizedCopy(leadId, {
       companyName: lead.company_name,
@@ -228,18 +340,28 @@ export async function builder(leadId: string): Promise<void> {
       rating: lead.rating != null ? Number(lead.rating) : null,
       reviewCount: lead.review_count ?? null,
       phone: lead.contact_phone ?? null,
-      reviews: (Array.isArray(leadReviews) ? leadReviews : []).map((r: any) => ({
-        rating: Number(r.rating ?? 5),
-        text: String(r.text?.text ?? r.text ?? "").trim(),
-      })).filter((r: { text: string }) => r.text).slice(0, 10),
+      reviews: (Array.isArray(leadReviews) ? leadReviews : [])
+        .map((r: any) => ({
+          rating: Number(r.rating ?? 5),
+          text: String(r.text?.text ?? r.text ?? "").trim(),
+        }))
+        .filter((r: { text: string }) => r.text)
+        .slice(0, 10),
       auditSummary: audit?.summary ?? null,
-      auditFindings: Array.isArray(audit?.findings) ? audit.findings.map((f: any) => String(f.evidence ?? "")).filter(Boolean).slice(0, 6) : [],
+      auditFindings: Array.isArray(audit?.findings)
+        ? audit.findings
+            .map((f: any) => String(f.evidence ?? ""))
+            .filter(Boolean)
+            .slice(0, 6)
+        : [],
       siteText,
       pitchAngle: solution?.pitch_angle ?? null,
     });
     copy = result.ok ? result.copy : null;
     await emitEvent({
-      agent: "builder", leadId, level: copy ? "info" : "warn",
+      agent: "builder",
+      leadId,
+      level: copy ? "info" : "warn",
       type: copy ? "copy.generated" : "copy.fallback",
       message: copy
         ? `personalized copy from evidence (site text: ${siteText ? "yes" : "no"}, reviews: ${Array.isArray(leadReviews) ? leadReviews.length : 0}, audit: ${audit ? "yes" : "no"})`
@@ -247,7 +369,10 @@ export async function builder(leadId: string): Promise<void> {
     });
   }
   if (copy?.needs.length) needs.push(...copy.needs);
-  if (!copy) needs.push("[NEEDS: confirm services & storm/insurance work] roofer defaults; confirm with owner before send");
+  if (!copy)
+    needs.push(
+      "[NEEDS: confirm services & storm/insurance work] roofer defaults; confirm with owner before send",
+    );
 
   const content = {
     placeId: lead.google_place_id ?? leadId,
@@ -272,42 +397,82 @@ export async function builder(leadId: string): Promise<void> {
     stormBand: preset.id === "roofing",
     faq: copy?.faq ?? [
       { q: "What areas do you cover?", a: `${city} and the surrounding area.` },
-      { q: "How do I get a quote?", a: lead.contact_phone ? `Call ${lead.contact_phone} or use the form above. It takes under a minute.` : "Use the form above. It takes under a minute." },
-      { q: "What should I do after a storm?", a: "Get the roof inspected and the damage photographed before you file anything. Then you know exactly what you're dealing with." },
+      {
+        q: "How do I get a quote?",
+        a: lead.contact_phone
+          ? `Call ${lead.contact_phone} or use the form above. It takes under a minute.`
+          : "Use the form above. It takes under a minute.",
+      },
+      {
+        q: "What should I do after a storm?",
+        a: "Get the roof inspected and the damage photographed before you file anything. Then you know exactly what you're dealing with.",
+      },
     ],
     needs,
     // demo controls (spec §6.7): watermark + noindex on demos; final client site has neither.
     demo: kind === "demo",
-    watermark: kind === "demo" ? `Demo preview built for ${lead.company_name} by ${agency.identity.name}` : null,
+    watermark:
+      kind === "demo" ? `Demo preview built for ${lead.company_name} by ${agency.identity.name}` : null,
     noindex: kind === "demo",
   };
 
-  writeFileSync(resolve(destDir, "content.json"), JSON.stringify(content, null, 2) + "\n", "utf8");
+  writeFileSync(resolve(destDir, "content.json"), `${JSON.stringify(content, null, 2)}\n`, "utf8");
 
   // Deploy (mock: local URL; real: Vercel builds + serves). Failure marks the build failed and
   // notifies the operator rather than throwing the lead into a retry storm.
   let deploy: { url: string; deploymentId: string; reachable: boolean };
   try {
-    deploy = await deployDir(destDir, `${slug}-${kind}`, { scope: agency.deploy.vercel_scope, aliasBase: "tradecraft" });
+    deploy = await deployDir(destDir, `${slug}-${kind}`, {
+      scope: agency.deploy.vercel_scope,
+      aliasBase: "tradecraft",
+    });
   } catch (err) {
     await pool.query("update builds set status='failed' where id=$1", [buildId]);
-    await emitEvent({ agent: "builder", leadId, level: "error", type: "build.failed", message: (err as Error).message });
+    await emitEvent({
+      agent: "builder",
+      leadId,
+      level: "error",
+      type: "build.failed",
+      message: (err as Error).message,
+    });
     // A REBUILD failing (deploy limit, transient Vercel outage) must never strand or churn the
     // lead: the previous demo is still live, so fall back to it (sales' rebuild guard restores the
     // exact prior stage). Observed 2026-07-12: the Vercel daily deploy cap turned 7 cosmetic
     // rebuilds into a retry+notification storm that also re-burned copy LLM calls per attempt.
     const previous = await pool.query<{ n: string }>(
-      "select count(*)::text n from builds where lead_id=$1 and kind=$2 and deploy_url like 'https://%'", [leadId, kind]);
+      "select count(*)::text n from builds where lead_id=$1 and kind=$2 and deploy_url like 'https://%'",
+      [leadId, kind],
+    );
     if (kind === "demo" && Number(previous.rows[0].n) > 0) {
       await advanceLead(leadId, "outreach_ready", { agent: "builder" });
-      await emitEvent({ agent: "builder", leadId, level: "warn", type: "build.deferred", message: "rebuild deploy failed; falling back to the existing live demo (will catch up on a later rebuild)" });
+      await emitEvent({
+        agent: "builder",
+        leadId,
+        level: "warn",
+        type: "build.deferred",
+        message:
+          "rebuild deploy failed; falling back to the existing live demo (will catch up on a later rebuild)",
+      });
       return;
     }
-    await notifyOperator({ type: "build_failed", title: `${lead.company_name}: ${kind} deploy failed`, leadId });
+    await notifyOperator({
+      type: "build_failed",
+      title: `${lead.company_name}: ${kind} deploy failed`,
+      leadId,
+    });
     return; // fresh build stays in *_building; operator sees it. No retry storm.
   }
 
-  await pool.query("update builds set status='deployed', deploy_url=$2, vercel_deployment_id=$3 where id=$1", [buildId, deploy.url, deploy.deploymentId]);
-  await emitEvent({ agent: "builder", leadId, type: "build.deployed", message: `${kind} #${iteration} live: ${deploy.url}${MOCK() ? " (mock)" : ""}`, payload: { url: deploy.url, kind, iteration, reachable: deploy.reachable } });
+  await pool.query(
+    "update builds set status='deployed', deploy_url=$2, vercel_deployment_id=$3 where id=$1",
+    [buildId, deploy.url, deploy.deploymentId],
+  );
+  await emitEvent({
+    agent: "builder",
+    leadId,
+    type: "build.deployed",
+    message: `${kind} #${iteration} live: ${deploy.url}${MOCK() ? " (mock)" : ""}`,
+    payload: { url: deploy.url, kind, iteration, reachable: deploy.reachable },
+  });
   await advanceLead(leadId, kind === "demo" ? "demo_qa" : "final_qa", { agent: "builder" });
 }

@@ -1,11 +1,15 @@
+import { CapExceededError, loadIcp, searchPlaces } from "@autopilot/adapters";
 // Research Agent (spec §6.1): no LLM. Places queries from icp.yaml (keywords x cities), dedupe on
 // google_place_id + normalized domain against leads AND suppression_list. Stops at requested
 // count or the Places cap.
 import { emitEvent, getPool } from "@autopilot/core";
-import { searchPlaces, loadIcp, CapExceededError } from "@autopilot/adapters";
 
 function slugify(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
 }
 
 function domainOf(url?: string): string | null {
@@ -28,7 +32,11 @@ export interface ResearchTargeting {
   country?: string;
 }
 
-export async function research(requestId: string, count: number, targeting?: ResearchTargeting): Promise<void> {
+export async function research(
+  requestId: string,
+  count: number,
+  targeting?: ResearchTargeting,
+): Promise<void> {
   const pool = getPool();
 
   // Explicit targeting from the dashboard's discover panel wins over icp.yaml + saved overrides.
@@ -41,7 +49,13 @@ export async function research(requestId: string, count: number, targeting?: Res
     agent: "research",
     type: "research.started",
     message: `target ${count} · ${icp.active_vertical} · ${icp.cities.length} cities · ${icp.country}`,
-    payload: { request_id: requestId, count, vertical: icp.active_vertical, cities: icp.cities, country: icp.country },
+    payload: {
+      request_id: requestId,
+      count,
+      vertical: icp.active_vertical,
+      cities: icp.cities,
+      country: icp.country,
+    },
   });
 
   // Custom niches (not in icp.yaml's verticals map) search by the niche name itself.
@@ -54,9 +68,15 @@ export async function research(requestId: string, count: number, targeting?: Res
     "select google_place_id, website_url from leads",
   );
   const seenPlace = new Set(existing.rows.map((r) => r.google_place_id).filter(Boolean) as string[]);
-  const seenDomain = new Set(existing.rows.map((r) => domainOf(r.website_url ?? undefined)).filter(Boolean) as string[]);
+  const seenDomain = new Set(
+    existing.rows.map((r) => domainOf(r.website_url ?? undefined)).filter(Boolean) as string[],
+  );
   const suppressed = new Set(
-    (await pool.query<{ domain: string | null }>("select domain from suppression_list where domain is not null")).rows.map((r) => r.domain as string),
+    (
+      await pool.query<{ domain: string | null }>(
+        "select domain from suppression_list where domain is not null",
+      )
+    ).rows.map((r) => r.domain as string),
   );
 
   let discovered = 0;
@@ -70,7 +90,13 @@ export async function research(requestId: string, count: number, targeting?: Res
           hits = await searchPlaces(`${kw} in ${city}${countrySuffix}`, 20, pageToken);
         } catch (err) {
           if (err instanceof CapExceededError) {
-            await emitEvent({ agent: "research", level: "warn", type: "research.paused", message: err.message, payload: { request_id: requestId } });
+            await emitEvent({
+              agent: "research",
+              level: "warn",
+              type: "research.paused",
+              message: err.message,
+              payload: { request_id: requestId },
+            });
             break outer;
           }
           throw err;
@@ -112,7 +138,12 @@ export async function research(requestId: string, count: number, targeting?: Res
     }
   }
 
-  await emitEvent({ agent: "research", type: "research.completed", message: `discovered ${discovered}`, payload: { request_id: requestId, discovered } });
+  await emitEvent({
+    agent: "research",
+    type: "research.completed",
+    message: `discovered ${discovered}`,
+    payload: { request_id: requestId, discovered },
+  });
 }
 
 /** icp.yaml merged with operator overrides saved from /settings (spec §2.3 + Phase 2 acceptance). */
@@ -123,7 +154,8 @@ async function mergedIcp() {
     const o = r.rows[0].value ?? {};
     if (Array.isArray(o.cities) && o.cities.length) icp.cities = o.cities;
     // custom verticals are allowed: keywords fall back to the niche name itself
-    if (typeof o.active_vertical === "string" && o.active_vertical.trim()) icp.active_vertical = o.active_vertical.trim().toLowerCase();
+    if (typeof o.active_vertical === "string" && o.active_vertical.trim())
+      icp.active_vertical = o.active_vertical.trim().toLowerCase();
     if (typeof o.country === "string" && o.country.trim()) icp.country = o.country.trim();
     if (typeof o.qualify_threshold === "number") icp.qualify_threshold = o.qualify_threshold;
   }

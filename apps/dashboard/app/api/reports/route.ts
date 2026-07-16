@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -9,17 +9,22 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const one = async (q: string, p: any[] = []) => Number((await db().query(q, p)).rows[0]?.n ?? 0);
 
-  const [found, qualified, audited, solutioned, designed, deployed, contacted, meetings, won] = await Promise.all([
-    one("select count(*)::int n from leads"),
-    one("select count(*)::int n from leads where status not in ('discovered','enriched','disqualified','suppressed')"),
-    one("select count(distinct lead_id)::int n from audits"),
-    one("select count(distinct lead_id)::int n from solutions"),
-    one("select count(distinct lead_id)::int n from designs"),
-    one("select count(distinct lead_id)::int n from builds where deploy_url is not null and kind='demo'"),
-    one("select count(distinct lead_id)::int n from emails where direction='outbound' and kind='outreach' and status='sent'"),
-    one("select count(*)::int n from meetings"),
-    one("select count(*)::int n from leads where status in ('closed_won','delivery_approval','delivered')"),
-  ]);
+  const [found, qualified, audited, solutioned, designed, deployed, contacted, meetings, won] =
+    await Promise.all([
+      one("select count(*)::int n from leads"),
+      one(
+        "select count(*)::int n from leads where status not in ('discovered','enriched','disqualified','suppressed')",
+      ),
+      one("select count(distinct lead_id)::int n from audits"),
+      one("select count(distinct lead_id)::int n from solutions"),
+      one("select count(distinct lead_id)::int n from designs"),
+      one("select count(distinct lead_id)::int n from builds where deploy_url is not null and kind='demo'"),
+      one(
+        "select count(distinct lead_id)::int n from emails where direction='outbound' and kind='outreach' and status='sent'",
+      ),
+      one("select count(*)::int n from meetings"),
+      one("select count(*)::int n from leads where status in ('closed_won','delivery_approval','delivered')"),
+    ]);
 
   const funnel = [
     { stage: "Discovered", count: found },
@@ -38,7 +43,9 @@ export async function GET() {
      from agent_events where cost_usd is not null and created_at >= now() - interval '14 days'
      group by 1 order by 1`,
   );
-  const totalSpend = await one("select coalesce(sum(cost_usd),0)::float n from agent_events where cost_usd is not null");
+  const totalSpend = await one(
+    "select coalesce(sum(cost_usd),0)::float n from agent_events where cost_usd is not null",
+  );
 
   const tiles = {
     total_spend: totalSpend,
@@ -46,13 +53,15 @@ export async function GET() {
     cost_per_qualified: qualified ? totalSpend / qualified : 0,
     demos_deployed: deployed,
     qualified,
-    reply_rate: contacted ? (await one("select count(distinct lead_id)::int n from emails where direction='inbound'")) / contacted : 0,
+    reply_rate: contacted
+      ? (await one("select count(distinct lead_id)::int n from emails where direction='inbound'")) / contacted
+      : 0,
   };
 
   // daily digests (spec §6.10), newest first
-  const digests = (await db().query(
-    "select date, summary_md, anomalies from daily_reports order by date desc limit 7",
-  )).rows;
+  const digests = (
+    await db().query("select date, summary_md, anomalies from daily_reports order by date desc limit 7")
+  ).rows;
 
   return NextResponse.json({ funnel, spend: spendRows.rows, tiles, digests });
 }

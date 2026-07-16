@@ -6,10 +6,10 @@
 // 21st.dev MCP, which only surfaces its tools in an interactive Claude Code session). Advisory only:
 // a skill miss never blocks a build.
 import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 const exec = promisify(execFile);
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");

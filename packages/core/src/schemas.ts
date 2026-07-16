@@ -19,9 +19,7 @@ export const LeadSchema = z.object({
   review_count: z.number().int().nullable(),
   rating: z.coerce.number().nullable(),
   photos: z.array(z.string()).default([]),
-  reviews: z
-    .array(z.object({ author: z.string(), rating: z.number(), text: z.string() }))
-    .default([]),
+  reviews: z.array(z.object({ author: z.string(), rating: z.number(), text: z.string() })).default([]),
   contact_name: z.string().nullable(),
   contact_email: z.string().nullable(),
   contact_phone: z.string().nullable(),
@@ -44,7 +42,12 @@ export type AuditFinding = z.infer<typeof AuditFindingSchema>;
 export const AuditSchema = z.object({
   lead_id: z.string().uuid(),
   lighthouse: z
-    .object({ performance: z.number(), seo: z.number(), accessibility: z.number(), best_practices: z.number() })
+    .object({
+      performance: z.number(),
+      seo: z.number(),
+      accessibility: z.number(),
+      best_practices: z.number(),
+    })
     .nullable(),
   screenshots: z.array(z.object({ viewport: z.string(), path: z.string() })).default([]),
   pages_crawled: z.array(z.string()).default([]),

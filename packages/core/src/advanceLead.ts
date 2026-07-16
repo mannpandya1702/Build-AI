@@ -2,10 +2,14 @@
 // Illegal transitions throw AND emit an error event. Every transition writes an event row.
 import { getPool } from "./db.js";
 import { emitEvent } from "./events.js";
-import { canTransition, type LeadStatus } from "./statuses.js";
+import { type LeadStatus, canTransition } from "./statuses.js";
 
 export class IllegalTransitionError extends Error {
-  constructor(public from: LeadStatus, public to: LeadStatus, public leadId: string) {
+  constructor(
+    public from: LeadStatus,
+    public to: LeadStatus,
+    public leadId: string,
+  ) {
     super(`illegal lead transition ${from} -> ${to} (lead ${leadId})`);
   }
 }

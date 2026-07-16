@@ -5,7 +5,7 @@
 // rendered templates land as those verticals go live (until then the builder only builds `live`
 // presets and flags the rest, never shipping a half-built demo).
 
-import { looksForPreset, type Look } from "./looks.js";
+import { type Look, looksForPreset } from "./looks.js";
 
 export interface Preset {
   id: string;
@@ -68,7 +68,19 @@ export const PRESETS: readonly Preset[] = [
     id: "dental",
     label: "Dental / med spa",
     nicheNeed: "comparing before/afters and wants to book quietly online",
-    blockSequence: ["sticky-call-header", "hero-split", "stats-strip", "services-grid", "gallery", "reviews", "process-steps", "quote-form", "faq", "service-map", "footer"],
+    blockSequence: [
+      "sticky-call-header",
+      "hero-split",
+      "stats-strip",
+      "services-grid",
+      "gallery",
+      "reviews",
+      "process-steps",
+      "quote-form",
+      "faq",
+      "service-map",
+      "footer",
+    ],
     templateDir: null,
     live: false,
     looks: looksForPreset("dental"),

@@ -1,21 +1,23 @@
 // File-based migration runner (spec §4.8: migrations are files, never dashboard mutations).
 // Applies /supabase/migrations/*.sql in filename order, exactly once each.
-import { readdirSync, readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { readFileSync, readdirSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { getPool, closePool } from "./db.js";
+import { closePool, getPool } from "./db.js";
 
 const MIGRATIONS_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "../../../supabase/migrations");
 
 async function main(): Promise<void> {
   const pool = getPool();
   await pool.query(
-    `create table if not exists _migrations (name text primary key, applied_at timestamptz not null default now())`,
+    "create table if not exists _migrations (name text primary key, applied_at timestamptz not null default now())",
   );
   const applied = new Set(
     (await pool.query<{ name: string }>("select name from _migrations")).rows.map((r) => r.name),
   );
-  const files = readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith(".sql")).sort();
+  const files = readdirSync(MIGRATIONS_DIR)
+    .filter((f) => f.endsWith(".sql"))
+    .sort();
   for (const f of files) {
     if (applied.has(f)) {
       console.log(`skip  ${f}`);

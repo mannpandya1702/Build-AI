@@ -5,10 +5,10 @@
 // (Lighthouse scores or their absence, GBP review reputation, website presence). No-website leads
 // get an absence-based audit.
 import { readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { MOCK, llm, pagespeed, screenshotSite } from "@autopilot/adapters";
 import { advanceLead, emitEvent, getPool } from "@autopilot/core";
-import { pagespeed, screenshotSite, llm, MOCK } from "@autopilot/adapters";
 
 const PROMPT = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "prompts/analyzer.md"), "utf8");
 
@@ -32,7 +32,13 @@ export async function analyzer(leadId: string): Promise<void> {
   // (singleton window race). Re-running would burn a Sonnet call, write a duplicate audit, and
   // throw on an illegal transition. If the lead has left `qualified`, this work is already done.
   if (lead.status !== "qualified") {
-    await emitEvent({ agent: "analyzer", leadId, level: "debug", type: "analyzer.skipped", message: `lead already at ${lead.status}` });
+    await emitEvent({
+      agent: "analyzer",
+      leadId,
+      level: "debug",
+      type: "analyzer.skipped",
+      message: `lead already at ${lead.status}`,
+    });
     return;
   }
 
@@ -44,17 +50,35 @@ export async function analyzer(leadId: string): Promise<void> {
   if (lead.website_url) {
     try {
       const psi = await pagespeed(lead.website_url, "mobile");
-      lighthouse = { performance: psi.performance, seo: psi.seo, accessibility: psi.accessibility, best_practices: psi.best_practices, lcp_ms: psi.lcp_ms ?? 0 };
+      lighthouse = {
+        performance: psi.performance,
+        seo: psi.seo,
+        accessibility: psi.accessibility,
+        best_practices: psi.best_practices,
+        lcp_ms: psi.lcp_ms ?? 0,
+      };
     } catch (err) {
       pagespeedFailed = true;
-      await emitEvent({ agent: "analyzer", leadId, level: "warn", type: "pagespeed.failed", message: (err as Error).message });
+      await emitEvent({
+        agent: "analyzer",
+        leadId,
+        level: "warn",
+        type: "pagespeed.failed",
+        message: (err as Error).message,
+      });
     }
     try {
       const s = await screenshotSite(lead.website_url, slugOf(lead));
       shots = s.map((x) => ({ viewport: x.viewport, path: x.path }));
       pagesCrawled.push(lead.website_url);
     } catch (err) {
-      await emitEvent({ agent: "analyzer", leadId, level: "warn", type: "screenshot.failed", message: (err as Error).message });
+      await emitEvent({
+        agent: "analyzer",
+        leadId,
+        level: "warn",
+        type: "screenshot.failed",
+        message: (err as Error).message,
+      });
     }
   }
 
@@ -72,7 +96,9 @@ export async function analyzer(leadId: string): Promise<void> {
 
   // Feed the real rendered mobile + desktop screenshots to the model so findings are backed by
   // the actual page, not a guess. Missing files are dropped inside the adapter.
-  const visionImages = shots.filter((s) => s.viewport === "mobile" || s.viewport === "desktop").map((s) => s.path);
+  const visionImages = shots
+    .filter((s) => s.viewport === "mobile" || s.viewport === "desktop")
+    .map((s) => s.path);
 
   const raw = await llm({
     tier: "sonnet",
@@ -82,15 +108,34 @@ export async function analyzer(leadId: string): Promise<void> {
     system: PROMPT,
     images: visionImages,
     prompt: `Audit data:\n${JSON.stringify(auditData, null, 2)}\n\n${
-      visionImages.length ? `The attached images are the site's real rendered mobile and desktop screenshots. Judge what you can actually see (phone number visibility on mobile, dated vs modern look, clarity of the call-to-action).` : `No screenshots were captured.`
+      visionImages.length
+        ? `The attached images are the site's real rendered mobile and desktop screenshots. Judge what you can actually see (phone number visibility on mobile, dated vs modern look, clarity of the call-to-action).`
+        : "No screenshots were captured."
     }\n\nReturn the JSON findings.`,
     mockResponse: JSON.stringify({
-      summary: lead.website_url ? "Slow mobile site with no clear call path." : "No website; invisible to mobile searchers.",
+      summary: lead.website_url
+        ? "Slow mobile site with no clear call path."
+        : "No website; invisible to mobile searchers.",
       findings: [
         lead.website_url
-          ? { category: "performance", severity: "high", evidence: `Lighthouse mobile performance ${lighthouse?.performance ?? 34}/100`, why_it_costs_them: "slow pages lose emergency callers to faster competitors" }
-          : { category: "conversion", severity: "high", evidence: "no website found on the Google listing", why_it_costs_them: `mobile searchers in ${lead.city ?? "the area"} cannot find or trust the business` },
-        { category: "conversion", severity: "high", evidence: "no tap-to-call element detected at 375px", why_it_costs_them: "phone-driven trade with no one-tap call path leaks leads" },
+          ? {
+              category: "performance",
+              severity: "high",
+              evidence: `Lighthouse mobile performance ${lighthouse?.performance ?? 34}/100`,
+              why_it_costs_them: "slow pages lose emergency callers to faster competitors",
+            }
+          : {
+              category: "conversion",
+              severity: "high",
+              evidence: "no website found on the Google listing",
+              why_it_costs_them: `mobile searchers in ${lead.city ?? "the area"} cannot find or trust the business`,
+            },
+        {
+          category: "conversion",
+          severity: "high",
+          evidence: "no tap-to-call element detected at 375px",
+          why_it_costs_them: "phone-driven trade with no one-tap call path leaks leads",
+        },
       ],
     }),
   });
@@ -99,28 +144,52 @@ export async function analyzer(leadId: string): Promise<void> {
   let findings: Finding[] = Array.isArray(parsed?.findings)
     ? parsed.findings.filter((f: any) => f?.evidence && f?.why_it_costs_them)
     : [];
-  let summary: string | null = typeof parsed?.summary === "string" && parsed.summary.trim() ? parsed.summary.trim() : null;
+  let summary: string | null =
+    typeof parsed?.summary === "string" && parsed.summary.trim() ? parsed.summary.trim() : null;
 
   // GUARANTEE a coherent audit. A qualified lead must never land in `analyzed` with an empty audit
   // (Phase 3 acceptance). If the model returned nothing usable, derive findings from known facts.
   if (findings.length === 0) {
     findings = fallbackFindings(lead, lighthouse, pagespeedFailed);
     summary = summary ?? fallbackSummary(lead, lighthouse, pagespeedFailed);
-    await emitEvent({ agent: "analyzer", leadId, level: "warn", type: "audit.fallback", message: "model returned no usable findings; used deterministic fallback" });
+    await emitEvent({
+      agent: "analyzer",
+      leadId,
+      level: "warn",
+      type: "audit.fallback",
+      message: "model returned no usable findings; used deterministic fallback",
+    });
   }
   summary = summary ?? fallbackSummary(lead, lighthouse, pagespeedFailed);
 
   await pool.query(
-    `insert into audits (lead_id, lighthouse, screenshots, pages_crawled, findings, summary) values ($1,$2,$3,$4,$5,$6)`,
-    [leadId, lighthouse ? JSON.stringify(lighthouse) : null, JSON.stringify(shots), JSON.stringify(pagesCrawled), JSON.stringify(findings), summary],
+    "insert into audits (lead_id, lighthouse, screenshots, pages_crawled, findings, summary) values ($1,$2,$3,$4,$5,$6)",
+    [
+      leadId,
+      lighthouse ? JSON.stringify(lighthouse) : null,
+      JSON.stringify(shots),
+      JSON.stringify(pagesCrawled),
+      JSON.stringify(findings),
+      summary,
+    ],
   );
-  await emitEvent({ agent: "analyzer", leadId, type: "audit.completed", message: `${findings.length} evidence-backed findings${MOCK() ? " (mock)" : ""}` });
+  await emitEvent({
+    agent: "analyzer",
+    leadId,
+    type: "audit.completed",
+    message: `${findings.length} evidence-backed findings${MOCK() ? " (mock)" : ""}`,
+  });
   await advanceLead(leadId, "analyzed", { agent: "analyzer" });
 }
 
 /** Deterministic findings from strictly-known facts only. Never fabricates (CLAUDE.md §0.1). */
 function fallbackFindings(
-  lead: { website_url: string | null; review_count: number | null; rating: number | null; city: string | null },
+  lead: {
+    website_url: string | null;
+    review_count: number | null;
+    rating: number | null;
+    city: string | null;
+  },
   lighthouse: Record<string, number> | null,
   pagespeedFailed: boolean,
 ): Finding[] {
@@ -161,7 +230,8 @@ function fallbackFindings(
         category: "seo",
         severity: lighthouse.seo < 70 ? "high" : "medium",
         evidence: `Lighthouse SEO ${lighthouse.seo}/100`,
-        why_it_costs_them: "weaker search signals mean fewer of the people searching this service find the business first",
+        why_it_costs_them:
+          "weaker search signals mean fewer of the people searching this service find the business first",
       });
     }
   } else if (pagespeedFailed) {
@@ -169,7 +239,8 @@ function fallbackFindings(
       category: "performance",
       severity: "high",
       evidence: `Google PageSpeed could not complete a Lighthouse audit for ${lead.website_url} after retries`,
-      why_it_costs_them: "a page Google itself cannot measure in 90 seconds is a page real mobile visitors abandon before it loads",
+      why_it_costs_them:
+        "a page Google itself cannot measure in 90 seconds is a page real mobile visitors abandon before it loads",
     });
   }
 
@@ -178,7 +249,8 @@ function fallbackFindings(
       category: "trust",
       severity: "medium",
       evidence: `${reviews} Google reviews${rating != null ? ` at ${rating}★` : ""}`,
-      why_it_costs_them: "a demand signal this strong should be front-and-center on the site to turn visitors into calls",
+      why_it_costs_them:
+        "a demand signal this strong should be front-and-center on the site to turn visitors into calls",
     });
   }
 
@@ -200,8 +272,10 @@ function fallbackSummary(
   pagespeedFailed: boolean,
 ): string {
   if (!lead.website_url) return `No website; invisible to mobile searchers in ${lead.city ?? "the area"}.`;
-  if (lighthouse?.performance != null) return `Live site scoring ${lighthouse.performance}/100 on mobile performance, with room to convert its reviews into calls.`;
-  if (pagespeedFailed) return "Live site too slow for Google to measure; mobile visitors likely leave before it loads.";
+  if (lighthouse?.performance != null)
+    return `Live site scoring ${lighthouse.performance}/100 on mobile performance, with room to convert its reviews into calls.`;
+  if (pagespeedFailed)
+    return "Live site too slow for Google to measure; mobile visitors likely leave before it loads.";
   return "Live site with weak conversion signals for a phone-driven local business.";
 }
 

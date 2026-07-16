@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { BLOCKS, blockDataSatisfied, BLOCK_BY_ID } from "../src/registry.js";
-import { PRESETS, presetForIndustry } from "../src/presets.js";
+import { describe, expect, it } from "vitest";
 import { LOOKS, looksForPreset } from "../src/looks.js";
+import { PRESETS, presetForIndustry } from "../src/presets.js";
+import { BLOCKS, BLOCK_BY_ID, blockDataSatisfied } from "../src/registry.js";
 
 describe("block library (spec §6.7 acceptance: ≥12 blocks, 4 presets)", () => {
   it("has at least 12 blocks", () => {
@@ -9,7 +9,20 @@ describe("block library (spec §6.7 acceptance: ≥12 blocks, 4 presets)", () =>
   });
 
   it("covers the required block types", () => {
-    for (const id of ["sticky-call-header", "hero-photo", "stats-strip", "services-grid", "niche-need-band", "process-steps", "gallery", "reviews", "service-map", "faq", "quote-form", "footer"]) {
+    for (const id of [
+      "sticky-call-header",
+      "hero-photo",
+      "stats-strip",
+      "services-grid",
+      "niche-need-band",
+      "process-steps",
+      "gallery",
+      "reviews",
+      "service-map",
+      "faq",
+      "quote-form",
+      "footer",
+    ]) {
       expect(BLOCK_BY_ID.has(id)).toBe(true);
     }
   });
@@ -25,13 +38,31 @@ describe("block library (spec §6.7 acceptance: ≥12 blocks, 4 presets)", () =>
   it("every look's fonts are declared in the roofing template's name-based font registry", () => {
     // Fonts the roofing template (legacy/templates/roofers) loads via next/font. A live-preset look
     // must render faithfully; guard against adding a look whose font the template can't load.
+    // Source of truth: FONT_VARS in legacy/templates/roofers/app/layout.tsx. Keep in sync — a look
+    // whose font is not loaded there renders with a fallback (silent design regression).
     const RENDERABLE = new Set([
-      "Bricolage Grotesque", "Source Sans 3", "Archivo", "IBM Plex Sans", "Space Grotesk", "Work Sans",
-      "Anton", "Bebas Neue", "Outfit", "Sora", "Hanken Grotesk", "Chivo", "Rubik", "Manrope",
+      "Bricolage Grotesque",
+      "Source Sans 3",
+      "Archivo",
+      "IBM Plex Sans",
+      "Space Grotesk",
+      "Work Sans",
+      "Anton",
+      "Bebas Neue",
+      "Outfit",
+      "Sora",
+      "Hanken Grotesk",
+      "Chivo",
+      "Rubik",
+      "Manrope",
+      "Barlow Condensed",
+      "Alfa Slab One",
     ]);
     for (const p of PRESETS.filter((p) => p.live)) {
       for (const l of p.looks) {
-        expect(RENDERABLE.has(l.typePairing.display), `${l.name} display ${l.typePairing.display}`).toBe(true);
+        expect(RENDERABLE.has(l.typePairing.display), `${l.name} display ${l.typePairing.display}`).toBe(
+          true,
+        );
         expect(RENDERABLE.has(l.typePairing.body), `${l.name} body ${l.typePairing.body}`).toBe(true);
       }
     }

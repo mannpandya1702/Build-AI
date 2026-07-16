@@ -16,11 +16,21 @@
 //     - append-only tables (agent_events, notifications, replies) pushed by created_at watermark
 //
 // Every step is idempotent; a crashed cycle re-runs safely. Failures log and never crash the worker.
-import { getPool, createPoolForUrl, type DbPool } from "@autopilot/core";
+import { type DbPool, createPoolForUrl, getPool } from "@autopilot/core";
 
 const UPSERT_TABLES = [
-  "looks", "leads", "audits", "solutions", "designs", "builds", "qa_reports",
-  "email_sequences", "emails", "meetings", "suppression_list", "daily_reports",
+  "looks",
+  "leads",
+  "audits",
+  "solutions",
+  "designs",
+  "builds",
+  "qa_reports",
+  "email_sequences",
+  "emails",
+  "meetings",
+  "suppression_list",
+  "daily_reports",
 ] as const;
 const APPEND_TABLES = ["agent_events", "notifications", "replies"] as const;
 
@@ -35,10 +45,15 @@ function getRemote(): DbPool | null {
 const colsCache = new Map<string, string[]>();
 async function cols(pool: DbPool, table: string): Promise<string[]> {
   if (!colsCache.has(table)) {
-    colsCache.set(table, (await pool.query<{ column_name: string }>(
-      "select column_name from information_schema.columns where table_name=$1 and table_schema='public' order by ordinal_position",
-      [table],
-    )).rows.map((r) => r.column_name));
+    colsCache.set(
+      table,
+      (
+        await pool.query<{ column_name: string }>(
+          "select column_name from information_schema.columns where table_name=$1 and table_schema='public' order by ordinal_position",
+          [table],
+        )
+      ).rows.map((r) => r.column_name),
+    );
   }
   return colsCache.get(table)!;
 }
@@ -50,14 +65,22 @@ function toParam(v: unknown): unknown {
 async function upsertAll(local: DbPool, rem: DbPool, table: string): Promise<void> {
   const cs = await cols(local, table);
   const rows = (await local.query(`select * from ${table}`)).rows;
-  const setList = cs.filter((c) => c !== "id").map((c) => `${c}=excluded.${c}`).join(",");
+  const setList = cs
+    .filter((c) => c !== "id")
+    .map((c) => `${c}=excluded.${c}`)
+    .join(",");
   for (let i = 0; i < rows.length; i += 100) {
     const chunk = rows.slice(i, i + 100);
     const params: unknown[] = [];
-    const tuples = chunk.map((row, r) => `(${cs.map((c, j) => {
-      params.push(toParam((row as Record<string, unknown>)[c]));
-      return `$${r * cs.length + j + 1}`;
-    }).join(",")})`);
+    const tuples = chunk.map(
+      (row, r) =>
+        `(${cs
+          .map((c, j) => {
+            params.push(toParam((row as Record<string, unknown>)[c]));
+            return `$${r * cs.length + j + 1}`;
+          })
+          .join(",")})`,
+    );
     await rem.query(
       `insert into ${table} (${cs.join(",")}) values ${tuples.join(",")} on conflict (id) do update set ${setList}`,
       params,
@@ -67,19 +90,32 @@ async function upsertAll(local: DbPool, rem: DbPool, table: string): Promise<voi
 
 async function appendNew(local: DbPool, rem: DbPool, table: string): Promise<void> {
   const cs = await cols(local, table);
-  const wm = (await rem.query<{ t: string | null }>(`select max(created_at)::text t from ${table}`)).rows[0].t;
-  const rows = (await local.query(
-    wm ? `select * from ${table} where created_at > $1 order by created_at asc limit 2000` : `select * from ${table} order by created_at asc limit 2000`,
-    wm ? [wm] : [],
-  )).rows;
+  const wm = (await rem.query<{ t: string | null }>(`select max(created_at)::text t from ${table}`)).rows[0]
+    .t;
+  const rows = (
+    await local.query(
+      wm
+        ? `select * from ${table} where created_at > $1 order by created_at asc limit 2000`
+        : `select * from ${table} order by created_at asc limit 2000`,
+      wm ? [wm] : [],
+    )
+  ).rows;
   for (let i = 0; i < rows.length; i += 100) {
     const chunk = rows.slice(i, i + 100);
     const params: unknown[] = [];
-    const tuples = chunk.map((row, r) => `(${cs.map((c, j) => {
-      params.push(toParam((row as Record<string, unknown>)[c]));
-      return `$${r * cs.length + j + 1}`;
-    }).join(",")})`);
-    await rem.query(`insert into ${table} (${cs.join(",")}) values ${tuples.join(",")} on conflict do nothing`, params);
+    const tuples = chunk.map(
+      (row, r) =>
+        `(${cs
+          .map((c, j) => {
+            params.push(toParam((row as Record<string, unknown>)[c]));
+            return `$${r * cs.length + j + 1}`;
+          })
+          .join(",")})`,
+    );
+    await rem.query(
+      `insert into ${table} (${cs.join(",")}) values ${tuples.join(",")} on conflict do nothing`,
+      params,
+    );
   }
 }
 
@@ -94,8 +130,12 @@ export async function bridgeCycle(): Promise<void> {
   // is deliberately NOT in the id-keyed up-sync below (local and hosted rows for the same key have
   // different ids), so this merge is its only sync path.
   const [remoteSettings, localSettings] = await Promise.all([
-    rem.query<{ key: string; value: unknown; updated_at: string }>("select key, value, updated_at from settings"),
-    local.query<{ key: string; value: unknown; updated_at: string }>("select key, value, updated_at from settings"),
+    rem.query<{ key: string; value: unknown; updated_at: string }>(
+      "select key, value, updated_at from settings",
+    ),
+    local.query<{ key: string; value: unknown; updated_at: string }>(
+      "select key, value, updated_at from settings",
+    ),
   ]);
   const localByKey = new Map(localSettings.rows.map((r) => [r.key, r]));
   const remoteByKey = new Map(remoteSettings.rows.map((r) => [r.key, r]));
@@ -108,11 +148,13 @@ export async function bridgeCycle(): Promise<void> {
     );
   for (const s of remoteSettings.rows) {
     const l = localByKey.get(s.key);
-    if (!l || new Date(l.updated_at) < new Date(s.updated_at)) await guardedUpsert(local)(s.key, s.value, s.updated_at);
+    if (!l || new Date(l.updated_at) < new Date(s.updated_at))
+      await guardedUpsert(local)(s.key, s.value, s.updated_at);
   }
   for (const l of localSettings.rows) {
     const r = remoteByKey.get(l.key);
-    if (!r || new Date(r.updated_at) < new Date(l.updated_at)) await guardedUpsert(rem)(l.key, l.value, l.updated_at);
+    if (!r || new Date(r.updated_at) < new Date(l.updated_at))
+      await guardedUpsert(rem)(l.key, l.value, l.updated_at);
   }
 
   // DOWN: operator inputs created on the hosted side, each pulled exactly once. Local replays are
@@ -120,7 +162,12 @@ export async function bridgeCycle(): Promise<void> {
   // to the hosted DB can never be pulled again (replay loop).
   const PULL_TYPES = ["booking.received", "research.requested"] as const;
   for (const type of PULL_TYPES) {
-    const rows = await rem.query<{ id: string; lead_id: string | null; message: string | null; payload: unknown }>(
+    const rows = await rem.query<{
+      id: string;
+      lead_id: string | null;
+      message: string | null;
+      payload: unknown;
+    }>(
       `select e.id, e.lead_id, e.message, e.payload from agent_events e
        where e.type = $1
          and e.agent <> 'bridge'
@@ -140,7 +187,10 @@ export async function bridgeCycle(): Promise<void> {
       }
       await rem.query(
         "insert into agent_events (agent, type, level, message, payload) values ('bridge','bridge.pulled','debug',$2,$1)",
-        [JSON.stringify({ remote_id: b.id }), `${type} ${originatedLocally.rowCount ? "recognized as local origin" : "pulled to worker"}`],
+        [
+          JSON.stringify({ remote_id: b.id }),
+          `${type} ${originatedLocally.rowCount ? "recognized as local origin" : "pulled to worker"}`,
+        ],
       );
     }
   }
@@ -159,7 +209,9 @@ export async function bridgeCycle(): Promise<void> {
     // never deletes, so a locally-deleted draft lives on in the hosted Outbox). Surface it once
     // per idempotency_key instead of swallowing it.
     if (d.status === "approved") {
-      const exists = await local.query("select 1 from emails where idempotency_key = $1", [d.idempotency_key]);
+      const exists = await local.query("select 1 from emails where idempotency_key = $1", [
+        d.idempotency_key,
+      ]);
       if (!exists.rowCount) {
         const seen = await local.query(
           "select 1 from agent_events where type='bridge.orphan_email' and payload->>'idempotency_key' = $1",
@@ -174,13 +226,10 @@ export async function bridgeCycle(): Promise<void> {
               JSON.stringify({ idempotency_key: d.idempotency_key }),
             ],
           );
-          await local.query(
-            `insert into notifications (type, title, body) values ('bridge_orphan',$1,$2)`,
-            [
-              "Approved email has no worker-side record",
-              `Idempotency key ${d.idempotency_key}. The approval cannot execute; check the lead and re-draft if outreach is still wanted.`,
-            ],
-          );
+          await local.query(`insert into notifications (type, title, body) values ('bridge_orphan',$1,$2)`, [
+            "Approved email has no worker-side record",
+            `Idempotency key ${d.idempotency_key}. The approval cannot execute; check the lead and re-draft if outreach is still wanted.`,
+          ]);
         }
       }
     }

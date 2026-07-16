@@ -2,10 +2,10 @@
 // Also writes the call_sheet_md: the operator's 30-second phone opener + objections + automation
 // upsell + best call window. Advances to solution_ready.
 import { readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { MOCK, llm } from "@autopilot/adapters";
 import { advanceLead, emitEvent, getPool } from "@autopilot/core";
-import { llm, MOCK } from "@autopilot/adapters";
 
 const PROMPT = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "prompts/solution.md"), "utf8");
 
@@ -16,11 +16,19 @@ export async function solution(leadId: string): Promise<void> {
 
   // Idempotency guard (spec §4.4): skip if a duplicate job fires after the lead already advanced.
   if (lead.status !== "analyzed") {
-    await emitEvent({ agent: "solution", leadId, level: "debug", type: "solution.skipped", message: `lead already at ${lead.status}` });
+    await emitEvent({
+      agent: "solution",
+      leadId,
+      level: "debug",
+      type: "solution.skipped",
+      message: `lead already at ${lead.status}`,
+    });
     return;
   }
 
-  const audit = (await pool.query("select * from audits where lead_id = $1 order by created_at desc limit 1", [leadId])).rows[0];
+  const audit = (
+    await pool.query("select * from audits where lead_id = $1 order by created_at desc limit 1", [leadId])
+  ).rows[0];
   const findings = audit?.findings ?? [];
 
   const raw = await llm({
@@ -33,9 +41,20 @@ export async function solution(leadId: string): Promise<void> {
     mockResponse: JSON.stringify({
       pitch_angle: `${lead.company_name} has ${lead.review_count ?? "strong"} reviews that nobody can see because there is no fast mobile site to send people to.`,
       proposed_pages: ["Home", "Services", "About", "Contact"],
-      features: ["sticky tap-to-call", "real Google reviews block", "3-5 field quote form", "storm/insurance band", "service-area map"],
-      differentiators: [`${lead.review_count ?? 0} real reviews front and center`, `${lead.city ?? "local"} in the hero`],
-      automation_opportunities: [{ package: "never-miss-a-lead", reason: "phone-driven trade loses calls while on the job" }],
+      features: [
+        "sticky tap-to-call",
+        "real Google reviews block",
+        "3-5 field quote form",
+        "storm/insurance band",
+        "service-area map",
+      ],
+      differentiators: [
+        `${lead.review_count ?? 0} real reviews front and center`,
+        `${lead.city ?? "local"} in the hero`,
+      ],
+      automation_opportunities: [
+        { package: "never-miss-a-lead", reason: "phone-driven trade loses calls while on the job" },
+      ],
       estimated_impact: "More of the people already finding them on Google actually call.",
     }),
   });
@@ -55,33 +74,40 @@ export async function solution(leadId: string): Promise<void> {
       callSheet,
     ],
   );
-  await emitEvent({ agent: "solution", leadId, type: "solution.ready", message: `pitch + call sheet${MOCK() ? " (mock)" : ""}` });
+  await emitEvent({
+    agent: "solution",
+    leadId,
+    type: "solution.ready",
+    message: `pitch + call sheet${MOCK() ? " (mock)" : ""}`,
+  });
   await advanceLead(leadId, "solution_ready", { agent: "solution" });
 }
 
 /** Call sheet (spec §6.9): the operator's phone weapon. Includes automation upsell for post-close. */
 function buildCallSheet(lead: any, s: any, findings: any[]): string {
   const biggest = findings[0]?.evidence ?? s.pitch_angle ?? "their weak web presence";
-  const autos = (s.automation_opportunities ?? []).map((a: any) => `- ${a.package}: ${a.reason}`).join("\n") || "- (assess after close)";
+  const autos =
+    (s.automation_opportunities ?? []).map((a: any) => `- ${a.package}: ${a.reason}`).join("\n") ||
+    "- (assess after close)";
   return [
     `# Call sheet — ${lead.company_name}`,
     `${lead.review_count ?? 0} reviews at ${lead.rating ?? "?"} | ${lead.city ?? "?"} | ${lead.contact_phone ?? "no phone"}`,
-    ``,
-    `## 30-second opener`,
-    `"Hey${lead.contact_name ? " " + String(lead.contact_name).split(" ")[0] : ""}, it's Mann from TradeCraft Sites. I built ${lead.company_name} a new website and emailed you the link. Did you get a chance to click it?"`,
-    ``,
-    `## The one finding to name`,
+    "",
+    "## 30-second opener",
+    `"Hey${lead.contact_name ? ` ${String(lead.contact_name).split(" ")[0]}` : ""}, it's Mann from TradeCraft Sites. I built ${lead.company_name} a new website and emailed you the link. Did you get a chance to click it?"`,
+    "",
+    "## The one finding to name",
     `${biggest}`,
-    ``,
-    `## Likely objections`,
+    "",
+    "## Likely objections",
     `- "How much?" -> setup then $149/mo, you pay nothing until it's live and you're happy.`,
     `- "Where are you based?" -> India. The work speaks for itself, click the demo.`,
-    ``,
-    `## After the close: automation to offer (never in the cold pitch)`,
+    "",
+    "## After the close: automation to offer (never in the cold pitch)",
     autos,
-    ``,
-    `## Best call window`,
-    `${lead.city ? lead.city + " " : ""}business hours, 8-10am local (before jobs start).`,
+    "",
+    "## Best call window",
+    `${lead.city ? `${lead.city} ` : ""}business hours, 8-10am local (before jobs start).`,
   ].join("\n");
 }
 

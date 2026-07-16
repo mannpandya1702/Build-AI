@@ -1,0 +1,55 @@
+# Phase 0 quality gate (AI_AGENCY_MASTER_SPEC.md §11). Every PR must pass before merge.
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    env:
+      # CI runs entirely in MOCK_MODE — no live credential ever exists in this environment (spec §11).
+      MOCK_MODE: "true"
+      DATABASE_URL: "postgres://autopilot:autopilot_local_dev@localhost:5432/agency_autopilot"
+      ANTHROPIC_API_KEY: "sk-ant-mock"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # Lockfile-only install (spec §9 supply chain). Fails if the lockfile is stale.
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint + format (Biome)
+        run: pnpm lint:ci
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests (Vitest)
+        run: pnpm test
+
+      - name: Evals (golden sets — no regression > 2 pts, spec §11)
+        run: pnpm --filter @autopilot/evals eval:ci
+
+      - name: Build
+        run: pnpm build
+
+      # Supply-chain audit (spec §9). Non-blocking for now (report only) until deps are pinned.
+      - name: Dependency audit
+        run: pnpm audit --prod || true

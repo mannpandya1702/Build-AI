@@ -1,7 +1,7 @@
+import { checkPlacesCap, meterPlacesCall } from "./caps.js";
 // Google Places (New) adapter (spec §3): no scraping of Maps HTML. Cost-metered via caps.ts.
 // Ported from the proven legacy client. MOCK_MODE serves fixtures.
 import { MOCK } from "./config.js";
-import { checkPlacesCap, meterPlacesCall } from "./caps.js";
 
 const BASE = "https://places.googleapis.com/v1";
 
@@ -28,7 +28,11 @@ export interface PlaceHit {
 const SEARCH_MASK =
   "places.id,places.displayName,places.formattedAddress,places.businessStatus,places.rating,places.userRatingCount,places.websiteUri,places.nationalPhoneNumber,places.googleMapsUri,nextPageToken";
 
-export async function searchPlaces(query: string, maxResultCount = 20, pageToken?: string): Promise<{ places: PlaceHit[]; nextPageToken?: string }> {
+export async function searchPlaces(
+  query: string,
+  maxResultCount = 20,
+  pageToken?: string,
+): Promise<{ places: PlaceHit[]; nextPageToken?: string }> {
   if (MOCK()) {
     return {
       places: Array.from({ length: 5 }, (_, i) => ({
@@ -45,7 +49,11 @@ export async function searchPlaces(query: string, maxResultCount = 20, pageToken
   await checkPlacesCap();
   const res = await fetch(`${BASE}/places:searchText`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Goog-Api-Key": apiKey(), "X-Goog-FieldMask": SEARCH_MASK },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey(),
+      "X-Goog-FieldMask": SEARCH_MASK,
+    },
     body: JSON.stringify({ textQuery: query, maxResultCount, ...(pageToken ? { pageToken } : {}) }),
   });
   await meterPlacesCall(`searchText: ${query}`);
@@ -64,7 +72,13 @@ export async function placeDetails(placeId: string): Promise<PlaceHit> {
       displayName: { text: "Mock Details Co" },
       rating: 4.9,
       userRatingCount: 77,
-      reviews: [{ rating: 5, text: { text: "Fixture review, verbatim." }, authorAttribution: { displayName: "Fixture" } }],
+      reviews: [
+        {
+          rating: 5,
+          text: { text: "Fixture review, verbatim." },
+          authorAttribution: { displayName: "Fixture" },
+        },
+      ],
     };
   }
   await checkPlacesCap();

@@ -1,6 +1,6 @@
+import { db } from "@/lib/db";
 // Live tail source for /activity. Local dev polls this; production swaps to Supabase Realtime.
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 

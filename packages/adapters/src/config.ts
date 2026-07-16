@@ -1,6 +1,6 @@
 // Typed access to /config/*.yaml (spec §2.3: ICP is configuration).
 import { readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 
@@ -35,7 +35,14 @@ export function loadCaps(): CapsConfig {
 }
 
 export interface AgencyFacts {
-  identity: { name: string; from_email: string; domain: string; address: string; operator_first_name: string; based_in: string };
+  identity: {
+    name: string;
+    from_email: string;
+    domain: string;
+    address: string;
+    operator_first_name: string;
+    based_in: string;
+  };
   deploy: { vercel_team_id: string; vercel_scope: string; demo_base_domain: string };
   booking: { provider: string; event_type_slug: string; event_type_id: number; booking_link: string };
   offer: Record<string, string>;

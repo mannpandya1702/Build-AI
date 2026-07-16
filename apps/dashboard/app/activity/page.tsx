@@ -1,9 +1,9 @@
 "use client";
 
+import { Empty, FilterChip, PageHeader, Skeleton } from "@/components/ui";
 // /activity (spec §8.6): live tail of agent_events with level filters (skill: dashboards need
 // filtering). Poll-based locally; Supabase Realtime in production.
 import { useEffect, useMemo, useState } from "react";
-import { PageHeader, FilterChip, Skeleton, Empty } from "@/components/ui";
 
 interface Ev {
   id: string;
@@ -34,14 +34,20 @@ export default function ActivityPage() {
       try {
         const res = await fetch("/api/events", { cache: "no-store" });
         const data = await res.json();
-        if (live) { setEvents(data.events); setError(null); }
+        if (live) {
+          setEvents(data.events);
+          setError(null);
+        }
       } catch (e) {
         if (live) setError((e as Error).message);
       }
     };
     tick();
     const t = setInterval(tick, 2000);
-    return () => { live = false; clearInterval(t); };
+    return () => {
+      live = false;
+      clearInterval(t);
+    };
   }, []);
 
   const shown = useMemo(() => {
@@ -55,7 +61,9 @@ export default function ActivityPage() {
       <PageHeader title="Activity" description="Live tail of agent events (2s poll in local dev).">
         <div className="flex gap-1.5">
           {LEVELS.map((l) => (
-            <FilterChip key={l} active={level === l} onClick={() => setLevel(l)}>{l}</FilterChip>
+            <FilterChip key={l} active={level === l} onClick={() => setLevel(l)}>
+              {l}
+            </FilterChip>
           ))}
         </div>
       </PageHeader>

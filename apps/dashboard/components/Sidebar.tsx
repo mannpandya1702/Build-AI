@@ -1,13 +1,13 @@
 "use client";
 
+import Bell from "@/components/Bell";
+import WorkerSwitch from "@/components/WorkerSwitch";
+import { Icon, type IconName } from "@/components/icons";
 // App shell navigation (skill §9: icon + label, active state highlighted, placement identical on
 // every page; ≥1024px sidebar, small screens horizontal top nav). Amber is reserved for the brand
 // mark + active indicator (accent used sparingly, per the design system).
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Bell from "@/components/Bell";
-import WorkerSwitch from "@/components/WorkerSwitch";
-import { Icon, type IconName } from "@/components/icons";
 
 const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: "/pipeline", label: "Pipeline", icon: "pipeline" },
@@ -25,7 +25,9 @@ export default function Sidebar() {
     <aside className="shrink-0 border-b border-line bg-surface/70 backdrop-blur md:sticky md:top-0 md:h-dvh md:w-56 md:border-b-0 md:border-r">
       <div className="flex items-center justify-between px-4 py-4 md:block">
         <Link href="/pipeline" className="flex items-center gap-2.5">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent font-display text-sm font-bold text-accentink">A</span>
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent font-display text-sm font-bold text-accentink">
+            A
+          </span>
           <span className="font-display text-[13px] font-semibold leading-tight tracking-tight text-ink">
             AGENCY
             <br className="hidden md:block" />
@@ -43,7 +45,7 @@ export default function Sidebar() {
 
       <nav className="flex gap-1 overflow-x-auto px-2 pb-2 md:mt-2 md:flex-col md:pb-4" aria-label="Primary">
         {NAV.map(({ href, label, icon }) => {
-          const active = pathname === href || pathname.startsWith(href + "/");
+          const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
               key={href}
@@ -53,7 +55,12 @@ export default function Sidebar() {
                 active ? "bg-surface2 font-medium text-ink" : "text-muted hover:bg-surface2/60 hover:text-ink"
               }`}
             >
-              {active && <span className="absolute left-0 top-1/2 hidden h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent md:block" aria-hidden />}
+              {active && (
+                <span
+                  className="absolute left-0 top-1/2 hidden h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent md:block"
+                  aria-hidden
+                />
+              )}
               <Icon name={icon} className={`h-4 w-4 ${active ? "text-accent" : "text-faint"}`} />
               {label}
             </Link>
