@@ -1,0 +1,9 @@
+# Baseline niche (home services). Volume tier, no special compliance — activates immediately.
+niche: roofing
+vertical: roofing
+display_name: "Roofing contractors"
+tier: volume
+compliance:
+  regime: baseline
+pricing_tier: volume
+playbook_skill: niche-playbook-roofing

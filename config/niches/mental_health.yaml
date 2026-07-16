@@ -1,0 +1,11 @@
+niche: mental_health
+vertical: mental health practice
+display_name: "Mental health practices"
+tier: high_ticket
+compliance:
+  regime: healthcare
+  requires_baa: true
+  phi_handling: true
+  insurance_required: ["E&O 1M/2M"]
+pricing_tier: high_ticket
+playbook_skill: niche-playbook-mental-health
