@@ -447,11 +447,11 @@ rough solo-developer estimate.
 
 ## 8. Decision points for you (the operator)
 
-These change the plan and are genuinely yours to call:
+These change the plan and are genuinely yours to call. (#1 is now decided; #2–#4 remain open.)
 
-1. **Supabase vs. stay-on-Neon+Auth.js.** Recommended: **Supabase** (auth + realtime + storage + RLS in
-   one platform; matches the original spec). Choose Neon+Auth.js only if you have a specific reason to
-   stay on Neon.
+1. **Supabase vs. stay-on-Neon+Auth.js.** ✅ **DECIDED (2026-07-16): Supabase** — auth + realtime +
+   storage + RLS in one platform, matching the original spec. This is the platform the rest of the plan
+   now assumes.
 2. **Worker host: Fly.io vs. Railway vs. a plain VPS.** Any works; the requirement is *always-on with
    normal `:5432` egress and a process supervisor*. Fly/Railway are the least ops.
 3. **Drizzle ORM vs. raw SQL + numbered migrations.** Optional; Drizzle buys compile-time query safety,
