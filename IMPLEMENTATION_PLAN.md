@@ -1,357 +1,269 @@
-# Agency Autopilot → AI Agency — Final End-to-End Implementation Plan
+# Final Implementation Plan — Agency Autopilot → AI Agency (v2.0)
 
-**Prepared:** 2026-07-16
-**Consolidates:** `AUDIT_AND_PRODUCTION_PLAN.md` (security/infra/UX audit) + `AI_AGENCY_EVOLUTION_PLAN.md`
-(product expansion). This is the **single build spec** — file-level, sequenced, with acceptance
-criteria — to take the system from a website-delivery autopilot to a secure, multi-service AI agency
-that you control.
+**Version:** 2.0 · **Prepared:** 2026-07-16 · **Supersedes:** v1.0
+**Governed by:** `AI_AGENCY_MASTER_SPEC.md` (the source of truth for vision, business model, pricing,
+compliance, architecture). This document is the **file-level "how"** for that spec's phases.
+**Precedence:** `CLAUDE.md` (behavior) → `AI_AGENCY_MASTER_SPEC.md` (what & why) → **this plan** (how).
+On any conflict: **stop and ask the operator.**
+**Companions:** `AUDIT_AND_PRODUCTION_PLAN.md`, `AI_AGENCY_EVOLUTION_PLAN.md`, `BUILD_STATUS_REPORT.md`.
+**Codebase:** branch `claude/read-pdf-89t95k`, ~7.2k LOC, pnpm + Turborepo.
 
-**Grounded in the real code** (branch `claude/read-pdf-89t95k`): the state machine
-(`packages/core/src/statuses.ts`), the single mover `advanceLead` (`packages/core/src/advanceLead.ts`),
-the status-triggered scheduler (`apps/worker/src/index.ts`), the agent registry
-(`packages/agents/src/registry.ts`), and the schema (`supabase/migrations/00001_init.sql`).
-
-**Prime directives** (every phase honors these):
-- **Reuse, don't rewrite.** The sales engine — discovery→qualify→demo→outreach→booking→deliver, the
-  event bus, layered idempotency, the email gate, MOCK-first — is kept intact.
-- **MOCK_MODE proves every phase before a dollar is spent.** No phase is "done" until it runs green
-  end-to-end in mock.
-- **You control spend.** After Part B, nothing expensive runs without your explicit approval.
-- **Secure by construction.** Security is woven into each part, not bolted on (OWASP map in §J).
+**Prime directives (every phase):**
+- **MOCK-first, always.** Each phase ends with a MOCK_MODE demo to the operator, criteria green, before
+  the next phase. The `MOCK_ON_REAL_DB` refusal stays permanently.
+- **Operator approves every dollar of build spend.** `BUILD_MODE=review` is the permanent default.
+- **No phase spends real money without an explicit "GO"** for that phase.
+- **Compliance is code, not documentation** (spec §10). A task conflicting with §10 is wrong.
+- **Never fabricate a number.** `[NEEDS:]` + anti-fabrication lint apply to every generated artifact.
+- **Honesty tagging** — `measured|allocated|estimated`; only `measured` reaches client-facing reports.
 
 ---
 
-## 0. The shape of the change (one picture)
+## 1. What v2.0 adds over v1.0
 
-```
-   AUTONOMOUS & CHEAP              ⛔ YOU APPROVE          OPERATOR-GATED & EXPENSIVE
-   discover → enrich → qualify ──► SHORTLIST ──► analyze → solution → build → QA → outreach → book → deliver
-                                   (per client,                 │ dispatch on service_type
-                                    per service)      ┌─────────┼──────────┐
-                                                   website   voice_agent  ai_automation
-                                                  (blocks)    (Vapi)      (Trigger.dev)
-```
+v1.0 planned security + a 3-service pivot. The master spec (and this v2) extends it to the full agency
+and folds in the **operator-approved niche-expansion engine + premium pricing tier**:
 
-One repo, one DB, one worker, one dashboard. Each service is a **builder behind the same stages**; the
-gate sits **once**, in front of the expensive half, and protects all services.
-
----
-
-## Part A — Foundations & Security *(must land before any real exposure)* · ~1.5–2 weeks
-
-### A0 · Quality gates (do first — everything rides on these)
-- **Files:** `.github/workflows/ci.yml`, `biome.json`, per-package real `test` scripts (replace the
-  `echo "tests land later"` stubs in `agents`, `adapters`, `worker`, `dashboard`).
-- **Do:** CI runs `pnpm typecheck && biome ci && pnpm test && pnpm build` on every PR, required to
-  merge. Add **Biome** (one fast tool, lint+format) — the dead `eslint-disable` comments currently
-  guard nothing.
-- **Accept:** a red test blocks merge; `biome ci` is clean.
-
-### A1 · Authentication + write-surface lockdown  *(audit C-1)*
-- **Files:** `apps/dashboard/middleware.ts` (new), `apps/dashboard/lib/auth.ts` (new),
-  `app/api/settings/route.ts`, `apps/dashboard/lib/devtools.ts`.
-- **Do:** Supabase Auth (single operator, magic-link/password + TOTP). `middleware.ts` gates **every**
-  route except the HMAC-verified Cal.com webhook. **Allowlist keys** in `POST /api/settings` (today it
-  accepts arbitrary key+JSON). Make dev-tools **fail closed** (`ALLOW_DEV_TOOLS==="1"` only, not
-  `!VERCEL`).
-- **Accept:** unauthenticated request to any `/api/*` (except webhook) → 401; a non-allowlisted settings
-  key → 400; dev fabricator routes → 403 unless explicitly enabled.
-
-### A2 · SSRF guard  *(audit H-1 / OWASP LLM05)*
-- **Files:** `packages/adapters/src/safeFetch.ts` (new); apply in `qualify.ts`, `crawl.ts`, `copy.ts`,
-  and the Playwright request-interception handler in `screenshots.ts`.
-- **Do:** resolve the target host → reject private/link-local/metadata ranges (`10/8`, `127/8`,
-  `169.254/16`, `::1`, fc00::/7, …) → **re-check after every redirect** → same guard inside Puppeteer
-  interception.
-- **Accept:** a lead whose `website_url` resolves to `169.254.169.254` or `localhost` is refused and
-  logged; a normal public site passes.
-
-### A3 · Data hygiene  *(audit H-2/H-3)*
-- **Do:** add `data/leads.json`, `data/research/`, `drafts/*.md` to `.gitignore`; scrub from history
-  (git-filter-repo); keep prospect data in Postgres only. **Complete + verify** rotation of every
-  chat-exposed key (Places, Vercel, Anthropic, PageSpeed, 21st, Resend, Cal.com).
-- **Accept:** `git log -p` shows no PII; a written rotation checklist is signed off.
-
-### A4 · Collapse the split-brain  *(audit C-2/C-3 — the highest-leverage infra move)*
-- **Do:** move the worker to **Fly.io/Railway** (systemd/PM2, direct `:5432`); collapse to **one
-  Supabase Postgres**; **delete `apps/worker/src/bridge.ts`** and the dual-DB toggle machinery; add an
-  **external dead-man's-switch** (Healthchecks.io/BetterStack querying heartbeat age) + wire
-  `notifyOperator` → **Telegram + Sentry**; ship logs off `/tmp` to Axiom/BetterStack.
-- **Accept:** kill the worker → external alert fires within minutes; a Cal.com cancellation stays
-  cancelled (the bug the bridge caused is structurally impossible with one DB).
-
-> After Part A the system is safe to expose. Parts B–H can then proceed in the sequence below.
-
----
-
-## Part B — Spend control: the client-approval gate *(your #1 pain)* · ~2–3 days
-
-**Root cause:** the scheduler auto-fires `qualified → analyzed` (`registry.ts:18`,
-`statuses.ts:40`), and the only throttle (`batch.ts`) auto-picks *top-N by score*. So it spends on
-businesses you never chose.
-
-### B1 · New status + transition
-- **File:** `packages/core/src/statuses.ts`, `supabase/migrations/00002_build_approval.sql` (new,
-  `alter type lead_status add value 'awaiting_build_approval'`).
-- **Do:** insert `awaiting_build_approval` between `qualified` and `analyzed`. New transitions:
-  `qualified → awaiting_build_approval → analyzed | disqualified`.
-
-### B2 · Scheduler gate
-- **File:** `apps/worker/src/index.ts` (scheduler loop), `registry.ts` (analyzer trigger →
-  `awaiting_build_approval` handled by an approval check, not auto-advance).
-- **Do:** qualified leads advance to `awaiting_build_approval` and **stop**. The analyzer only fires
-  for a lead that has an operator `lead.build_approved` event (mirrors the existing Outbox approval
-  pattern in the outbox-poll at `index.ts:254`). `BUILD_MODE=review` (default) requires the click;
-  `BUILD_MODE=auto` keeps today's top-N behavior for when you trust it.
-
-### B3 · Build budget + projected cost
-- **Files:** `config/caps.yaml` (add `build_spend_per_day`, `build_spend_per_lead`),
-  `config/unit-costs.yaml` (already exists — source of the projection).
-- **Do:** the Shortlist shows "approve these N ≈ $X" before you click; hitting the daily build ceiling
-  **pauses and notifies** (reusing the existing Places/Anthropic cap pattern), never silently drains.
-
-### B4 · Shortlist dashboard page
-- **Files:** `apps/dashboard/app/shortlist/page.tsx` (new), `app/api/shortlist/route.ts` (new),
-  `app/api/shortlist/approve/route.ts` (new), `components/Sidebar.tsx` (nav entry).
-- **Do:** list every `awaiting_build_approval` lead with score, detected gaps, contact, projected cost;
-  single + bulk "Approve for build" → emits `lead.build_approved` (authed, per A1). Reuses the existing
-  `StatusPill`/`Card`/`Empty` kit.
-- **Accept (MOCK):** run 10 mock leads → all stop at Shortlist, **zero** analyzer/build spend until you
-  approve; approve 3 → exactly those 3 proceed; the other 7 stay put.
-
----
-
-## Part C — Multi-service spine *(websites → agency)* · ~1 week
-
-This is the pivot. It generalizes the pipeline so "build" means *any* service.
-
-### C1 · `service_type` + `opportunities`
-- **File:** `supabase/migrations/00003_opportunities.sql` (new).
-- **Schema:**
-  ```sql
-  create type service_type as enum ('website','voice_agent','ai_automation'); -- extensible: seo, ads
-  create table opportunities (
-    id uuid primary key default gen_random_uuid(),
-    lead_id uuid not null references leads(id) on delete cascade,
-    service_type service_type not null,
-    status lead_status not null default 'qualified',   -- the state machine now moves THIS
-    score int, score_breakdown jsonb,
-    created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
-    unique (lead_id, service_type)
-  );
-  -- artifacts gain opportunity_id (nullable during migration, then backfilled + set not null):
-  alter table audits    add column opportunity_id uuid references opportunities(id) on delete cascade;
-  alter table solutions add column opportunity_id uuid references opportunities(id) on delete cascade;
-  alter table designs   add column opportunity_id uuid references opportunities(id) on delete cascade;
-  alter table builds    add column opportunity_id uuid references opportunities(id) on delete cascade;
-  alter table emails    add column opportunity_id uuid references opportunities(id); -- outreach is per-offer
-  ```
-- **Backfill:** every existing lead gets one `website` opportunity carrying its current `status`;
-  existing artifacts link to it. The `leads` row stays the **CRM/company record**; the **opportunity**
-  becomes the pipeline unit. One lead → many opportunities = cross-sell.
-
-### C2 · `advanceOpportunity` + dispatch
-- **Files:** `packages/core/src/advanceLead.ts` → add `advanceOpportunity(opportunityId, to, opts)`
-  (same `BEGIN … FOR UPDATE … validate … UPDATE … event … COMMIT` shape, keyed on `opportunities`),
-  keep `advanceLead` as a thin wrapper during migration; `packages/agents/src/registry.ts` →
-  triggers become `(status, service_type)`; `apps/worker/src/index.ts` scheduler selects
-  opportunities and dispatches to the right service module.
-- **Do:** the scheduler's per-status query (`index.ts:196`) becomes per-`(status, service_type)`; the
-  agent handler map gains a service dimension: `handlers[agent.name][service_type]`.
-
-### C3 · Multi-gap analyzer
-- **File:** `packages/agents/src/real/analyzer.ts` (+ per-service analyze modules).
-- **Do:** one analyze pass detects **all three** opportunity types from data the scraper already
-  collects: weak/absent site → `website`; voicemail/"missed call" complaints in `reviews` → `voice_agent`;
-  "call for a quote"/no online booking → `ai_automation`. Each detected gap **creates an opportunity**
-  at `awaiting_build_approval`. Now the Shortlist recommends *which service* per client.
-
-### C4 · Generalize builds/QA/outbox
-- **Do:** `builds`, `qa_reports`, and the Outbox key off `opportunity_id`. A voice demo stores its
-  demo phone number in `builds.deploy_url`; an automation demo stores its sandbox trigger link — same
-  table, same "here's your demo" outreach.
-- **Accept (MOCK):** a mock lead spawns 2 opportunities (website + voice), both stop at Shortlist,
-  approve both → two independent demos build and two offers reach the Outbox.
-
----
-
-## Part D — Service builders *(the new products)* · ~1–2 weeks each
-
-Each service implements the **same four hooks** — `analyze · solution · build · qa` — behind the
-interface Part C defines. Website is the existing code, moved behind the interface (`D0`, ~2 days).
-
-### D1 · Voice agents — `packages/voice` (recommended first)
-- **Stack:** **Vapi** (adapter `packages/adapters/src/vapi.ts`), mock-backed like every adapter.
-- **build:** provision a temporary **demo phone number**; system prompt built from the lead's real
-  facts (services, hours, `contact_phone`, booking link); inbound-only (no cold-call consent issues).
-- **qa:** place a **scripted test call**, score the transcript for correctness + booking success +
-  latency; fail → rebuild (same QA-loop the website builder uses).
-- **outreach:** "Call this number — that's your 24/7 receptionist." Monthly-retainer offer.
-- **Skill:** custom `voice-agent-playbook` (below).
-- **Accept (MOCK):** mock Vapi returns a fake number + canned transcript; QA passes; Outbox draft
-  contains the number. No real telephony spend in mock.
-
-### D2 · AI automation — `packages/automation`
-- **Stack:** **Trigger.dev** (adapter `packages/adapters/src/triggerdev.ts`); n8n later for
-  client-owned/white-label.
-- **build:** generate a **sandboxed** workflow seeded with the lead's public data (missed-call
-  text-back, review-request, quote auto-reply); runs against **your** test tools, never the prospect's
-  real systems, until close.
-- **qa:** dry-run the workflow, **assert the side effect** (test SMS sent, mock row created).
-- **outreach:** a one-click "run the demo" link that produces a visible result.
-- **Skill:** custom `automation-blueprint`.
-- **Accept (MOCK):** the demo fires against a stub, QA asserts the side effect, nothing touches a real
-  external system.
-
----
-
-## Part E — Skills layer *(make every subagent a specialist)* · ongoing, parallel from Part C
-
-Skills are folders (`SKILL.md` + refs + scripts) an agent loads **only when relevant** (progressive
-disclosure). They live in-repo under `.claude/skills/` and are versioned with the code — **not a
-separate system**.
-
-### E1 · Install vetted third-party skills (per agent)
-**Every third-party skill is safety-reviewed before install** (they carry executable scripts) — the
-same discipline the repo already used for the marketing skills.
-
-| Agent / area | Skill | Source |
-|---|---|---|
-| scrape/research | Firecrawl skill + CLI | firecrawl |
-| qualify/analyzer | SEO Audit & AEO, Local SEO Manager | alirezarezvani/claude-skills |
-| solution | CRO Specialist, Contracts & Proposals, Market Research | alirezarezvani |
-| website builder | Frontend Design, Vercel Web Design Guidelines, Vercel React Best Practices | firecrawl roundup |
-| qa | Webapp Testing (Playwright), Trail of Bits Security (CodeQL/Semgrep) | firecrawl |
-| sales | Content Creator, Growth Marketer | alirezarezvani |
-
-Catalogs to mine (all safety-reviewed first): `anthropics/skills`, `ComposioHQ/awesome-claude-skills`,
-`hesreallyhim/awesome-claude-code`.
-
-### E2 · Author the custom agency skills *(your moat)*
-These encode **your** winning patterns so every run reproduces them:
-- `agency-brand-voice` — the outreach/site voice, wired to the existing anti-fabrication guards.
-- `niche-playbook-<trade>` (roofing, HVAC, dental, …) — proven gaps + copy + look per vertical.
-- `demo-quality-bar` — the "does this demo clear the bar" checklist the QA agent applies.
-- `voice-agent-playbook` — Vapi prompt/flow templates, objection handling, booking hooks.
-- `automation-blueprint` — the Trigger.dev/n8n patterns you productize.
-
-**SKILL.md shape** (progressive disclosure — short entry, detail in refs):
-```
----
-name: voice-agent-playbook
-description: Build and QA a Vapi voice-agent demo for a local-service business.
-  Use when service_type=voice_agent — designing the system prompt, call flow,
-  booking hooks, and the QA test-call rubric. Triggers: "voice agent", "receptionist demo".
----
-# Voice Agent Playbook
-[short instructions] · see references/prompts.md, references/qa-rubric.md
-```
-Descriptions carry the **exact trigger phrases** the work uses — that is what makes the agent load the
-right skill at the right moment.
-
-### E3 · Wire skills to agents
-- **Do:** each pipeline agent references its skill(s) in its prompt-assembly step
-  (`packages/agents/*/prompts/`), and the Anthropic adapter loads the skill body as system context when
-  that agent runs. Keep the sweet spot: a few specialist skills per agent, not dozens.
-- **Accept:** the website builder's output measurably clears the Vercel Web Design Guidelines checks;
-  the voice builder produces a flow that passes the `voice-agent-playbook` QA rubric.
-
----
-
-## Part F — Frontend / UX overhaul *(fabulous & appealing)* · ~2–3 weeks
-
-Build **on** the existing token system (it's good) — this is finishing, not redesigning.
-- **Primitives:** adopt **shadcn/ui (Radix)** on the current tokens — replaces native `confirm()`, the
-  incomplete tab pattern, the custom bell menu with accessible dialogs/menus/tabs/toasts. Use **v0** +
-  the installed **21st.dev Magic MCP** to generate components fast.
-- **Data layer:** replace the 9 copy-pasted pollers with **TanStack Query + Supabase Realtime**; add
-  `error.tsx`/`not-found.tsx` and explicit per-page error UI (no more infinite skeletons). SSR initial
-  data + stream; subscribe for deltas.
-- **New surfaces:** the **Shortlist** page (B4), a **service badge** per opportunity, and
-  demo-experience cards ("Call the demo" / "Run the automation") on the lead page.
-- **A11y:** stop using the 3.2:1 `faint` token on small body text; complete the lead-page tab ARIA;
-  **sandbox** the demo iframes; trim font weights.
-- **Accept:** Lighthouse a11y ≥ 95 on dashboard pages; no page shows an infinite skeleton on a failed
-  fetch; the Vercel Web Design Guidelines skill passes on the new components.
-
----
-
-## Part G — Delivery ops & retention *(what makes it an agency)* · ~1 week
-
-Post-`closed_won` today is one-and-done. Voice/automation are **living** services:
-- **Health checks:** a monitor job verifies each delivered service weekly (number answers? automation
-  fired?) → alert on failure.
-- **Monthly value report:** an email (transactional, review-mode) summarizing outcomes (calls handled,
-  hours saved) — the retainer justification.
-- **Cross-sell prompts:** a delivered website opportunity surfaces "pitch the voice agent" on the lead
-  page — the next `opportunity`, warm.
-- **Accept (MOCK):** a delivered opportunity generates a mock value report and a cross-sell suggestion.
-
----
-
-## Part H — Observability, testing & launch · ~1–2 weeks
-
-- **Observability:** Sentry (worker + dashboard), external heartbeat monitor (A4), `agent_events`
-  **monthly partitioning + retention**, composite index `(type, created_at)`, in-dashboard spend/queue
-  gauges.
-- **LLM resilience:** localized 429/5xx retry-with-backoff in `anthropic.ts`, **prompt caching** on the
-  large static system prompts (cost + latency win), **pin** the Sonnet model, move models/prices to
-  `caps.yaml`.
-- **Tests (the incident-prone modules):** email gate, `approveAndSend` idempotency, `advanceOpportunity`
-  under concurrent callers, the **build-approval gate**, SSRF guard, each service builder's QA in mock;
-  Playwright e2e for login → approve-shortlist → approve-outbox.
-- **Launch checklist:** all caps set to warm-up values; `BUILD_MODE=review`; keys rotated; one full
-  **MOCK** pipeline run per service green; then one **real** run of a single approved lead per service,
-  watched.
-
----
-
-## I. Dependency-ordered timeline
-
-| Order | Part | Gates | Rough effort |
-|------|------|-------|--------------|
-| 1 | **A0** CI/lint/test scaffold | — | 2–3 d |
-| 2 | **A1–A3** auth, SSRF, data hygiene | A0 | 4–6 d |
-| 3 | **B** spend gate (ship value early) | A1 | 2–3 d |
-| 4 | **A4** collapse split-brain | A1 | 4–7 d |
-| 5 | **C** opportunities/service_type spine | A4, B | ~1 wk |
-| 6 | **D1** voice builder | C | 1–2 wk |
-| 7 | **E** skills (parallel from step 5) | C | ongoing |
-| 8 | **D2** automation builder | C | 1–2 wk |
-| 9 | **F** frontend overhaul (parallel from step 3) | A1 | 2–3 wk |
-| 10 | **G** delivery/retention | C, D1 | ~1 wk |
-| 11 | **H** observability/testing/launch | all | 1–2 wk |
-
-**Fastest path to relief:** steps 1→2→3 (CI + security + spend gate) in the first ~2 weeks stops the
-bleeding and closes the critical holes. The agency expansion (C, D, E) builds on that foundation.
-
-## J. Security woven through — OWASP LLM Top 10 (2025) coverage
-
-| Risk | Covered by |
+| Added in v2.0 | Source |
 |---|---|
-| LLM01 Prompt Injection | untrusted-content delimiters in agent prompts; existing output guards kept |
-| LLM02 Sensitive Info | A1 auth; A3 PII purge; secrets in env only |
-| LLM05 Improper Output Handling (→SSRF) | A2 `safeFetch` on every adapter + Playwright interception |
-| LLM06 Excessive Agency | **Part B build-approval gate** + email review mode + hard caps |
-| LLM09 Misinformation | anti-fabrication guards + `[NEEDS:]` extended to voice/automation scripts |
-| LLM10 Unbounded Consumption | build budget (B3) + `agent_events` retention (H) |
-| Web classics | webhook HMAC (kept), CSRF once sessions exist, least-privilege keys, rotation (A3) |
-
-New-surface security: voice demos **inbound-only** + call-recording disclosure + per-number spend caps;
-automation demos **sandboxed** against your test tools, least-privilege-scoped, fully logged.
-
----
-
-## K. Acceptance philosophy (how we know each part is real)
-
-Every part ships with a **MOCK_MODE end-to-end proof first** (zero external spend), then a single
-**watched real run**. The system's own guardrails make this safe: `MOCK_ON_REAL_DB` refusal, the
-advisory single-worker lock, and — after Part B — your approval on every expensive action. Nothing
-reaches a prospect, and no dollar is spent, without both a green mock run and your click.
+| **Chatbot** as a 4th service line + first retainer (`packages/chat`, RAG on scrape corpus) | spec §7.2 |
+| **Demo Hub** — one URL/lead carrying site + embedded chatbot + web-call voice demo + booking | spec §6.3 |
+| **Revenue rails** — Stripe billing, proposal/contract generation, invoices, dunning (`packages/billing`) | spec §7, §14 P3 |
+| **Compliance-as-code** — `consent_records`, TCPA/A2P/CAN-SPAM enforcement (`packages/compliance`) | spec §10 |
+| **Eval harness** — golden sets frozen from the ~108 leads, CI-gated (`packages/evals`) | spec §11 |
+| **Graphile Worker** replaces pg-boss; advisory lock retired (see §8 decision) | spec §8.5 |
+| **Client portal, SLA metrics/credits, per-client P&L, case-study engine** | spec §7.5, §12 |
+| **➕ Niche-Expansion Engine** — target any vertical as config + compliance profile + playbook + price tier | **Amendment A** |
+| **➕ Premium / high-ticket pricing tier** ($5k–$10k setup for high-LTV niches) | **Amendment A** |
 
 ---
 
-*Companion specs: `AUDIT_AND_PRODUCTION_PLAN.md`, `AI_AGENCY_EVOLUTION_PLAN.md`. This plan is
-design-only — no application code changed. On your go-ahead I start at step 1 (CI scaffold) and step 3
-(the spend gate) against the code branch `claude/read-pdf-89t95k`, proving each in MOCK_MODE before
-anything spends.*
+## 2. Architecture deltas (grounded in the real code)
+
+- **State machine → opportunities.** Keep `advanceLead` exactly as built (`packages/core/advanceLead.ts`
+  — transactional `BEGIN … FOR UPDATE … COMMIT`, total transition map, illegal transitions rejected).
+  Add `advanceOpportunity` with identical guarantees. The **approval gate is a status**
+  (`awaiting_build_approval`), not a flag, so it inherits crash-tolerance for free.
+- **Scheduler dispatch** (`apps/worker/src/index.ts`) moves from `status → agent` (today via
+  `AGENT_BY_TRIGGER` in `registry.ts`) to **`(status, service_type) → agent`**.
+- **One database.** Collapse the split-brain to a single Supabase Postgres; **delete
+  `apps/worker/src/bridge.ts`** (not disable). RLS on every table.
+- **Jobs.** Graphile Worker on the same Postgres executes jobs; **status stays the source of truth** —
+  the scan reconciles `status → desired jobs`, Graphile executes with retries/backoff/priorities.
+- **Demo Hub** (`apps/demo-hub`) rides on the site the pipeline already builds; chatbot + voice-web-call
+  demos reuse the **scrape corpus** already collected → four-product demo at ~website-demo cost.
+
+---
+
+## 3. Phased execution (spec §14, made file-level)
+
+Each phase: MOCK demo + acceptance criteria green + operator **GO** before the next. **F (frontend)** and
+**S (skills)** run in parallel from Phase 4.
+
+### Phase 0 · Quality rails (wk 1)
+- **Files:** `.github/workflows/ci.yml`, `biome.json`, `packages/evals/**` (harness skeleton),
+  replace every `echo` test script.
+- **Do:** CI = Biome + typecheck + Vitest + Playwright smoke + `pnpm audit`, required to merge. Freeze
+  `qualify_v1` golden set from the ~108 leads.
+- **AC:** red PR cannot merge; evals run on PR; all `echo` stubs gone.
+
+### Phase 1 · Security (wk 1–2)
+- **Files:** `apps/dashboard/middleware.ts`, `apps/dashboard/lib/auth.ts`,
+  `packages/adapters/src/safeFetch.ts` (applied in `qualify.ts`, `crawl.ts`, `copy.ts`,
+  `screenshots.ts` interception), `app/api/settings/route.ts` (allowlist), `lib/devtools.ts` (fail closed).
+- **Do:** Supabase Auth (operator email OTP) + middleware on every route (webhook excepted); **RLS on all
+  tables**; SSRF guard; **rotate keys → purge history (`git-filter-repo`) → verify**; rate-limit public
+  routes.
+- **AC:** unauthenticated request → 401; SSRF corpus tests pass; no secret in history scan; OWASP
+  checklist (from `AUDIT_AND_PRODUCTION_PLAN.md`) signed off.
+
+### Phase 2 · One database + spend gate (wk 2–3)
+- **Files:** `supabase/migrations/00002_build_approval.sql` (`awaiting_build_approval` +
+  transitions in `packages/core/statuses.ts`), scheduler guard in `apps/worker/src/index.ts`, worker on
+  Fly.io + Graphile Worker, delete `bridge.ts`, `config/caps.yaml` (`build_spend_per_day/_per_lead`),
+  Shortlist API + page (Phase F), Telegram inline approvals.
+- **Do:** single Supabase Postgres; qualified leads stop at `awaiting_build_approval`; analyzer fires
+  only on a `lead.build_approved` event; `BUILD_MODE=review` default; dead-man's-switch → healthchecks.io
+  → Telegram.
+- **AC:** `kill -9` the worker mid-build → self-heals, **no duplicate side effects**; **zero expensive
+  jobs run without an approval event**; bridge **deleted**, not disabled.
+
+### Phase 3 · Revenue rails (wk 3–4)  *(monetize the existing website product now)*
+- **Files:** `packages/billing/**` (Stripe products/prices per spec §4 incl. **the new tiers, Amendment
+  A**), proposal generator, contract generator (validated templates), invoices, dunning + service
+  auto-pause, Stripe webhook (HMAC).
+- **Do:** programmatic contracts — **impossible to generate with a blank field or contradictory pricing**;
+  **do not** copy the ClinicPro IP clause (client owns their site/data; **agency owns the platform**).
+- **AC:** MOCK checkout → subscription → invoice → dunning → auto-pause end-to-end; contract validation
+  suite green (no blanks, no price contradictions, correct IP clause).
+
+### Phase 4 · Opportunities spine + Niche engine (wk 4–5)
+- **Files:** `supabase/migrations/00003_opportunities.sql` (`service_type` enum incl. `chatbot`;
+  `opportunities`, `clients`, `service_instances`, `exclusivity_claims` tables),
+  `packages/core` (`advanceOpportunity`), scheduler `(status, service_type)` dispatch, multi-gap
+  analyzer, **Niche-Expansion Engine (Amendment A)**.
+- **AC:** one mock lead yields website + chatbot + voice opportunities, each independently advanceable;
+  exclusivity conflict blocks approval with a logged override path; **a niche cannot be activated until
+  its compliance profile is satisfied** (Amendment A).
+
+### Phase 5 · Chatbot + Demo Hub (wk 5–7)
+- **Files:** `packages/chat/**` (RAG on `kb_documents`, Haiku live + Sonnet escalation, `<script>`
+  widget, consent-aware capture), `apps/demo-hub/**`.
+- **AC:** demo hub renders for a mock lead; chatbot grounded **only** in scraped KB (fabrication lint
+  green); widget passes CLS/latency budget; rate-limiting proven.
+
+### Phase 6 · Voice line (wk 7–9)
+- **Files:** `packages/voice/**` (4 Vapi templates; consent-gated speed-to-lead webhook), web-call demo
+  on the hub, QA scripted calls, `sla_metrics`.
+- **AC:** **dialer provably refuses a number without a `consent_records` row**; AI disclosure asserted in
+  every QA transcript; mock speed-to-lead fires <60s from webhook; per-call cost lands in `costs` with
+  client attribution. **Measure real Vapi $/min early** (margin-critical, spec §5).
+
+### Phase 7 · Automation line (wk 9–10)
+- **Files:** `packages/automation/**` (3 Trigger.dev templates), A2P onboarding state machine in
+  `packages/compliance`, quiet hours + STOP/HELP global.
+- **AC:** each template has a side-effect assertion test; **SMS hard-blocked until campaign status =
+  approved**; STOP writes to global suppression across channels.
+
+### Phase 8 · Delivery ops + portal (wk 10–12)
+- **Files:** health-check jobs, monthly value-report generator (measured-only), SLA credits, case-study
+  engine, `apps/portal/**`, cross-sell artifact generation.
+- **AC:** value report for a mock client contains **zero `estimated` numbers**; SLA credit computed
+  correctly from seeded telemetry.
+
+### Phase 9 · Scale + observability (ongoing)
+- **Files:** Sentry, `agent_events` monthly partitioning + retention, prompt caching + Batch API, pinned
+  models config, spend/queue gauges, per-client P&L dashboard.
+- **AC:** cache-hit rate + batch savings visible in finance; P&L view matches `costs` sums to the cent.
+
+**Parallel F — Frontend** (from P4): shadcn/ui on existing tokens, TanStack Query + Supabase Realtime
+(delete 9 pollers), TanStack Table virtualized, sonner toasts, error/not-found boundaries, a11y,
+Shortlist (keyboard-first), command palette, Client P&L, SLA board, spend gauges (spec §12).
+**Parallel S — Skills** (from P4): §6 below.
+
+---
+
+## 4. Amendment A — Niche-Expansion Engine + Premium Tier ➕ *(operator-approved 2026-07-16)*
+
+**Rationale.** ICP is already configuration (`config/icp.yaml`), so the system can target *any* vertical.
+Pricing power is a property of the **niche**, not the software: a recovered dental/med-spa/PI-law lead
+is worth far more than a roofing lead, which is what makes a **$5k–$10k setup** defensible (cf. the
+ClinicPro comparable at $10.5k). This amendment makes "target any niche, priced to its LTV" a
+**first-class, safe, one-flip capability** — without overturning the spec's healthcare-default-off
+stance (§10): a high-compliance niche simply requires its compliance profile satisfied before activation.
+
+### A.1 A niche is a **Niche Profile** = four bound artifacts
+- **Targeting** — `config/niches/<niche>.yaml`: vertical, Places search terms, cities, scoring rubric,
+  qualification thresholds. (Generalizes today's `icp.yaml`.)
+- **Compliance profile** — flags the `packages/compliance` engine enforces, e.g.
+  `requires_baa`, `phi_handling`, `insurance_required: [E&O 1M/2M]`, `advertising_rules: <bar|none>`.
+  Home services = baseline; **healthcare (dental/med-spa/chiro) = HIPAA/BAA/PHI/insurance ON**; legal =
+  advertising-ethics ON.
+- **Playbook skill** — `skills/niche-playbook-<niche>` (gap detection, objections, demo angles, brand-
+  voice tuning). The conversion moat; **roofing done excellently first** (spec §13).
+- **Price tier** — `config/pricing/<tier>.yaml`, consumed by the contract/proposal generator (Phase 3),
+  validated (no blanks, no contradictions).
+
+### A.2 The niche-activation gate (safe by construction)
+Activating a niche is an operator action, gated exactly like the spend gate: the system **refuses to run
+discovery/outreach for a niche whose compliance profile is unmet** — e.g. a healthcare niche cannot
+activate until a BAA template exists, insurance is on file, and `phi_handling` is on. This keeps spec
+§10 intact: healthcare is *off by default* and only reachable through a satisfied compliance profile.
+- **Files:** `packages/compliance/src/nicheProfile.ts` (load + validate), `apps/dashboard` niche-admin
+  surface, an `agent_events` `niche.activated` record with the compliance attestation.
+- **Discipline:** spec's *one active vertical at a time* holds — activation is deliberate and sequenced,
+  not a spray.
+
+### A.3 Premium / high-ticket pricing tier (extends spec §4)
+Two coexisting models, both driven by the same automated pipeline:
+
+| Tier | Niches | Setup | Monthly | Delivery |
+|---|---|---|---|---|
+| **Volume** (default) | Home services (roofing→HVAC→plumbing) | $1.5k–$3k | $99–$1,297 | Fully automated (spec §4) |
+| **➕ High-Ticket** | High-LTV: med spa, dental, PI/family law, multi-location | **$5k–$10k** | $1k–$2.5k | Automated **+ white-glove onboarding SKU** (a few operator hours) to meet the price expectation |
+
+- **Why the price holds:** high niche LTV + heavier integration + compliance burden (BAA/insurance) —
+  the setup fee is *earned*, not arbitrary. The white-glove onboarding SKU is what a $10k buyer expects
+  and prevents the refund/chargeback risk of selling automated-only delivery at a premium price.
+- **Guardrails:** premium contracts still generated programmatically + validated; still no fabricated
+  numbers; still `measured`-only client reports. The premium tier changes the *price and compliance
+  profile*, never the honesty or spend-gate rules.
+
+### A.4 Where it lands in the phases
+- **Phase 1/7 (`packages/compliance`):** compliance profiles + the per-niche enforcement flags.
+- **Phase 3 (`packages/billing`):** the High-Ticket price tiers + white-glove SKU in the pricing/contract
+  generator.
+- **Phase 4 (spine):** niche-activation gate + `config/niches/**`.
+- **Parallel S (skills):** `niche-playbook-<niche>` per activated vertical (roofing first, then one
+  high-ticket niche as a proof).
+- **AC (amendment):** activating a healthcare niche is **blocked** until BAA + insurance + PHI handling
+  are present (test); a High-Ticket contract generates with the correct tier, IP clause, and no price
+  contradiction; the volume model is unaffected.
+
+---
+
+## 5. Pricing ladder v2 (spec §4 + Amendment A)
+
+| Product / tier | Setup | Monthly |
+|---|---|---|
+| Website (wedge) | $1,500 | $99 |
+| Chatbot (first retainer) | $297 *(waived w/ website)* | $197 |
+| Voice — single assistant | $497 | $397 (500 min) |
+| Automation pack | $297 | $247 |
+| AI Front Desk (bundle) | $997 | $797 |
+| Growth System (flagship) | $2,997 | $1,297 (1,000 min) |
+| **➕ High-Ticket Niche (Amendment A)** | **$5,000–$10,000** | **$1,000–$2,500** |
+
+Economics unchanged for volume tiers (spec §5). High-Ticket margins are set per niche once COGS +
+compliance/insurance amortization are **measured**, not assumed.
+
+---
+
+## 6. Skills plan (spec §13)
+
+**Per-agent installs** (safety-reviewed, pinned): Firecrawl → scrape; SEO/Local-SEO → analyzer; Frontend
+Design + Vercel Web Design Guidelines → website builder; Webapp Testing + Trail-of-Bits → QA.
+
+**Custom agency skills (the moat, priority order):** `niche-playbook-roofing` (first, excellently) →
+`agency-brand-voice` → `demo-quality-bar` → `voice-agent-playbook` → `automation-blueprint` →
+`proposal-and-pricing` → `objection-handling` → `client-onboarding` → `compliance-checklist` →
+`case-study-writer`. **Amendment A adds** one `niche-playbook-<niche>` per activated high-ticket vertical.
+
+---
+
+## 7. Sequencing & timeline
+
+| Wk | Phase | Ship |
+|---|---|---|
+| 1 | 0 Quality rails | CI/evals gate every change |
+| 1–2 | 1 Security | 401 everywhere; SSRF closed; keys clean |
+| 2–3 | 2 One DB + **spend gate** | **runaway spend stops** |
+| 3–4 | 3 Revenue rails (+ premium tiers) | **monetize websites now** |
+| 4–5 | 4 Spine + **Niche engine** | agency pivot + any-niche capability |
+| 5–7 | 5 Chatbot + Demo Hub | the conversion weapon |
+| 7–9 | 6 Voice line | anchor retainer |
+| 9–10 | 7 Automation line | ops retainer + A2P |
+| 10–12 | 8 Delivery + portal | retention + SLA proof |
+| ongoing | 9 Scale/observability | margins + P&L to the cent |
+| ∥ from 4 | F Frontend · S Skills | UX overhaul + playbooks |
+
+**Fastest value:** weeks 1–3 (rails + security + spend gate) stop the bleeding and put you in control;
+week 3–4 turns on revenue for the product that already works.
+
+---
+
+## 8. Open decisions (operator)
+
+1. **Branch.** This plan + the master spec live on the docs branch (`claude/agency-audit-production-plan-198p01`);
+   the code is on `claude/read-pdf-89t95k`. **Confirm I execute against the code branch** before any code.
+2. **Graphile Worker vs. keep pg-boss.** The spec mandates Graphile (retires the advisory lock); the audit
+   found pg-boss adequate. It's a real migration on a queue layer that works. **Confirm Graphile is a
+   deliberate priority**, or keep pg-boss and bank the time.
+3. **First high-ticket niche (Amendment A).** After roofing proof, which premium vertical first — **med
+   spa / dental** (highest LTV, but HIPAA/BAA/insurance) or **PI/family law** (high LTV, no HIPAA, but
+   advertising-ethics rules)? This sets which compliance profile we build first.
+
+---
+
+*Governed by `AI_AGENCY_MASTER_SPEC.md`. Design-only; no application code changed. On GO + the branch
+confirmation (§8.1), I start at Phase 0, MOCK-first, criteria green before each next phase.*
