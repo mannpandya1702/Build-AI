@@ -25,6 +25,13 @@ const PATHS = {
       <rect x="17" y="4" width="4" height="13" rx="1" />
     </>
   ),
+  shortlist: (
+    <>
+      <rect x="4" y="3" width="16" height="18" rx="2" />
+      <path d="M8 3v3h8V3" />
+      <path d="M9 12l2 2 4-4" />
+    </>
+  ),
   outbox: (
     <>
       <path d="M3 8l9 6 9-6" />

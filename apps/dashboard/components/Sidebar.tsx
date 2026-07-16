@@ -10,6 +10,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV: { href: string; label: string; icon: IconName }[] = [
+  { href: "/shortlist", label: "Shortlist", icon: "shortlist" },
   { href: "/pipeline", label: "Pipeline", icon: "pipeline" },
   { href: "/outbox", label: "Outbox", icon: "outbox" },
   { href: "/meetings", label: "Meetings", icon: "meetings" },

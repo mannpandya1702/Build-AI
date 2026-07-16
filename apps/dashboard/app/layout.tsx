@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fira_Code, Fira_Sans } from "next/font/google";
 import "./globals.css";
+import { QueryProvider } from "@/components/QueryProvider";
 import Sidebar from "@/components/Sidebar";
 
 // Typography per the skill's design system for data-dense dashboards: Fira Code (display/data:
@@ -24,10 +25,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${display.variable} ${body.variable}`}>
       <body className="min-h-dvh font-body text-[15px] text-ink antialiased">
-        <div className="flex min-h-dvh flex-col md:flex-row">
-          <Sidebar />
-          <main className="min-w-0 flex-1 px-4 py-5 md:px-8 md:py-7">{children}</main>
-        </div>
+        <QueryProvider>
+          <div className="flex min-h-dvh flex-col md:flex-row">
+            <Sidebar />
+            <main className="min-w-0 flex-1 px-4 py-5 md:px-8 md:py-7">{children}</main>
+          </div>
+        </QueryProvider>
       </body>
     </html>
   );
