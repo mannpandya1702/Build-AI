@@ -1,4 +1,4 @@
-import { loadIcp } from "@autopilot/adapters";
+import { loadIcp, safeFetch } from "@autopilot/adapters";
 // Qualifier Agent (spec §6.3): deterministic scoring from icp.yaml (the contract's §4 rubric,
 // encoded exactly). ENV ADAPTATION (PROGRESS.md): the "outdated/broken/mobile-unfriendly"
 // judgment uses a deterministic homepage probe (dead/parked/no-viewport) instead of a Haiku
@@ -7,8 +7,7 @@ import { advanceLead, emitEvent, getPool } from "@autopilot/core";
 
 async function probeSiteWeak(url: string): Promise<{ weak: boolean; why: string }> {
   try {
-    const res = await fetch(url.startsWith("http") ? url : `https://${url}`, {
-      redirect: "follow",
+    const res = await safeFetch(url.startsWith("http") ? url : `https://${url}`, {
       signal: AbortSignal.timeout(15000),
       headers: {
         "User-Agent":

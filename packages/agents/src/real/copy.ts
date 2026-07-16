@@ -1,4 +1,4 @@
-import { llm, voiceLint } from "@autopilot/adapters";
+import { llm, safeFetch, voiceLint } from "@autopilot/adapters";
 // Per-business site copy (contract §5a "design to the business, not to a template" + §5d Content:
 // auto-fill copy from THEIR data, plain voice). The generic-template failure this fixes (operator,
 // 2026-07-11): every demo shipped the same four service blurbs, hero subline, and FAQ.
@@ -64,9 +64,8 @@ function clamp(s: string, max: number): string {
 export async function fetchSiteText(url: string | null): Promise<string | null> {
   if (!url || !/^https?:\/\//i.test(url)) return null;
   try {
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
       headers: { "user-agent": "TradeCraftSites-Bot/1.0 (+https://tradecraftsites.com)" },
-      redirect: "follow",
       signal: AbortSignal.timeout(15000),
     });
     if (!res.ok) return null;

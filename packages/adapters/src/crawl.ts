@@ -3,6 +3,7 @@
 // external sites directly in this container, so crawling uses Node fetch (which routes through
 // the proxy); the Phase 3 screenshot adapter reuses the legacy request-interception technique.
 import { MOCK, loadCaps } from "./config.js";
+import { safeFetch } from "./safeFetch.js";
 
 const UA = "AgencyAutopilotBot/0.1 (+website audit for outreach; contact: operator)";
 const lastHit = new Map<string, number>();
@@ -13,9 +14,9 @@ async function politeFetch(url: string): Promise<Response> {
   const wait = (lastHit.get(host) ?? 0) + caps.crawl.per_domain_min_interval_ms - Date.now();
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   lastHit.set(host, Date.now());
-  return fetch(url, {
+  // safeFetch enforces the SSRF blocklist and re-checks after each redirect (§8.8).
+  return safeFetch(url, {
     headers: { "User-Agent": UA },
-    redirect: "follow",
     signal: AbortSignal.timeout(15000),
   });
 }

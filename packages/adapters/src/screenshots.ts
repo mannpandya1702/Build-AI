@@ -6,6 +6,7 @@ import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import type { HTTPRequest } from "puppeteer";
 import { MOCK } from "./config.js";
+import { safeFetch } from "./safeFetch.js";
 
 export interface Shot {
   viewport: "mobile" | "tablet" | "desktop";
@@ -35,11 +36,12 @@ export async function screenshotSite(url: string, slug: string): Promise<Shot[]>
       await page.setRequestInterception(true);
       page.on("request", async (req: HTTPRequest) => {
         try {
-          const res = await fetch(req.url(), {
+          // Every page sub-resource is re-fetched server-side here — the worst SSRF vector, so it
+          // goes through safeFetch (blocklist + redirect re-check). A blocked target throws -> abort.
+          const res = await safeFetch(req.url(), {
             method: req.method(),
             headers: req.headers(),
             body: req.postData(),
-            redirect: "follow",
           });
           const body = Buffer.from(await res.arrayBuffer());
           const headers: Record<string, string> = {};

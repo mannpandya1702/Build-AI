@@ -16,15 +16,16 @@ describe("dev-tools gate", () => {
     process.env = saved;
   });
 
-  it("is enabled off-Vercel (local dev)", () => {
+  it("fails closed: disabled by default, even off-Vercel", () => {
     process.env = envWithout("VERCEL", "ALLOW_DEV_TOOLS");
-    expect(devToolsEnabled()).toBe(true);
+    expect(devToolsEnabled()).toBe(false);
   });
 
-  it("is disabled on Vercel unless explicitly allowed", () => {
-    process.env = { ...envWithout("ALLOW_DEV_TOOLS"), VERCEL: "1" };
-    expect(devToolsEnabled()).toBe(false);
-    process.env.ALLOW_DEV_TOOLS = "1";
+  it("is enabled only with an explicit ALLOW_DEV_TOOLS=1 opt-in", () => {
+    process.env = { ...envWithout("VERCEL"), ALLOW_DEV_TOOLS: "1" };
     expect(devToolsEnabled()).toBe(true);
+    // still on even on Vercel if explicitly opted in; off for any other value
+    process.env = { ...saved, VERCEL: "1", ALLOW_DEV_TOOLS: "0" };
+    expect(devToolsEnabled()).toBe(false);
   });
 });
