@@ -15,7 +15,9 @@ export interface AgentSpec {
 export const AGENTS: readonly AgentSpec[] = [
   { name: "scrape", queue: "agent:scrape", triggers: ["discovered"] },
   { name: "qualify", queue: "agent:qualify", triggers: ["enriched"] },
-  { name: "analyzer", queue: "agent:analyzer", triggers: ["qualified"] },
+  // analyzer triggers on awaiting_build_approval (the spend gate), NOT qualified: the scheduler parks
+  // qualified leads at the gate and only admits approved (or auto-mode, in-budget) leads to analysis.
+  { name: "analyzer", queue: "agent:analyzer", triggers: ["awaiting_build_approval"] },
   { name: "solution", queue: "agent:solution", triggers: ["analyzed"] },
   { name: "uiux", queue: "agent:uiux", triggers: ["solution_ready"] },
   // *_building triggers are the QA-fix re-entry (the QA agent sends a failed lead back to rebuild);

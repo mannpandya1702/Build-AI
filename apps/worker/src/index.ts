@@ -4,7 +4,7 @@
 // the scheduler notices the new status and enqueues the next agent. Illegal transitions throw
 // inside advanceLead and surface as error events.
 
-import { loadCaps, usedToday } from "@autopilot/adapters";
+import { loadCaps, resolveBuildMode, usedToday } from "@autopilot/adapters";
 import {
   AGENTS,
   AGENT_BY_TRIGGER,
@@ -24,7 +24,14 @@ import {
   realUiux,
   research,
 } from "@autopilot/agents";
-import { type LeadStatus, emitEvent, getPool } from "@autopilot/core";
+import {
+  type LeadStatus,
+  advanceLead,
+  canRunBuild,
+  emitEvent,
+  getPool,
+  notifyOperator,
+} from "@autopilot/core";
 import PgBoss from "pg-boss";
 import { readDemoBatch } from "./batch.js";
 import { bridgeCycle } from "./bridge.js";
@@ -139,6 +146,20 @@ async function main(): Promise<void> {
   // Only statuses whose agent has a handler in this mode are scheduled: no no-op job churn.
   const handledTriggers = [...AGENT_BY_TRIGGER.entries()].filter(([, a]) => Boolean(handlers[a.name]));
   const caps = loadCaps();
+  // Seed the spend-gate settings so the dashboard Shortlist can read the projected per-lead cost and
+  // the current mode. build_budget mirrors caps.yaml; build_mode defaults to review (never auto).
+  await pool
+    .query(
+      `insert into settings (key, value) values ('build_budget', $1::jsonb)
+       on conflict (key) do update set value = excluded.value`,
+      [JSON.stringify(caps.build_budget)],
+    )
+    .catch(() => undefined);
+  await pool
+    .query(
+      `insert into settings (key, value) values ('build_mode', '"review"'::jsonb) on conflict (key) do nothing`,
+    )
+    .catch(() => undefined);
   const placesCap = caps.places_calls_per_day;
   const buildCap = caps.concurrent_demo_builds; // spec §9: cap concurrent demo builds (default 2)
   // Fresh builds are gated by a concurrency cap; a lead already mid-build (a QA-fix re-entry) is
@@ -158,11 +179,116 @@ async function main(): Promise<void> {
           .catch(() => ({ rows: [{ n: "0" }] }))
       ).rows[0].n,
     );
+
+    // --- Spend gate (MASTER_SPEC §2): the operator approves before any paid build ---
+    // (1) Park qualified leads at the gate and notify the operator once (free, no spend).
+    const toGate = await pool
+      .query<{ id: string; company_name: string; score: number | null }>(
+        `select id, company_name, score from leads where status='qualified'
+         order by coalesce(score,0) desc, updated_at asc limit 20`,
+      )
+      .catch(() => ({ rows: [] as Array<{ id: string; company_name: string; score: number | null }> }));
+    for (const l of toGate.rows) {
+      try {
+        await advanceLead(l.id, "awaiting_build_approval", {
+          agent: "scheduler",
+          reason: "qualified — awaiting operator build approval",
+        });
+        await notifyOperator({
+          type: "lead.awaiting_build_approval",
+          title: "Lead awaiting build approval",
+          body: `${l.company_name} qualified (score ${l.score ?? "—"}) — approve to build a demo`,
+          leadId: l.id,
+        });
+      } catch (e) {
+        console.error("[gate-hop]", (e as Error).message);
+      }
+    }
+    // (2) Build mode + daily build budget (one admission = one usd_per_lead slot).
+    const buildMode = resolveBuildMode(
+      (
+        await pool
+          .query<{ value: unknown }>("select value from settings where key='build_mode'")
+          .catch(() => ({ rows: [] as Array<{ value: unknown }> }))
+      ).rows[0]?.value,
+    );
+    const buildBudget = caps.build_budget;
+    const maxBuildsPerDay = Math.max(0, Math.floor(buildBudget.usd_per_day / buildBudget.usd_per_lead));
+    const admittedToday = Number(
+      (
+        await pool
+          .query<{ n: string }>(
+            `select count(distinct lead_id)::text n from agent_events
+             where type='build.gate_admitted' and created_at >= date_trunc('day', now())`,
+          )
+          .catch(() => ({ rows: [{ n: "0" }] }))
+      ).rows[0].n,
+    );
+    let buildBudgetRemaining = Math.max(0, maxBuildsPerDay - admittedToday);
+
     for (const [status, agent] of handledTriggers) {
       if (agent.name === "scrape" && placesSpent >= placesCap) continue;
       // hold fresh builds when the concurrent-build cap is reached (best leads go first, below)
       if (agent.name === "builder" && FRESH_BUILD.includes(status) && buildingNow >= buildCap) continue;
       try {
+        // Spend gate: admit awaiting_build_approval leads to PAID analysis only when the gate allows
+        // (review: an operator `lead.build_approved` event exists; auto: within the daily build
+        // budget), top scores first. A `build.gate_admitted` event marks admission so budget
+        // accounting is idempotent; the generic enqueue is skipped for this status. This is the one
+        // place real build spend is authorized (canRunBuild is the tested rule).
+        if (agent.name === "analyzer") {
+          const enqueueAnalyzer = (leadId: string) =>
+            boss.send(
+              agent.queue,
+              { leadId },
+              {
+                singletonKey: `${leadId}:${status}`,
+                singletonSeconds: 300,
+                retryLimit: 3,
+                retryBackoff: true,
+              },
+            );
+          // Re-enqueue already-admitted leads still at the gate so a retry-exhausted analyzer never
+          // strands a lead (singleton dedupes a live job) — mirrors the demo-batch re-entry rule.
+          const admitted = await pool.query<{ id: string }>(
+            `select l.id from leads l where l.status = $1::lead_status and exists (
+               select 1 from agent_events g where g.lead_id = l.id and g.type = 'build.gate_admitted')`,
+            [status],
+          );
+          for (const l of admitted.rows) await enqueueAnalyzer(l.id);
+          if (buildBudgetRemaining <= 0) continue;
+          const cands = await pool.query<{ id: string; approved: boolean }>(
+            `select l.id,
+                    exists(select 1 from agent_events e where e.lead_id = l.id and e.type = 'lead.build_approved') as approved
+             from leads l
+             where l.status = $1::lead_status
+               and not exists(select 1 from agent_events g where g.lead_id = l.id and g.type = 'build.gate_admitted')
+             order by coalesce(l.score,0) desc, l.updated_at asc
+             limit 20`,
+            [status],
+          );
+          for (const c of cands.rows) {
+            if (buildBudgetRemaining <= 0) break;
+            const decision = canRunBuild({
+              mode: buildMode,
+              hasApproval: c.approved,
+              budgetRemainingUsd: buildBudgetRemaining * buildBudget.usd_per_lead,
+              estCostUsd: buildBudget.usd_per_lead,
+            });
+            if (!decision.allowed) continue;
+            await emitEvent({
+              agent: "scheduler",
+              leadId: c.id,
+              type: "build.gate_admitted",
+              level: "info",
+              message: `admitted to build (${buildMode}): ${decision.reason}`,
+              payload: { mode: buildMode, est_cost_usd: buildBudget.usd_per_lead },
+            });
+            await enqueueAnalyzer(c.id);
+            buildBudgetRemaining -= 1;
+          }
+          continue; // gate path fully handled this status
+        }
         // builder picks the best leads first (spec §9: score desc). Sales puts EMAILABLE leads
         // first: a no-email lead at outreach_ready blocks silently (call-first) but keeps its
         // updated_at, so oldest-first let 12 of them pin all 10 slots and starve every email lead

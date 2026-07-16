@@ -12,6 +12,7 @@ describe("lead state machine", () => {
       "discovered",
       "enriched",
       "qualified",
+      "awaiting_build_approval", // spend gate: operator approves before paid analysis/build
       "analyzed",
       "solution_ready",
       "design_ready",
@@ -47,6 +48,8 @@ describe("lead state machine", () => {
     expect(canTransition("discovered", "outreach_ready")).toBe(false);
     expect(canTransition("qualified", "contacted")).toBe(false);
     expect(canTransition("delivered", "discovered")).toBe(false);
+    // the spend gate cannot be bypassed: qualified must pass through awaiting_build_approval
+    expect(canTransition("qualified", "analyzed")).toBe(false);
   });
 
   it("suppression is reachable from any live state but not from terminal states", () => {
