@@ -19,6 +19,7 @@ live wiring point.
 ---
 
 ## Phase 1 — Security & infra
+- [ ] 🔑 `AUTH_PASSWORD` + `AUTH_SECRET` — operator login is BUILT (middleware gates every route); set these to turn it on. Production fails closed (503) until both are set. Upgrades to Supabase Auth at the DB cutover.
 - [ ] 🔑 `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` — the single production Postgres + Auth.
 - [ ] 🔑 `SUPABASE_DB_URL` — direct Postgres connection string for the worker (Fly.io).
 - [ ] ⚙️ Fly.io (or Railway) account + `FLY_API_TOKEN` for the always-on worker.
