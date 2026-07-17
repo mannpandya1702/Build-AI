@@ -1,9 +1,11 @@
 "use client";
 
-import { Card, Empty, PageHeader, Skeleton, StatusPill } from "@/components/ui";
-import Link from "next/link";
 // /builds (spec §8.5): gallery of deployed demos with live scaled iframe previews + QA badges.
-import { useEffect, useState } from "react";
+// Migrated to TanStack Query (no poller, real error state); demo iframes are now sandboxed.
+import { Card, Empty, PageHeader, Skeleton, StatusPill } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 
 interface Build {
   id: string;
@@ -17,28 +19,26 @@ interface Build {
   region: string | null;
   lead_status: string;
   qa_passed: boolean | null;
-  qa_issues: any[] | null;
+  qa_issues: unknown[] | null;
+}
+
+async function fetchBuilds(): Promise<Build[]> {
+  const res = await fetch("/api/builds", { cache: "no-store" });
+  if (!res.ok) throw new Error(`builds ${res.status}`);
+  return (await res.json()).builds as Build[];
 }
 
 export default function BuildsPage() {
-  const [builds, setBuilds] = useState<Build[] | null>(null);
-
-  useEffect(() => {
-    let live = true;
-    const tick = async () => {
-      const res = await fetch("/api/builds", { cache: "no-store" });
-      if (res.ok) {
-        const d = await res.json();
-        if (live) setBuilds(d.builds);
-      }
-    };
-    tick();
-    const t = setInterval(tick, 5000);
-    return () => {
-      live = false;
-      clearInterval(t);
-    };
-  }, []);
+  const {
+    data: builds,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["builds"],
+    queryFn: fetchBuilds,
+    refetchInterval: 5000,
+  });
 
   return (
     <div>
@@ -47,11 +47,19 @@ export default function BuildsPage() {
         description={
           builds
             ? `${builds.length} deployed demo${builds.length === 1 ? "" : "s"} · live previews`
-            : "loading…"
+            : "Deployed demo previews"
         }
       />
 
-      {!builds && <Skeleton rows={3} />}
+      {isLoading && <Skeleton rows={3} />}
+      {isError && (
+        <Card className="flex items-center justify-between gap-3 px-4 py-3">
+          <p className="text-sm text-muted">Couldn't load builds.</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </Card>
+      )}
       {builds && builds.length === 0 && (
         <Empty hint="The builder deploys demos as leads reach design_ready.">No demos deployed yet.</Empty>
       )}
@@ -76,12 +84,14 @@ export default function BuildsPage() {
                 </span>
               )}
             </div>
-            {/* Live preview: the demo is public + noindexed, safe to iframe. Scaled to fit. */}
+            {/* Live preview: the demo is public + noindexed. Sandboxed so an embedded page can't
+                navigate the top window or submit forms out of the frame (audit finding). */}
             <div className="relative h-60 overflow-hidden bg-white">
               <iframe
                 src={b.deploy_url}
                 title={b.company_name}
                 loading="lazy"
+                sandbox="allow-scripts allow-same-origin"
                 className="absolute left-0 top-0 origin-top-left"
                 style={{ width: "200%", height: "200%", transform: "scale(0.5)" }}
               />

@@ -1,9 +1,11 @@
 "use client";
 
-import { Card, Empty, PageHeader, Skeleton, StatusPill } from "@/components/ui";
-import Link from "next/link";
 // /meetings (spec §8.4): booked intro calls. Lights up when Phase 5 Cal.com booking goes live.
-import { useEffect, useState } from "react";
+// Migrated to TanStack Query: no hand-rolled poller, pauses on hidden tabs, real error state.
+import { Card, Empty, PageHeader, Skeleton, StatusPill } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 
 interface Meeting {
   id: string;
@@ -11,40 +13,47 @@ interface Meeting {
   start_time: string | null;
   timezone: string | null;
   status: string;
-  attendee: any;
+  attendee: unknown;
   lead_id: string;
   company_name: string;
   city: string | null;
 }
 
+async function fetchMeetings(): Promise<Meeting[]> {
+  const res = await fetch("/api/meetings", { cache: "no-store" });
+  if (!res.ok) throw new Error(`meetings ${res.status}`);
+  return (await res.json()).meetings as Meeting[];
+}
+
 export default function MeetingsPage() {
-  const [m, setM] = useState<Meeting[] | null>(null);
-  useEffect(() => {
-    let live = true;
-    const tick = async () => {
-      const res = await fetch("/api/meetings", { cache: "no-store" });
-      if (res.ok) {
-        const d = await res.json();
-        if (live) setM(d.meetings);
-      }
-    };
-    tick();
-    const t = setInterval(tick, 5000);
-    return () => {
-      live = false;
-      clearInterval(t);
-    };
-  }, []);
+  const {
+    data: meetings,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["meetings"],
+    queryFn: fetchMeetings,
+    refetchInterval: 5000,
+  });
 
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader title="Meetings" description="Booked intro calls, straight from the Cal.com webhook." />
-      {!m && <Skeleton rows={3} />}
+      {isLoading && <Skeleton rows={3} />}
+      {isError && (
+        <Card className="flex items-center justify-between gap-3 px-4 py-3">
+          <p className="text-sm text-muted">Couldn't load meetings.</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </Card>
+      )}
       <div className="space-y-1.5">
-        {m && m.length === 0 && (
+        {meetings && meetings.length === 0 && (
           <Empty hint="Bookings arrive automatically once outreach is live.">no meetings booked yet</Empty>
         )}
-        {(m ?? []).map((mt) => (
+        {(meetings ?? []).map((mt) => (
           <Card
             key={mt.id}
             className="flex flex-wrap items-center gap-3 px-4 py-3 transition-colors duration-150 hover:border-faint/40"
