@@ -36,9 +36,12 @@ export const SERVICE_QUEUES: Record<ServiceType, { propose: string; build: strin
   },
 };
 
-// Shared across every service line: the sales agent ships the demo (the email/call references the
-// service-specific demo, but the send + gate + suppression logic is one path).
-export const OUTREACH_QUEUE = "agent:sales";
+// The opportunity pipeline's OWN outreach step. Deliberately distinct from the lead sales queue
+// (agent:sales), which drives the website cold-drop keyed on lead_status. An expansion opportunity
+// ships a post-close upsell to an EXISTING client — a different message on a different trigger — so it
+// must never land on the lead-sales consumer (that would re-run the lead's cold outreach). One shared
+// queue across service lines (send/gate/suppression is one path); the message is stamped per opp.
+export const OUTREACH_QUEUE = "agent:opportunity-outreach";
 
 // The one thing the scheduler does with an opportunity this tick.
 export type DispatchAction =

@@ -40,6 +40,7 @@ real money. Operator inputs to flip subsystems MOCK→LIVE are tracked in `NEEDS
 | 19 | Opportunity CREATION wired: `websiteOpportunityStatusFor` (pure lead→website projection, single source of truth for the backfill map + unlock set) + `ensureServiceOpportunities` (upserts website line synced to lead_status + expansion lines at `identified`), called from the qualifier. Dispatcher unlock now derives from authoritative `lead_status` (no website-opp sync needed). Premium **Service lines** tab on the lead detail | Phase 4 wiring/§8.3 | 5 projection tests; qualifier + worker typecheck; creation is best-effort (never fails qualification) |
 | 20 | **Chatbot product artifact**: embeddable `chat-widget.js` (self-contained, themeable, XSS-safe via textContent, floating or inline) + `/api/chat` (input-validated, KB from the lead's REAL facts, answers through `@autopilot/chat` guardrails, declines rather than fabricate) + premium **Chatbot** dashboard page (live preview against a labeled sample + copy-paste embed). next.config transpiles the workspace TS pkg | Phase 5/§7.2 | dashboard build green; live answers gated on Anthropic key (grounded either way) |
 | 21 | **Voice + Automation product surfaces**: premium `/voice` (4 assistant templates + the TCPA consent model + Vapi activation placeholder) and `/automation` (3 productized templates + A2P/SMS consent model + Twilio/Trigger.dev placeholder), both server components rendering the real templates from `@autopilot/{voice,automation}` (single source of truth). Sidebar now carries all four service lines | Phase 6-7/§7.3,§7.4,§10 | static build green; safety model front-and-center |
+| 22 | **Spine MOCK loop closed**: `opportunityHandlers.ts` registers a MOCK consumer per non-website opportunity queue (propose→build→outreach→onboard advances), so `OPPORTUNITY_DISPATCH=execute` runs a full expansion lifecycle under MOCK. Website queues are excluded (they're the lead agents'). Fixed the router's outreach queue → dedicated `agent:opportunity-outreach` (never collides with lead sales) | Phase 4 wiring/§7.2-7.4 | 3 worker tests (incl. no-website-queue collision); full build green; real handlers replace these per adapter |
 
 ### New packages
 `@autopilot/{evals, compliance, billing, chat, voice, automation, delivery}` + dashboard UI kit
@@ -49,11 +50,12 @@ real money. Operator inputs to flip subsystems MOCK→LIVE are tracked in `NEEDS
 - **Wiring:** the opportunity dispatch decision layer is built + tested (router + planner, slices 16-17)
   and wired into the worker behind `OPPORTUNITY_DISPATCH` (default **off**; `shadow` observes,
   `execute` acts on non-website lines). The detection brain (`detectServiceOpportunities`) + the
-  sell-after-close hold are built + tested (slice 18), and creation is now WIRED into the qualifier
-  (slice 19) so qualified leads get their website + expansion opportunity rows. Still pending: (a) a
-  Postgres to verify `execute` end-to-end, (b) the chatbot/voice/automation worker HANDLERS the router
-  enqueues (MOCK-stubbed queues today) — the remaining real integration piece. The website line keeps
-  running on the lead scheduler.
+  sell-after-close hold are built + tested (slice 18), creation is WIRED into the qualifier (slice 19),
+  and the MOCK stage handlers now close the loop (slice 22) so `execute` advances an expansion
+  opportunity propose→build→outreach→onboard end to end under MOCK. Still pending: (a) a Postgres to
+  verify `execute` end-to-end at runtime, (b) the REAL per-service handlers (Vapi assistant
+  provisioning, Twilio A2P, the chatbot builder) that replace the MOCK stage handlers as their adapters
+  land. The website line keeps running on the lead scheduler.
 - **Real adapters (credential-blocked, all mock-stubbed today):** Vapi (voice), Trigger.dev + Twilio
   (automation/A2P), Stripe (billing checkout/webhooks/dunning), Supabase (single DB + Auth + RLS),
   Sentry + healthchecks.io (observability), Fly.io (always-on worker → delete the bridge).

@@ -36,6 +36,7 @@ import PgBoss from "pg-boss";
 import { readDemoBatch } from "./batch.js";
 import { bridgeCycle } from "./bridge.js";
 import { resolveOpportunityDispatchMode, runOpportunityDispatch } from "./opportunityDispatch.js";
+import { mockOpportunityHandlers } from "./opportunityHandlers.js";
 
 const MOCK = process.env.MOCK_MODE !== "false";
 
@@ -393,6 +394,33 @@ async function main(): Promise<void> {
       message: `opportunity dispatch: ${oppDispatchMode} (non-website service lines)`,
     });
     console.log(`[worker] opportunity dispatch: ${oppDispatchMode}`);
+
+    // MOCK stage handlers: one consumer per opportunity queue so execute-mode advances the expansion
+    // lifecycle end to end. Registered only in MOCK — the real per-service handlers (Vapi/Twilio/build)
+    // replace these when adapters land. Website queues are excluded by mockOpportunityHandlers (they
+    // belong to the lead agents), so this never double-registers a lead queue.
+    if (MOCK) {
+      const oppHandlers = mockOpportunityHandlers();
+      for (const [queue, handler] of oppHandlers) {
+        await boss.work<{ opportunityId: string; leadId: string }>(queue, { teamSize: 2 }, async (job) => {
+          if (!workerEnabled) return;
+          try {
+            await handler(job.data.opportunityId, job.data.leadId);
+          } catch (err) {
+            await emitEvent({
+              agent: "opp-mock",
+              leadId: job.data.leadId,
+              level: "error",
+              type: "opportunity.stage_failed",
+              message: `${queue}: ${(err as Error).message}`,
+            });
+            throw err; // let pg-boss retry
+          }
+        });
+      }
+      console.log(`[worker] registered ${oppHandlers.size} MOCK opportunity handlers`);
+    }
+
     let oppBusy = false;
     setInterval(async () => {
       if (!workerEnabled || oppBusy) return; // paused or a pass still running: skip this tick

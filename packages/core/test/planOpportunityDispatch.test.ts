@@ -35,7 +35,7 @@ describe("planOpportunityDispatch", () => {
     );
     const queues = plan.enqueue.map((e) => e.queue).sort();
     expect(queues).toEqual(
-      ["agent:solution", "agent:chatbot-build", "agent:voice-provision", "agent:sales"].sort(),
+      ["agent:solution", "agent:chatbot-build", "agent:voice-provision", "agent:opportunity-outreach"].sort(),
     );
   });
 
