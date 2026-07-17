@@ -29,6 +29,9 @@ importers:
       '@autopilot/chat':
         specifier: workspace:*
         version: link:../../packages/chat
+      '@autopilot/delivery':
+        specifier: workspace:*
+        version: link:../../packages/delivery
       '@autopilot/voice':
         specifier: workspace:*
         version: link:../../packages/voice

@@ -68,6 +68,12 @@ const PATHS = {
       <path d="M8 8h8M8 12h8" />
     </>
   ),
+  delivery: (
+    <>
+      <path d="M3 17l6-6 4 4 8-8" />
+      <path d="M17 7h4v4" />
+    </>
+  ),
   builds: (
     <>
       <path d="M3 9l9-5 9 5-9 5-9-5z" />
