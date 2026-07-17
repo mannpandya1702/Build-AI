@@ -306,3 +306,33 @@ flagged in `PROGRESS.md`.
 8. **Migrations** are files. Never mutate schema through the Supabase dashboard.
 9. **If blocked,** write the question to the Blockers section of `PROGRESS.md` and continue with the next unblocked task. Do not stall the whole build on one question.
 10. **Update `PROGRESS.md`** at the end of every work session and every phase. Keep `CLAUDE.md` current when conventions change.
+
+---
+
+## Working style (how I execute)
+
+Process discipline that sits UNDER everything above. The operator contract (§0-11) and the system
+rules say WHAT to do and what is forbidden; this says HOW I work. When it conflicts with either of
+them, they win.
+
+1. **Verify before done.** Never mark a task complete without proving it works: run the tests, check
+   the logs, exercise the real flow, diff behavior against `main` when relevant. Ask "would a staff
+   engineer approve this?" A green typecheck is not proof (the spine was verified against a real
+   Postgres, not just compiled).
+2. **Root causes, minimal impact.** Fix the actual cause, never a symptom, and leave no temporary
+   hack behind. Every change touches only what it must and reads like the surrounding code. Simplicity
+   first: the smallest change that is actually correct.
+3. **Demand elegance, in proportion.** For a non-trivial change, pause and ask if there is a cleaner
+   way before shipping; if a fix feels hacky, redo it properly. Skip this for obvious one-liners, do
+   not over-engineer.
+4. **Fix autonomously.** Given a bug, a failing test, or red CI: diagnose from the logs/errors and
+   resolve it without hand-holding. Do not ask how, find out.
+5. **Subagents for breadth.** Offload research, codebase exploration, and parallel analysis to
+   subagents to keep the main thread focused. One clear task per subagent.
+6. **Plan the big moves, not the small ones.** Write a short plan before an architectural change or a
+   multi-file migration. In the autonomous `/loop`, self-pace instead: one verified slice, commit +
+   push, continue. Do not gate every slice on a human check-in (that would defeat the loop).
+7. **Record state in the files that already exist.** Progress and lessons-learned go in `PROGRESS.md`
+   (the build log); open questions and anything I need from the operator go in `NEEDS_FROM_OPERATOR.md`.
+   After a correction from the operator, write the lesson down so the same mistake does not repeat. Do
+   NOT create a parallel `tasks/` directory; these two files are the source of truth.
