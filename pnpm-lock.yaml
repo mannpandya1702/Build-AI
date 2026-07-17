@@ -20,9 +20,15 @@ importers:
 
   apps/dashboard:
     dependencies:
+      '@autopilot/automation':
+        specifier: workspace:*
+        version: link:../../packages/automation
       '@autopilot/chat':
         specifier: workspace:*
         version: link:../../packages/chat
+      '@autopilot/voice':
+        specifier: workspace:*
+        version: link:../../packages/voice
       '@neondatabase/serverless':
         specifier: ^0.10.4
         version: 0.10.4

@@ -17,6 +17,8 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: "/meetings", label: "Meetings", icon: "meetings" },
   { href: "/builds", label: "Builds", icon: "builds" },
   { href: "/chatbot", label: "Chatbot", icon: "chatbot" },
+  { href: "/voice", label: "Voice", icon: "voice" },
+  { href: "/automation", label: "Automation", icon: "automation" },
   { href: "/activity", label: "Activity", icon: "activity" },
   { href: "/reports", label: "Reports", icon: "reports" },
   { href: "/settings", label: "Settings", icon: "settings" },
