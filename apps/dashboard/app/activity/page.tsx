@@ -1,9 +1,12 @@
 "use client";
 
-import { Empty, FilterChip, PageHeader, Skeleton } from "@/components/ui";
 // /activity (spec §8.6): live tail of agent_events with level filters (skill: dashboards need
-// filtering). Poll-based locally; Supabase Realtime in production.
-import { useEffect, useMemo, useState } from "react";
+// filtering). Migrated to TanStack Query: no hand-rolled poller, pauses on hidden tabs, real
+// error state with retry (the audit's "silent failures" finding). Supabase Realtime in production.
+import { Card, Empty, FilterChip, PageHeader, Skeleton } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 
 interface Ev {
   id: string;
@@ -23,32 +26,24 @@ const LEVEL_STYLES: Record<Ev["level"], string> = {
   error: "text-danger",
 };
 
-export default function ActivityPage() {
-  const [events, setEvents] = useState<Ev[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [level, setLevel] = useState<(typeof LEVELS)[number]>("all");
+async function fetchEvents(): Promise<Ev[]> {
+  const res = await fetch("/api/events", { cache: "no-store" });
+  if (!res.ok) throw new Error(`events ${res.status}`);
+  return (await res.json()).events as Ev[];
+}
 
-  useEffect(() => {
-    let live = true;
-    const tick = async () => {
-      try {
-        const res = await fetch("/api/events", { cache: "no-store" });
-        const data = await res.json();
-        if (live) {
-          setEvents(data.events);
-          setError(null);
-        }
-      } catch (e) {
-        if (live) setError((e as Error).message);
-      }
-    };
-    tick();
-    const t = setInterval(tick, 2000);
-    return () => {
-      live = false;
-      clearInterval(t);
-    };
-  }, []);
+export default function ActivityPage() {
+  const [level, setLevel] = useState<(typeof LEVELS)[number]>("all");
+  const {
+    data: events,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["events"],
+    queryFn: fetchEvents,
+    refetchInterval: 2000,
+  });
 
   const shown = useMemo(() => {
     if (!events) return [];
@@ -68,8 +63,15 @@ export default function ActivityPage() {
         </div>
       </PageHeader>
 
-      {error && <p className="mb-3 text-sm text-danger">DB error: {error}</p>}
-      {!events && <Skeleton rows={6} />}
+      {isLoading && <Skeleton rows={6} />}
+      {isError && (
+        <Card className="flex items-center justify-between gap-3 px-4 py-3">
+          <p className="text-sm text-muted">Couldn't load the event stream.</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </Card>
+      )}
       {events && shown.length === 0 && <Empty>no events at this level</Empty>}
 
       <div className="space-y-1 font-display text-xs">
