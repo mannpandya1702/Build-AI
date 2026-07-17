@@ -39,7 +39,16 @@ export function createPoolForUrl(url: string, max = 10): DbPool {
     neon.neonConfig.poolQueryViaFetch = true; // one-shot queries ride plain HTTPS
     return new neon.Pool({ connectionString: url, max }) as unknown as DbPool;
   }
-  return new pg.Pool({ connectionString: url, max });
+  // Managed Postgres (Supabase pooler, RDS, …) requires TLS; local Postgres does not. Enable SSL for
+  // any non-local host so a hosted DATABASE_URL connects. rejectUnauthorized:false keeps encryption on
+  // without bundling the provider's CA (standard for managed Postgres; tighten to a CA + verify-full
+  // if the deployment demands strict chain validation).
+  const isLocal = /@(localhost|127\.0\.0\.1|\[::1\]|\[?::1\]?)[:/]/i.test(url);
+  return new pg.Pool({
+    connectionString: url,
+    max,
+    ssl: isLocal ? undefined : { rejectUnauthorized: false },
+  });
 }
 
 export function getPool(): DbPool {
