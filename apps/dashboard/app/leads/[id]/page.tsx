@@ -1,5 +1,9 @@
 "use client";
 
+// /leads/[id] (spec §8.2): the full lead story in tabs — Overview, Audit, Solution, Design,
+// Builds+QA, Emails, Timeline. Styled to the skill design system (data-dense, blue data, amber
+// active indicators, Fira Code for figures). Migrated to TanStack Query (no poller, real error
+// state); a transient poll failure keeps the last-good data on screen instead of flashing an error.
 import {
   Card,
   Empty,
@@ -11,11 +15,10 @@ import {
   StatusPill,
   severityTone,
 } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-// /leads/[id] (spec §8.2): the full lead story in tabs — Overview, Audit, Solution, Design,
-// Builds+QA, Emails, Timeline. Styled to the skill design system (data-dense, blue data, amber
-// active indicators, Fira Code for figures).
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface Finding {
   category: string;
@@ -77,29 +80,43 @@ interface Detail {
 
 const TABS = ["Overview", "Audit", "Solution", "Design", "Builds", "Emails", "Timeline"] as const;
 
+async function fetchDetail(id: string): Promise<Detail> {
+  const res = await fetch(`/api/leads/${id}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`lead ${res.status}`);
+  return (await res.json()) as Detail;
+}
+
 export default function LeadPage() {
   const { id } = useParams<{ id: string }>();
-  const [d, setD] = useState<Detail | null>(null);
   const [tab, setTab] = useState<(typeof TABS)[number]>("Overview");
 
-  useEffect(() => {
-    let live = true;
-    const tick = async () => {
-      const res = await fetch(`/api/leads/${id}`, { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        if (live) setD(data);
-      }
-    };
-    tick();
-    const t = setInterval(tick, 3000);
-    return () => {
-      live = false;
-      clearInterval(t);
-    };
-  }, [id]);
+  const {
+    data: d,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["lead", id],
+    queryFn: () => fetchDetail(id),
+    refetchInterval: 3000,
+  });
 
-  if (!d) return <Skeleton rows={5} />;
+  // Once `d` is loaded it survives a failed background poll, so this branch only shows on the very
+  // first fetch: retry on a hard error, otherwise the skeleton.
+  if (!d) {
+    if (isError) {
+      return (
+        <div className="mx-auto max-w-6xl">
+          <Card className="flex items-center justify-between gap-3 px-4 py-3">
+            <p className="text-sm text-muted">Couldn't load this lead.</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </Card>
+        </div>
+      );
+    }
+    return <Skeleton rows={5} />;
+  }
   const L = d.lead;
   const demo = d.builds.find((b) => b.kind === "demo" && b.deploy_url);
   const count = (t: string) => (t === "Builds" ? d.builds.length : t === "Emails" ? d.emails.length : 0);
