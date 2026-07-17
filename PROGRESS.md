@@ -34,15 +34,20 @@ real money. Operator inputs to flip subsystems MOCK→LIVE are tracked in `NEEDS
 | 13 | Delivery ops (`@autopilot/delivery`): measured-only value report + auto SLA credits | Phase 8/§7.5 | zero estimated numbers in report |
 | 14 | Frontend resilience: app-wide `error.tsx`/`not-found.tsx` boundaries + logout UX | Phase F/§12 | next build green |
 | 15 | Dashboard-wide TanStack Query migration: every page (shortlist, meetings, builds, activity, outbox, reports, pipeline, lead-detail) off hand-rolled `setInterval` pollers → `useQuery`/`useMutation` with real error+retry states; outbox/pipeline actions invalidate on success (instant refresh); Button primitive on all action buttons | Phase F/§12 (closes audit "silent failures / infinite skeleton") | `grep setInterval app/` empty; 7 builds green |
+| 16 | Opportunity dispatch router (`dispatchOpportunity`) — pure `(service_type, status)`→action map; service-specific build/onboard queues, shared outreach+gate; exhaustive `never` guard | Phase 4 wiring/§8.3-8.4 | 9 tests, all 4 service lines |
+| 17 | Opportunity scheduler plan (`planOpportunityDispatch`) + worker wiring (`opportunityDispatch.ts`): reuses `canRunBuild`, admits best-score-first until the daily budget runs out; flag-gated (`OPPORTUNITY_DISPATCH` off→shadow→execute), non-website only | Phase 4 wiring/§2,§8.4 | 8 planner tests; worker typechecks; gated OFF |
 
 ### New packages
 `@autopilot/{evals, compliance, billing, chat, voice, automation, delivery}` + dashboard UI kit
 (`components/ui/*`, `QueryProvider`, auth). Migrations `00002` (spend gate), `00003` (opportunities).
 
 ### What remains before go-live (needs operator inputs or a running DB to verify)
-- **Wiring:** route the scheduler to dispatch on `(opportunity.status, service_type)` — the service
-  cores exist and are tested; the live pipeline still runs the website lead flow. (Needs a Postgres to
-  verify end-to-end.)
+- **Wiring:** the opportunity dispatch decision layer is built + tested (router + planner, slices 16-17)
+  and wired into the worker behind `OPPORTUNITY_DISPATCH` (default **off**; `shadow` observes,
+  `execute` acts on non-website lines). Still pending: (a) a Postgres to verify `execute` end-to-end,
+  (b) the chatbot/voice/automation worker HANDLERS the router enqueues (MOCK-stubbed queues today),
+  (c) an opportunity-creation path (nothing creates non-website opportunities yet). The website line
+  keeps running on the proven lead scheduler.
 - **Real adapters (credential-blocked, all mock-stubbed today):** Vapi (voice), Trigger.dev + Twilio
   (automation/A2P), Stripe (billing checkout/webhooks/dunning), Supabase (single DB + Auth + RLS),
   Sentry + healthchecks.io (observability), Fly.io (always-on worker → delete the bridge).

@@ -35,6 +35,7 @@ import {
 import PgBoss from "pg-boss";
 import { readDemoBatch } from "./batch.js";
 import { bridgeCycle } from "./bridge.js";
+import { resolveOpportunityDispatchMode, runOpportunityDispatch } from "./opportunityDispatch.js";
 
 const MOCK = process.env.MOCK_MODE !== "false";
 
@@ -380,6 +381,31 @@ async function main(): Promise<void> {
       }
     }
   }, 2000);
+
+  // Opportunity dispatcher (agency spine, MASTER_SPEC §8.3/§8.4). DEFAULT OFF — see
+  // opportunityDispatch.ts for the safety model. Scoped to NON-website service lines (website stays
+  // on the lead scheduler above, so nothing double-runs). Serialized so a slow pass never overlaps.
+  const oppDispatchMode = resolveOpportunityDispatchMode();
+  if (oppDispatchMode !== "off") {
+    await emitEvent({
+      agent: "worker",
+      type: "opportunity.dispatch_enabled",
+      message: `opportunity dispatch: ${oppDispatchMode} (non-website service lines)`,
+    });
+    console.log(`[worker] opportunity dispatch: ${oppDispatchMode}`);
+    let oppBusy = false;
+    setInterval(async () => {
+      if (!workerEnabled || oppBusy) return; // paused or a pass still running: skip this tick
+      oppBusy = true;
+      try {
+        await runOpportunityDispatch(boss, oppDispatchMode);
+      } catch (err) {
+        console.error("[opp-dispatch]", (err as Error).message);
+      } finally {
+        oppBusy = false;
+      }
+    }, 3000);
+  }
 
   // operator-triggered research requests ride the event stream (research.requested -> started).
   // The payload carries the discover panel's targeting (vertical, cities, country).
