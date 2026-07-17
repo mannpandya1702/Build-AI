@@ -2,6 +2,59 @@
 
 Build log per `AGENCY_AUTOPILOT_SPEC.md` §13. Updated at the end of every work session and phase.
 
+---
+
+# AI AGENCY EVOLUTION BUILD (2026-07-17, branch `claude/read-pdf-89t95k`, PR #1)
+
+Governing docs: `AI_AGENCY_MASTER_SPEC.md` (source of truth) + `IMPLEMENTATION_PLAN.md` (file-level).
+This session evolved the website-only autopilot into the multi-service AI agency. Everything below is
+**MOCK-first and CI-green** (Biome + typecheck + Vitest + eval harness on every commit); nothing spends
+real money. Operator inputs to flip subsystems MOCK→LIVE are tracked in `NEEDS_FROM_OPERATOR.md`.
+
+### Operator decisions locked (2026-07-17)
+- **Branch:** execute on `claude/read-pdf-89t95k`. **Queue:** keep pg-boss (spec's "boring proven tech
+  over novel tech" beat the Graphile migration; single-worker is fine for the 12-month target).
+- **First premium niche:** healthcare (med spa / dental / mental health / chiropractic).
+
+### Delivered slices (each committed + pushed, gates green)
+| # | Slice | Master-spec phase | Acceptance |
+|---|-------|-------------------|------------|
+| 1 | Quality rails: GitHub Actions CI, Biome, real Vitest (echo stubs gone), eval harness (`packages/evals`) | Phase 0 | red PR blocks; evals run; fixed a stale font-registry test |
+| 2 | SSRF guard (`safeFetch`) on all 4 adapters + Playwright interception; settings-key allowlist; dev-tools fail-closed | Phase 1 | 36-case SSRF corpus green |
+| 3 | Spend-gate core: `awaiting_build_approval` status + `canRunBuild` decision + build budget + `BUILD_MODE` | Phase 2 | 6-case gate test; gate can't be skipped |
+| 4 | Spend-gate wiring: scheduler parks qualified leads at the gate; analyzer admitted only on approval/auto-in-budget; `/api/shortlist` + approve | Phase 2 | no build job without an approval event |
+| 5 | Premium UI foundation: shadcn-style Radix primitives on existing tokens, TanStack Query, sonner; **premium Shortlist page** (keyboard-first) | Phase F/§12 | next build green |
+| 6 | Opportunities spine: `service_type` + `opportunity_status` enums, `opportunities` table + backfill, `advanceOpportunity` | Phase 4 | 7-test opportunity state machine |
+| 7 | Niche engine (Amendment A): `@autopilot/compliance` + activation gate; roofing baseline + 4 healthcare niches | Phase 4/§Amendment A | healthcare blocked until BAA+insurance+PHI |
+| 8 | Revenue rails: `config/pricing.yaml` + `@autopilot/billing` — contract generator (no blanks/contradictions possible; IP clause guarded) | Phase 3 | 7 tests |
+| 9 | Dashboard auth gate: `middleware.ts` over every route + HMAC-signed operator session; premium `/login`; logout | Phase 1/§9 (closes audit C-1) | 401 everywhere; fails closed on hosted |
+| 10 | Chatbot core (`@autopilot/chat`): KB grounding + anti-fabrication (never invents prices/availability) | Phase 5/§7.2 | 8 tests |
+| 11 | Voice core (`@autopilot/voice`): TCPA consent gate (no record→refuse) + 4 assistant templates w/ AI disclosure | Phase 6/§7.3,§10 | 8 tests |
+| 12 | Automation core (`@autopilot/automation`): A2P/SMS gate (blocked until campaign approved; STOP global; quiet hours) + 3 templates | Phase 7/§7.4,§10 | 9 tests |
+| 13 | Delivery ops (`@autopilot/delivery`): measured-only value report + auto SLA credits | Phase 8/§7.5 | zero estimated numbers in report |
+| 14 | Frontend resilience: app-wide `error.tsx`/`not-found.tsx` boundaries + logout UX | Phase F/§12 | next build green |
+
+### New packages
+`@autopilot/{evals, compliance, billing, chat, voice, automation, delivery}` + dashboard UI kit
+(`components/ui/*`, `QueryProvider`, auth). Migrations `00002` (spend gate), `00003` (opportunities).
+
+### What remains before go-live (needs operator inputs or a running DB to verify)
+- **Wiring:** route the scheduler to dispatch on `(opportunity.status, service_type)` — the service
+  cores exist and are tested; the live pipeline still runs the website lead flow. (Needs a Postgres to
+  verify end-to-end.)
+- **Real adapters (credential-blocked, all mock-stubbed today):** Vapi (voice), Trigger.dev + Twilio
+  (automation/A2P), Stripe (billing checkout/webhooks/dunning), Supabase (single DB + Auth + RLS),
+  Sentry + healthchecks.io (observability), Fly.io (always-on worker → delete the bridge).
+- **Demo Hub app + chat `<script>` widget**; migrate remaining dashboard pages to the premium kit.
+- **Healthcare niche activation:** operator provides BAA template + E&O insurance + PHI toggle.
+- All items enumerated in `NEEDS_FROM_OPERATOR.md`.
+
+### Conflicts flagged (per spec precedence rule)
+- Spec §8.5 mandates Graphile Worker; spec §0 prefers "boring proven tech." Operator chose pg-boss
+  ("best one"). Recorded here per the "flag conflicts in PROGRESS.md" rule.
+
+---
+
 ## Phase status
 
 | Phase | Status | Notes |
