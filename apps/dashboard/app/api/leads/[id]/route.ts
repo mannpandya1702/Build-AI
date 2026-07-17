@@ -9,7 +9,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const lead = await db().query("select * from leads where id = $1", [id]);
   if (lead.rowCount === 0) return NextResponse.json({ error: "not found" }, { status: 404 });
 
-  const [audit, solution, design, builds, qa, emails, events] = await Promise.all([
+  const [audit, solution, design, builds, qa, emails, events, opportunities] = await Promise.all([
     db().query(
       "select lighthouse, findings, summary, screenshots, pages_crawled, created_at from audits where lead_id=$1 order by created_at desc limit 1",
       [id],
@@ -40,6 +40,16 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       "select id, agent, level, type, message, cost_usd, created_at from agent_events where lead_id=$1 order by created_at desc limit 200",
       [id],
     ),
+    // Service lines (opportunities, spec §8.3). Defensive: a DB without migration 00003 returns [] so
+    // the lead detail never 500s on the newer table. Website first, then expansion lines.
+    db()
+      .query(
+        `select id, service_type, status, score, created_at, updated_at from opportunities where lead_id=$1
+         order by case service_type
+           when 'website' then 0 when 'ai_automation' then 1 when 'chatbot' then 2 when 'voice_agent' then 3 else 4 end`,
+        [id],
+      )
+      .catch(() => ({ rows: [] as Array<Record<string, unknown>> })),
   ]);
 
   const spend = events.rows.reduce(
@@ -56,6 +66,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     qa: qa.rows,
     emails: emails.rows,
     events: events.rows,
+    opportunities: opportunities.rows,
     spend,
   });
 }

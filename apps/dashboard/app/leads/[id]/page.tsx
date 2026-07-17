@@ -75,10 +75,31 @@ interface Detail {
     cost_usd: string | null;
     created_at: string;
   }[];
+  opportunities: {
+    id: string;
+    service_type: string;
+    status: string;
+    score: number | null;
+    created_at: string;
+    updated_at: string;
+  }[];
   spend: number;
 }
 
-const TABS = ["Overview", "Audit", "Solution", "Design", "Builds", "Emails", "Timeline"] as const;
+const TABS = ["Overview", "Services", "Audit", "Solution", "Design", "Builds", "Emails", "Timeline"] as const;
+
+// Service-line presentation (the agency's four products). Website is the cold pitch; the rest are
+// expansion revenue sold after the close (CLAUDE.md §1). Kept in sync with SERVICE_TYPES in core.
+const SERVICE_META: Record<string, { label: string; blurb: string; expansion: boolean }> = {
+  website: { label: "Website", blurb: "The cold-pitch product", expansion: false },
+  ai_automation: {
+    label: "AI Automation",
+    blurb: "Missed-call text-back, review engine, follow-ups",
+    expansion: true,
+  },
+  chatbot: { label: "Chatbot", blurb: "Site lead-capture widget", expansion: true },
+  voice_agent: { label: "Voice Agent", blurb: "Inbound / after-hours reception", expansion: true },
+};
 
 async function fetchDetail(id: string): Promise<Detail> {
   const res = await fetch(`/api/leads/${id}`, { cache: "no-store" });
@@ -119,7 +140,14 @@ export default function LeadPage() {
   }
   const L = d.lead;
   const demo = d.builds.find((b) => b.kind === "demo" && b.deploy_url);
-  const count = (t: string) => (t === "Builds" ? d.builds.length : t === "Emails" ? d.emails.length : 0);
+  const count = (t: string) =>
+    t === "Builds"
+      ? d.builds.length
+      : t === "Emails"
+        ? d.emails.length
+        : t === "Services"
+          ? d.opportunities.length
+          : 0;
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -176,7 +204,7 @@ export default function LeadPage() {
             className={`shrink-0 cursor-pointer border-b-2 px-3 py-2 text-sm transition-colors duration-150 ${tab === t ? "border-accent font-medium text-ink" : "border-transparent text-muted hover:text-ink"}`}
           >
             {t}
-            {["Builds", "Emails"].includes(t) && count(t) > 0 && (
+            {["Builds", "Emails", "Services"].includes(t) && count(t) > 0 && (
               <span className="ml-1.5 font-display text-[11px] text-faint">{count(t)}</span>
             )}
           </button>
@@ -219,6 +247,46 @@ export default function LeadPage() {
             </Card>
           </div>
         )}
+
+        {tab === "Services" &&
+          (d.opportunities.length ? (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {d.opportunities.map((o) => {
+                const meta = SERVICE_META[o.service_type] ?? {
+                  label: o.service_type,
+                  blurb: "",
+                  expansion: true,
+                };
+                return (
+                  <Card key={o.id} className="p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-display text-sm font-semibold text-ink">{meta.label}</p>
+                        {meta.blurb && <p className="mt-0.5 text-xs text-faint">{meta.blurb}</p>}
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-md px-2 py-0.5 font-display text-[11px] ${meta.expansion ? "bg-data/10 text-data" : "bg-accent/15 text-accent"}`}
+                      >
+                        {meta.expansion ? "expansion" : "cold pitch"}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between border-t border-line pt-2.5">
+                      <span className="font-display text-[13px] text-muted">
+                        {o.status.replace(/_/g, " ")}
+                      </span>
+                      {o.score != null && (
+                        <span className="font-display text-[11px] text-faint">score {o.score}</span>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <Empty hint="Website is the cold pitch; expansion lines are added after the close.">
+              no service lines yet
+            </Empty>
+          ))}
 
         {tab === "Audit" &&
           (d.audit ? (
