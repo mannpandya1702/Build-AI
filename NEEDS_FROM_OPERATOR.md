@@ -1,12 +1,30 @@
 # NEEDS FROM OPERATOR — placeholder tracker
 
-The system is being built **MOCK-first**: every feature works with zero external credentials so it can
-be proven before any real spend. This file tracks everything I need from you to flip a subsystem from
-MOCK to LIVE. **Nothing here blocks the build** — each item has a safe mock default until you provide the
-real value. Fill these in when you're ready; I'll wire them and remove the placeholder.
+**The buildable-without-your-credentials system is now COMPLETE and CI-green on `claude/read-pdf-89t95k`
+(PR #1), and the opportunity spine is runtime-verified against a real Postgres.** Everything below is a
+switch to flip a subsystem from MOCK to LIVE, or a business decision only you can make. Nothing here
+blocked the build — each item has a safe mock default. Fill these in when you're ready; I'll wire them.
 
 Convention: code uses `[NEEDS: <key>]` markers and env vars default to mock. Grep `[NEEDS:` to find every
 live wiring point.
+
+---
+
+## ⭐ Fastest path to a live dashboard link (do this first)
+
+The dashboard is built and premium but not deployed anywhere yet. To get a clickable URL I need exactly
+three things — then I deploy and hand back the link:
+
+1. 🔑 A **Postgres/`DATABASE_URL`** — a Supabase free-tier project is perfect (also covers Auth + the
+   production DB item below).
+2. 🔑 An **`AUTH_PASSWORD`** you choose (your operator login) + an **`AUTH_SECRET`** (any long random
+   string; I can generate it).
+3. ⚙️ A **host** — a Vercel token (recommended; `scripts/deploy-dashboard.sh` is ready) or say the word
+   and I'll pick one.
+
+Everything else on this page is for turning on individual service lines (voice calls, SMS, payments) and
+can come later — the dashboard, pipeline, chatbot preview, and all four product pages work the moment
+the three above are set.
 
 ---
 
@@ -59,4 +77,6 @@ live wiring point.
 
 ---
 
-*Updated automatically as phases land. Last updated: Phase 0 (quality rails).*
+*Updated as phases land. Last updated: full buildable system complete — spine runtime-verified, all
+four service lines + pricing + delivery surfaced in the premium dashboard. Remaining items are all
+credential- or decision-gated (above).*
