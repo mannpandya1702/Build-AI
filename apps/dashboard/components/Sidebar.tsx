@@ -1,6 +1,7 @@
 "use client";
 
 import Bell from "@/components/Bell";
+import LogoutButton from "@/components/LogoutButton";
 import WorkerSwitch from "@/components/WorkerSwitch";
 import { Icon, type IconName } from "@/components/icons";
 // App shell navigation (skill §9: icon + label, active state highlighted, placement identical on
@@ -69,8 +70,11 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="hidden px-4 pb-4 pt-2 md:absolute md:bottom-0 md:block">
-        <p className="font-display text-[11px] text-faint">TradeCraft Sites · operator console</p>
+      <div className="px-2 pt-1 md:absolute md:bottom-0 md:w-full md:pb-3">
+        <LogoutButton />
+        <p className="hidden px-3 pt-1 font-display text-[11px] text-faint md:block">
+          TradeCraft Sites · operator console
+        </p>
       </div>
     </aside>
   );
