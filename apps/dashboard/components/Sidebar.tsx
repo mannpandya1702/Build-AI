@@ -29,7 +29,7 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
 export default function Sidebar() {
   const pathname = usePathname();
   return (
-    <aside className="shrink-0 border-b border-line bg-surface/70 backdrop-blur md:sticky md:top-0 md:h-dvh md:w-56 md:border-b-0 md:border-r">
+    <aside className="shrink-0 border-b border-line bg-surface/70 backdrop-blur md:sticky md:top-0 md:flex md:h-dvh md:w-56 md:flex-col md:border-b-0 md:border-r">
       <div className="flex items-center justify-between px-4 py-4 md:block">
         <Link href="/pipeline" className="flex items-center gap-2.5">
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent font-display text-sm font-bold text-accentink">
@@ -50,7 +50,10 @@ export default function Sidebar() {
         <WorkerSwitch />
       </div>
 
-      <nav className="flex gap-1 overflow-x-auto px-2 pb-2 md:mt-2 md:flex-col md:pb-4" aria-label="Primary">
+      <nav
+        className="flex gap-1 overflow-x-auto px-2 pb-2 md:mt-2 md:min-h-0 md:flex-1 md:flex-col md:overflow-y-auto md:pb-4"
+        aria-label="Primary"
+      >
         {NAV.map(({ href, label, icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
@@ -75,7 +78,7 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="px-2 pt-1 md:absolute md:bottom-0 md:w-full md:pb-3">
+      <div className="border-line px-2 pt-1 md:shrink-0 md:border-t md:pb-3 md:pt-2">
         <LogoutButton />
         <p className="hidden px-3 pt-1 font-display text-[11px] text-faint md:block">
           TradeCraft Sites · operator console

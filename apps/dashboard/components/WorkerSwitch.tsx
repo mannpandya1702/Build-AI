@@ -5,11 +5,13 @@
 //   Paused  (amber)  = process alive, processing disabled — inputs queue, nothing spends
 //   Offline (gray)   = no heartbeat: the process itself is not running on the host (RUNBOOK §3);
 //                      the toggle still sets the DESIRED state, applied when the process is back.
-// Turning ON confirms first: it starts real builds/spend on everything that is queued.
+// Turning ON confirms first. In REVIEW mode (the default), qualified leads PARK for operator approval
+// on the Shortlist — no demo is built and nothing spends until you approve it there. The worker only
+// discovers, qualifies, and runs already-approved work on its own.
 //
-// Demo limit: "build the top N demos first". The worker admits leads into design+build best score
-// first and stops at N; setting a new number restarts the count from that moment. No limit = every
-// qualified lead gets a demo.
+// Demo cap (optional): an extra throttle on top of approval — "build only the top N demos by score".
+// Setting a new number restarts the count from that moment. No cap = approved leads build up to the
+// daily budget.
 import { useEffect, useState } from "react";
 
 interface BatchState {
@@ -57,12 +59,12 @@ export default function WorkerSwitch() {
     if (!s || busy) return;
     const next = !s.enabled;
     const batchLine = s.demo_batch
-      ? `Demo limit: top ${s.demo_batch.size} by score (${s.demo_batch.remaining} left).`
-      : "No demo limit set: every qualified lead gets a demo.";
+      ? ` A demo cap is set: top ${s.demo_batch.size} by score (${s.demo_batch.remaining} left).`
+      : "";
     if (
       next &&
       !confirm(
-        `Turn the worker ON?\n\nIt will start processing everything queued: discovery requests, demo builds (real Vercel deploys + AI spend, 2 at a time, best leads first), and approved sends. ${batchLine} Caps and budgets apply.`,
+        `Turn the worker ON?\n\nIt discovers and qualifies leads, then holds each qualified lead for your approval — no demo is built and nothing spends until you approve it on the Shortlist. Only discovery and already-approved sends run on their own.${batchLine} Caps and budgets still apply.`,
       )
     )
       return;
@@ -170,7 +172,7 @@ export default function WorkerSwitch() {
           </div>
         ) : (
           <p className="mb-1.5 text-[10px] leading-tight text-faint">
-            No demo limit: every qualified lead gets a demo.
+            You approve each build on the Shortlist. Optionally cap demos to the top N by score:
           </p>
         )}
         <div className="flex items-center gap-1.5">
