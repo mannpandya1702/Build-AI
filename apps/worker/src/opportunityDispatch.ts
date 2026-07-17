@@ -20,6 +20,7 @@ import { loadCaps, resolveBuildMode } from "@autopilot/adapters";
 import {
   type OppGateContext,
   type OpportunityRow,
+  WEBSITE_UNLOCK_LEAD_STATUSES,
   advanceOpportunity,
   emitEvent,
   getPool,
@@ -60,18 +61,19 @@ export async function runOpportunityDispatch(boss: PgBoss, mode: OpportunityDisp
     approved: boolean;
     website_unlocked: boolean;
   }>(
+    // website_unlocked derives from the AUTHORITATIVE lead status (the website line is a projection of
+    // the lead flow), so no website-opportunity row has to be kept in sync for the hold to be correct.
     `select o.id, o.lead_id, o.service_type, o.status, o.score,
             exists(select 1 from agent_events e
                    where e.type = $1 and e.payload->>'opportunityId' = o.id::text) as approved,
-            exists(select 1 from opportunities w
-                   where w.lead_id = o.lead_id and w.service_type = 'website'
-                     and w.status in ('closed_won','onboarding','live')) as website_unlocked
+            exists(select 1 from leads l
+                   where l.id = o.lead_id and l.status = any($2::lead_status[])) as website_unlocked
      from opportunities o
      where o.service_type <> 'website'
        and o.status not in ('churned','closed_lost')
      order by coalesce(o.score,0) desc, o.updated_at asc
      limit 50`,
-    [APPROVED_EVENT],
+    [APPROVED_EVENT, [...WEBSITE_UNLOCK_LEAD_STATUSES]],
   );
   if (rowsRes.rows.length === 0) return; // nothing to do (no non-website opportunities yet)
   const rows: OpportunityRow[] = rowsRes.rows.map((r) => ({

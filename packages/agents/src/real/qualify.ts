@@ -3,7 +3,7 @@ import { loadIcp, safeFetch } from "@autopilot/adapters";
 // encoded exactly). ENV ADAPTATION (PROGRESS.md): the "outdated/broken/mobile-unfriendly"
 // judgment uses a deterministic homepage probe (dead/parked/no-viewport) instead of a Haiku
 // screenshot review until Phase 3 wires screenshots.
-import { advanceLead, emitEvent, getPool } from "@autopilot/core";
+import { advanceLead, emitEvent, ensureServiceOpportunities, getPool } from "@autopilot/core";
 
 async function probeSiteWeak(url: string): Promise<{ weak: boolean; why: string }> {
   try {
@@ -84,6 +84,29 @@ export async function qualify(leadId: string): Promise<void> {
   });
   if (score >= icp.qualify_threshold) {
     await advanceLead(leadId, "qualified", { agent: "qualify" });
+    // Create the lead's service opportunities (agency spine, §8.3): the website line (mirrors
+    // lead_status) plus any expansion lines detection turns up (created at `identified`, held until
+    // the website closes). Best-effort — a creation failure must never fail qualification.
+    await ensureServiceOpportunities(
+      leadId,
+      {
+        hasWebsite: Boolean(lead.website_url),
+        siteIsWeak: Boolean(lead.website_url) && (breakdown.website_gap ?? 0) > 0,
+        reviewCount: lead.review_count ?? null,
+        isPhoneDriven: Boolean(lead.contact_phone),
+        hasOnlineBooking: false, // unknown at qualify time; conservative (assume absent)
+        hasChat: false,
+      },
+      { leadStatus: "qualified", score, agent: "qualify" },
+    ).catch((e) =>
+      emitEvent({
+        agent: "qualify",
+        leadId,
+        level: "warn",
+        type: "opportunity.detect_failed",
+        message: (e as Error).message,
+      }).catch(() => undefined),
+    );
   } else {
     await pool.query("update leads set disqualify_reason = $2 where id = $1", [
       leadId,

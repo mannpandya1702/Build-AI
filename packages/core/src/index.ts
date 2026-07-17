@@ -2,6 +2,8 @@ export * from "./statuses.js";
 export * from "./opportunityStatuses.js";
 export * from "./dispatchOpportunity.js";
 export * from "./detectServiceOpportunities.js";
+export * from "./websiteOpportunityStatus.js";
+export * from "./ensureServiceOpportunities.js";
 export * from "./planOpportunityDispatch.js";
 export * from "./buildGate.js";
 export * from "./advanceLead.js";
