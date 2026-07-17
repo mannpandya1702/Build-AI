@@ -1,9 +1,13 @@
 "use client";
 
-import { Empty, FilterChip, PageHeader, SearchInput, Skeleton, statusTone } from "@/components/ui";
-import Link from "next/link";
 // /pipeline (spec §8.1): kanban by lead status, with search + stage-group filtering (the skill's
-// dashboard anti-pattern list literally names "No filtering"). Poll-based locally.
+// dashboard anti-pattern list literally names "No filtering"). Migrated to TanStack Query: the leads
+// poller is now useQuery (real error state, pauses on hidden tabs) and mock-lead/discover invalidate
+// it so a queued batch shows up the instant the API accepts it.
+import { Card, Empty, FilterChip, PageHeader, SearchInput, Skeleton, statusTone } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 interface LeadCard {
@@ -75,10 +79,15 @@ function age(seconds: number): string {
 const NICHES = ["roofing", "plumbing", "hvac", "dental", "custom"] as const;
 const COUNTRIES = ["United States", "Canada", "United Kingdom", "Australia", "India", "other"] as const;
 
+async function fetchLeads(): Promise<LeadCard[]> {
+  const res = await fetch("/api/leads", { cache: "no-store" });
+  if (!res.ok) throw new Error(`leads ${res.status}`);
+  return (await res.json()).leads as LeadCard[];
+}
+
 export default function PipelinePage() {
-  const [leads, setLeads] = useState<LeadCard[] | null>(null);
+  const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
-  const [devTools, setDevTools] = useState(false);
   const [q, setQ] = useState("");
   const [group, setGroup] = useState<keyof typeof GROUPS>("All");
   const [contact, setContact] = useState<(typeof CONTACT)[number]>("All contacts");
@@ -93,23 +102,32 @@ export default function PipelinePage() {
   const [count, setCount] = useState(25);
   const [discoverMsg, setDiscoverMsg] = useState<string>("");
 
+  const {
+    data: leads,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["leads"],
+    queryFn: fetchLeads,
+    refetchInterval: 2000,
+  });
+  const { data: devTools } = useQuery({
+    queryKey: ["dev-enabled"],
+    queryFn: async () => {
+      const r = await fetch("/api/dev/enabled");
+      if (!r.ok) return false;
+      return Boolean((await r.json()).enabled);
+    },
+    staleTime: Number.POSITIVE_INFINITY,
+    refetchOnWindowFocus: false,
+  });
+
+  // One-shot prefill of the discover panel from saved targeting. This seeds *editable* form state,
+  // so it must run exactly once on mount, not a query that could re-seed and clobber the operator's
+  // in-progress edits on refetch.
   useEffect(() => {
     let live = true;
-    const tick = async () => {
-      const res = await fetch("/api/leads", { cache: "no-store" });
-      const data = await res.json();
-      if (live) setLeads(data.leads);
-    };
-    tick();
-    const t = setInterval(tick, 2000);
-    // dev-only fabricators (mock lead) render only where dev tools are enabled
-    fetch("/api/dev/enabled")
-      .then((r) => r.json())
-      .then((d) => {
-        if (live) setDevTools(Boolean(d.enabled));
-      })
-      .catch(() => undefined);
-    // prefill the discover panel with the saved targeting
     fetch("/api/settings", { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
@@ -135,7 +153,6 @@ export default function PipelinePage() {
       .catch(() => undefined);
     return () => {
       live = false;
-      clearInterval(t);
     };
   }, []);
 
@@ -143,6 +160,7 @@ export default function PipelinePage() {
     setBusy(true);
     await fetch("/api/dev/run-mock-lead", { method: "POST" });
     setBusy(false);
+    qc.invalidateQueries({ queryKey: ["leads"] });
   }
 
   async function submitDiscover() {
@@ -178,6 +196,7 @@ export default function PipelinePage() {
       setDiscoverMsg(
         `queued: ${d.count} ${d.vertical} leads in ${cities.length} cit${cities.length === 1 ? "y" : "ies"} (${finalCountry}). The worker picks it up within a minute.`,
       );
+      qc.invalidateQueries({ queryKey: ["leads"] });
     } else {
       setDiscoverMsg(`error: ${d.error ?? res.status}`);
     }
@@ -211,21 +230,13 @@ export default function PipelinePage() {
         description={leads ? `${leads.length} leads · ${filtered.length} shown` : "loading…"}
       >
         {devTools && (
-          <button
-            onClick={runMockLead}
-            disabled={busy}
-            className="h-9 cursor-pointer rounded-lg border border-line px-3 text-sm text-muted transition-colors duration-150 hover:bg-surface2 hover:text-ink disabled:opacity-50"
-          >
+          <Button variant="outline" onClick={runMockLead} disabled={busy}>
             Run mock lead
-          </button>
+          </Button>
         )}
-        <button
-          onClick={() => setShowDiscover(!showDiscover)}
-          aria-expanded={showDiscover}
-          className="h-9 cursor-pointer rounded-lg bg-accent px-3 font-display text-sm font-semibold text-accentink transition-opacity duration-150 hover:opacity-90"
-        >
+        <Button variant="primary" onClick={() => setShowDiscover(!showDiscover)} aria-expanded={showDiscover}>
           {showDiscover ? "Close" : "Discover leads"}
-        </button>
+        </Button>
       </PageHeader>
 
       {showDiscover && (
@@ -318,13 +329,9 @@ export default function PipelinePage() {
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-3">
-            <button
-              onClick={submitDiscover}
-              disabled={busy}
-              className="h-10 cursor-pointer rounded-lg bg-accent px-5 font-display text-sm font-semibold text-accentink transition-opacity duration-150 hover:opacity-90 disabled:opacity-50"
-            >
+            <Button variant="primary" size="lg" onClick={submitDiscover} disabled={busy}>
               {busy ? "Queuing…" : "Start discovery"}
-            </button>
+            </Button>
             {discoverMsg && (
               <span
                 className={`text-sm ${discoverMsg.startsWith("error") ? "text-danger" : "text-muted"}`}
@@ -355,7 +362,15 @@ export default function PipelinePage() {
         </div>
       </div>
 
-      {!leads && <Skeleton rows={4} />}
+      {isLoading && <Skeleton rows={4} />}
+      {isError && (
+        <Card className="flex items-center justify-between gap-3 px-4 py-3">
+          <p className="text-sm text-muted">Couldn't load the pipeline.</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </Card>
+      )}
       {leads && visible.length === 0 && (
         <Empty hint="Adjust the search or stage filter.">No leads match.</Empty>
       )}
