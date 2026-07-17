@@ -37,3 +37,6 @@ apps/worker/data/
 data/leads.json
 data/research/
 drafts/
+
+# Vercel CLI local link + build state (not committed; recreated on deploy)
+.vercel
