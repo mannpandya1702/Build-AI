@@ -62,6 +62,12 @@ const PATHS = {
       <circle cx="7" cy="17" r="3" />
     </>
   ),
+  billing: (
+    <>
+      <path d="M4 3h16a1 1 0 0 1 1 1v17l-3-2-3 2-3-2-3 2-3-2-3 2V4a1 1 0 0 1 1-1z" />
+      <path d="M8 8h8M8 12h8" />
+    </>
+  ),
   builds: (
     <>
       <path d="M3 9l9-5 9 5-9 5-9-5z" />

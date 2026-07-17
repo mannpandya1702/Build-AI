@@ -23,6 +23,9 @@ importers:
       '@autopilot/automation':
         specifier: workspace:*
         version: link:../../packages/automation
+      '@autopilot/billing':
+        specifier: workspace:*
+        version: link:../../packages/billing
       '@autopilot/chat':
         specifier: workspace:*
         version: link:../../packages/chat
