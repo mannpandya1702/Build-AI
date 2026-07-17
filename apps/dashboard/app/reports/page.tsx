@@ -1,10 +1,11 @@
 "use client";
 
-import { Card, Empty, PageHeader, SectionTitle, Skeleton, StatTile } from "@/components/ui";
 // /reports (spec §8.7): pipeline funnel + spend trend + unit economics + daily digests. Chart types
 // per the skill: funnel (per-stage conversion %, biggest drop highlighted), area for spend trend,
-// subtle gridlines, tabular figures.
-import { useEffect, useState } from "react";
+// subtle gridlines, tabular figures. Migrated to TanStack Query (no poller, real error state).
+import { Card, Empty, PageHeader, SectionTitle, Skeleton, StatTile } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 
 interface Report {
   funnel: { stage: string; count: number }[];
@@ -100,84 +101,98 @@ function SpendArea({ data }: { data: { day: string; usd: number }[] }) {
   );
 }
 
+async function fetchReport(): Promise<Report> {
+  const res = await fetch("/api/reports", { cache: "no-store" });
+  if (!res.ok) throw new Error(`reports ${res.status}`);
+  return (await res.json()) as Report;
+}
+
 export default function ReportsPage() {
-  const [r, setR] = useState<Report | null>(null);
-  useEffect(() => {
-    let live = true;
-    const tick = async () => {
-      const res = await fetch("/api/reports", { cache: "no-store" });
-      if (res.ok) {
-        const d = await res.json();
-        if (live) setR(d);
-      }
-    };
-    tick();
-    const t = setInterval(tick, 5000);
-    return () => {
-      live = false;
-      clearInterval(t);
-    };
-  }, []);
-  if (!r) return <Skeleton rows={5} />;
+  const {
+    data: r,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["reports"],
+    queryFn: fetchReport,
+    refetchInterval: 5000,
+  });
 
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader title="Reports" description="Funnel, spend, and unit economics from live pipeline data." />
 
-      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
-        <StatTile label="AI spend" value={`$${r.tiles.total_spend.toFixed(2)}`} tone="warn" />
-        <StatTile
-          label="Cost / demo"
-          value={`$${r.tiles.cost_per_demo.toFixed(2)}`}
-          sub={`${r.tiles.demos_deployed} demos`}
-          tone="data"
-        />
-        <StatTile
-          label="Cost / qualified"
-          value={`$${r.tiles.cost_per_qualified.toFixed(2)}`}
-          sub={`${r.tiles.qualified} qualified`}
-        />
-        <StatTile label="Reply rate" value={`${Math.round(r.tiles.reply_rate * 100)}%`} tone="ok" />
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card className="p-4">
-          <SectionTitle>Pipeline funnel</SectionTitle>
-          <div className="mt-4">
-            <Funnel data={r.funnel} />
-          </div>
+      {isLoading && <Skeleton rows={5} />}
+      {isError && (
+        <Card className="flex items-center justify-between gap-3 px-4 py-3">
+          <p className="text-sm text-muted">Couldn't load reports.</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
         </Card>
-        <Card className="p-4">
-          <SectionTitle>AI spend (14 days)</SectionTitle>
-          <div className="mt-4">
-            <SpendArea data={r.spend} />
-          </div>
-        </Card>
-      </div>
+      )}
 
-      <div className="mt-6">
-        <SectionTitle>Daily digests</SectionTitle>
-        <div className="mt-2 space-y-2.5">
-          {(r.digests ?? []).length === 0 && (
-            <Empty>no digests yet (the monitor writes one daily at 09:00 IST)</Empty>
-          )}
-          {(r.digests ?? []).map((d) => (
-            <Card key={d.date} className="p-4">
-              <div className="flex items-center justify-between">
-                <p className="font-display text-sm font-semibold text-ink">{String(d.date).slice(0, 10)}</p>
-                {d.anomalies?.length > 0 && (
-                  <span className="rounded-md bg-warn/10 px-2 py-0.5 font-display text-[11px] text-warn">
-                    {d.anomalies.length} anomalies
-                  </span>
-                )}
+      {r && (
+        <>
+          <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
+            <StatTile label="AI spend" value={`$${r.tiles.total_spend.toFixed(2)}`} tone="warn" />
+            <StatTile
+              label="Cost / demo"
+              value={`$${r.tiles.cost_per_demo.toFixed(2)}`}
+              sub={`${r.tiles.demos_deployed} demos`}
+              tone="data"
+            />
+            <StatTile
+              label="Cost / qualified"
+              value={`$${r.tiles.cost_per_qualified.toFixed(2)}`}
+              sub={`${r.tiles.qualified} qualified`}
+            />
+            <StatTile label="Reply rate" value={`${Math.round(r.tiles.reply_rate * 100)}%`} tone="ok" />
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Card className="p-4">
+              <SectionTitle>Pipeline funnel</SectionTitle>
+              <div className="mt-4">
+                <Funnel data={r.funnel} />
               </div>
-              <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap font-display text-xs leading-relaxed text-muted">
-                {d.summary_md}
-              </pre>
             </Card>
-          ))}
-        </div>
-      </div>
+            <Card className="p-4">
+              <SectionTitle>AI spend (14 days)</SectionTitle>
+              <div className="mt-4">
+                <SpendArea data={r.spend} />
+              </div>
+            </Card>
+          </div>
+
+          <div className="mt-6">
+            <SectionTitle>Daily digests</SectionTitle>
+            <div className="mt-2 space-y-2.5">
+              {(r.digests ?? []).length === 0 && (
+                <Empty>no digests yet (the monitor writes one daily at 09:00 IST)</Empty>
+              )}
+              {(r.digests ?? []).map((d) => (
+                <Card key={d.date} className="p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="font-display text-sm font-semibold text-ink">
+                      {String(d.date).slice(0, 10)}
+                    </p>
+                    {d.anomalies?.length > 0 && (
+                      <span className="rounded-md bg-warn/10 px-2 py-0.5 font-display text-[11px] text-warn">
+                        {d.anomalies.length} anomalies
+                      </span>
+                    )}
+                  </div>
+                  <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap font-display text-xs leading-relaxed text-muted">
+                    {d.summary_md}
+                  </pre>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
