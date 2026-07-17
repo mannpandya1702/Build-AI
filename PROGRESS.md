@@ -33,6 +33,7 @@ real money. Operator inputs to flip subsystems MOCK→LIVE are tracked in `NEEDS
 | 12 | Automation core (`@autopilot/automation`): A2P/SMS gate (blocked until campaign approved; STOP global; quiet hours) + 3 templates | Phase 7/§7.4,§10 | 9 tests |
 | 13 | Delivery ops (`@autopilot/delivery`): measured-only value report + auto SLA credits | Phase 8/§7.5 | zero estimated numbers in report |
 | 14 | Frontend resilience: app-wide `error.tsx`/`not-found.tsx` boundaries + logout UX | Phase F/§12 | next build green |
+| 15 | Dashboard-wide TanStack Query migration: every page (shortlist, meetings, builds, activity, outbox, reports, pipeline, lead-detail) off hand-rolled `setInterval` pollers → `useQuery`/`useMutation` with real error+retry states; outbox/pipeline actions invalidate on success (instant refresh); Button primitive on all action buttons | Phase F/§12 (closes audit "silent failures / infinite skeleton") | `grep setInterval app/` empty; 7 builds green |
 
 ### New packages
 `@autopilot/{evals, compliance, billing, chat, voice, automation, delivery}` + dashboard UI kit
@@ -45,7 +46,8 @@ real money. Operator inputs to flip subsystems MOCK→LIVE are tracked in `NEEDS
 - **Real adapters (credential-blocked, all mock-stubbed today):** Vapi (voice), Trigger.dev + Twilio
   (automation/A2P), Stripe (billing checkout/webhooks/dunning), Supabase (single DB + Auth + RLS),
   Sentry + healthchecks.io (observability), Fly.io (always-on worker → delete the bridge).
-- **Demo Hub app + chat `<script>` widget**; migrate remaining dashboard pages to the premium kit.
+- **Demo Hub app + chat `<script>` widget** (frontend page migration to the premium kit is done — all
+  8 dashboard pages are on TanStack Query with error/retry states).
 - **Healthcare niche activation:** operator provides BAA template + E&O insurance + PHI toggle.
 - All items enumerated in `NEEDS_FROM_OPERATOR.md`.
 
