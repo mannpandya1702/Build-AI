@@ -1,5 +1,6 @@
 export * from "./statuses.js";
 export * from "./opportunityStatuses.js";
+export * from "./dispatchOpportunity.js";
 export * from "./buildGate.js";
 export * from "./advanceLead.js";
 export * from "./advanceOpportunity.js";
