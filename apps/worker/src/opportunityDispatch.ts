@@ -49,7 +49,8 @@ export async function runOpportunityDispatch(boss: PgBoss, mode: OpportunityDisp
   if (mode === "off") return;
   const pool = getPool();
 
-  // Non-website, non-terminal opportunities + whether an operator approval exists for each.
+  // Non-website, non-terminal opportunities + whether an operator approval exists, + whether the
+  // owning lead's WEBSITE opportunity is won (closed_won/onboarding/live) — the expansion unlock.
   const rowsRes = await pool.query<{
     id: string;
     lead_id: string;
@@ -57,10 +58,14 @@ export async function runOpportunityDispatch(boss: PgBoss, mode: OpportunityDisp
     status: OpportunityRow["status"];
     score: number | null;
     approved: boolean;
+    website_unlocked: boolean;
   }>(
     `select o.id, o.lead_id, o.service_type, o.status, o.score,
             exists(select 1 from agent_events e
-                   where e.type = $1 and e.payload->>'opportunityId' = o.id::text) as approved
+                   where e.type = $1 and e.payload->>'opportunityId' = o.id::text) as approved,
+            exists(select 1 from opportunities w
+                   where w.lead_id = o.lead_id and w.service_type = 'website'
+                     and w.status in ('closed_won','onboarding','live')) as website_unlocked
      from opportunities o
      where o.service_type <> 'website'
        and o.status not in ('churned','closed_lost')
@@ -69,6 +74,15 @@ export async function runOpportunityDispatch(boss: PgBoss, mode: OpportunityDisp
     [APPROVED_EVENT],
   );
   if (rowsRes.rows.length === 0) return; // nothing to do (no non-website opportunities yet)
+  const rows: OpportunityRow[] = rowsRes.rows.map((r) => ({
+    id: r.id,
+    lead_id: r.lead_id,
+    service_type: r.service_type,
+    status: r.status,
+    score: r.score,
+    approved: r.approved,
+    websiteUnlocked: r.website_unlocked,
+  }));
 
   // Daily build budget shared across all opportunities (mirrors the lead gate accounting).
   const caps = loadCaps();
@@ -93,14 +107,14 @@ export async function runOpportunityDispatch(boss: PgBoss, mode: OpportunityDisp
   );
 
   const gate: OppGateContext = { mode: buildMode, budgetRemainingUsd, estCostUsd: budget.usd_per_lead };
-  const plan = planOpportunityDispatch(rowsRes.rows, gate);
+  const plan = planOpportunityDispatch(rows, gate);
 
   // Always emit the plan summary — this is the shadow observability signal.
   await emitEvent({
     agent: "scheduler",
     level: "debug",
     type: "opportunity.dispatch_plan",
-    message: `opp dispatch (${mode}): ${plan.enqueue.length} enqueue, ${plan.parkAtGate.length} park, ${plan.admitToBuild.length} admit, ${plan.waiting.length} waiting`,
+    message: `opp dispatch (${mode}): ${plan.enqueue.length} enqueue, ${plan.parkAtGate.length} park, ${plan.admitToBuild.length} admit, ${plan.held.length} held, ${plan.waiting.length} waiting`,
     payload: {
       mode,
       buildMode,
@@ -108,6 +122,7 @@ export async function runOpportunityDispatch(boss: PgBoss, mode: OpportunityDisp
       enqueue: plan.enqueue.length,
       park: plan.parkAtGate.length,
       admit: plan.admitToBuild.length,
+      held: plan.held.length,
       waiting: plan.waiting.length,
       queues: [...new Set(plan.enqueue.map((e) => e.queue))],
     },

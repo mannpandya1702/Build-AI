@@ -20,6 +20,13 @@ export interface OpportunityRow {
   approved: boolean;
   /** owning lead's score — used only to order gate admission (best first) */
   score: number | null;
+  /**
+   * The owning lead's WEBSITE opportunity has been won (closed_won / onboarding / live). Expansion
+   * lines (chatbot/voice/automation) may only START selling after the website closes (CLAUDE.md §1:
+   * "sell it AFTER the close, never in cold outreach"), so a non-website opportunity is held at
+   * `identified` until this is true. Defaults to false (held) when omitted.
+   */
+  websiteUnlocked?: boolean;
 }
 
 export interface OppGateContext {
@@ -37,6 +44,8 @@ export interface OpportunityPlan {
   parkAtGate: Array<{ oppId: string; leadId: string; reason: string }>;
   /** gate passed: advance awaiting_build_approval -> building (consumes one budget slot) */
   admitToBuild: Array<{ oppId: string; leadId: string; reason: string }>;
+  /** expansion line held at `identified` until the website closes (CLAUDE.md §1: sell after the close) */
+  held: Array<{ oppId: string; leadId: string; reason: string }>;
   /** nothing to do: waiting on operator/prospect, live steady-state, or terminal */
   waiting: Array<{ oppId: string; kind: DispatchAction["kind"]; reason: string }>;
 }
@@ -48,7 +57,7 @@ export interface OpportunityPlan {
  * Every other status is routed by `dispatchOpportunity` and either enqueued, parked, or left waiting.
  */
 export function planOpportunityDispatch(rows: OpportunityRow[], gate: OppGateContext): OpportunityPlan {
-  const plan: OpportunityPlan = { enqueue: [], parkAtGate: [], admitToBuild: [], waiting: [] };
+  const plan: OpportunityPlan = { enqueue: [], parkAtGate: [], admitToBuild: [], held: [], waiting: [] };
   let budgetUsd = gate.budgetRemainingUsd;
 
   // Gate fairness: process best scores first (nulls last) so a low-value opportunity never consumes a
@@ -56,6 +65,18 @@ export function planOpportunityDispatch(rows: OpportunityRow[], gate: OppGateCon
   const ordered = [...rows].sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
 
   for (const row of ordered) {
+    // Expansion-hold (CLAUDE.md §1): an expansion line can't START selling until the website closes.
+    // Hold non-website opportunities at their entry (`identified`) until the website is won. Once
+    // unlocked and moved past identified, they flow normally through the gate + build like any other.
+    if (row.service_type !== "website" && row.status === "identified" && !row.websiteUnlocked) {
+      plan.held.push({
+        oppId: row.id,
+        leadId: row.lead_id,
+        reason: `${row.service_type}: expansion held until the website closes`,
+      });
+      continue;
+    }
+
     const action = dispatchOpportunity(row.service_type, row.status);
     switch (action.kind) {
       case "enqueue":

@@ -36,6 +36,7 @@ real money. Operator inputs to flip subsystems MOCK→LIVE are tracked in `NEEDS
 | 15 | Dashboard-wide TanStack Query migration: every page (shortlist, meetings, builds, activity, outbox, reports, pipeline, lead-detail) off hand-rolled `setInterval` pollers → `useQuery`/`useMutation` with real error+retry states; outbox/pipeline actions invalidate on success (instant refresh); Button primitive on all action buttons | Phase F/§12 (closes audit "silent failures / infinite skeleton") | `grep setInterval app/` empty; 7 builds green |
 | 16 | Opportunity dispatch router (`dispatchOpportunity`) — pure `(service_type, status)`→action map; service-specific build/onboard queues, shared outreach+gate; exhaustive `never` guard | Phase 4 wiring/§8.3-8.4 | 9 tests, all 4 service lines |
 | 17 | Opportunity scheduler plan (`planOpportunityDispatch`) + worker wiring (`opportunityDispatch.ts`): reuses `canRunBuild`, admits best-score-first until the daily budget runs out; flag-gated (`OPPORTUNITY_DISPATCH` off→shadow→execute), non-website only | Phase 4 wiring/§2,§8.4 | 8 planner tests; worker typechecks; gated OFF |
+| 18 | Service detection (`detectServiceOpportunities`) — conservative heuristics pick which lines to carry; website=cold, chatbot/voice/automation=expansion. Plus the **sell-after-close guard**: the planner holds a non-website `identified` opp until the lead's website opp is won (`websiteUnlocked` join in the dispatcher) | Phase 4 wiring/§8.3, CLAUDE.md §1 | 7 detection + 4 hold tests; enforces "sell after close" |
 
 ### New packages
 `@autopilot/{evals, compliance, billing, chat, voice, automation, delivery}` + dashboard UI kit
@@ -44,10 +45,12 @@ real money. Operator inputs to flip subsystems MOCK→LIVE are tracked in `NEEDS
 ### What remains before go-live (needs operator inputs or a running DB to verify)
 - **Wiring:** the opportunity dispatch decision layer is built + tested (router + planner, slices 16-17)
   and wired into the worker behind `OPPORTUNITY_DISPATCH` (default **off**; `shadow` observes,
-  `execute` acts on non-website lines). Still pending: (a) a Postgres to verify `execute` end-to-end,
-  (b) the chatbot/voice/automation worker HANDLERS the router enqueues (MOCK-stubbed queues today),
-  (c) an opportunity-creation path (nothing creates non-website opportunities yet). The website line
-  keeps running on the proven lead scheduler.
+  `execute` acts on non-website lines). The detection brain (`detectServiceOpportunities`) + the
+  sell-after-close hold are built + tested (slice 18). Still pending: (a) a Postgres to verify
+  `execute` end-to-end, (b) the chatbot/voice/automation worker HANDLERS the router enqueues
+  (MOCK-stubbed queues today), (c) the creation CALL SITE — wire `detectServiceOpportunities` into the
+  analyzer so qualified leads actually get their opportunity rows upserted (the decision is ready; the
+  upsert + where-to-call-it is the remaining step). The website line keeps running on the lead scheduler.
 - **Real adapters (credential-blocked, all mock-stubbed today):** Vapi (voice), Trigger.dev + Twilio
   (automation/A2P), Stripe (billing checkout/webhooks/dunning), Supabase (single DB + Auth + RLS),
   Sentry + healthchecks.io (observability), Fly.io (always-on worker → delete the bridge).

@@ -16,6 +16,7 @@ function row(p: Partial<OpportunityRow> & Pick<OpportunityRow, "status">): Oppor
     status: p.status,
     approved: p.approved ?? false,
     score: p.score ?? null,
+    websiteUnlocked: p.websiteUnlocked ?? false,
   };
 }
 
@@ -126,5 +127,40 @@ describe("planOpportunityDispatch", () => {
     expect(plan.parkAtGate).toHaveLength(1);
     expect(plan.admitToBuild).toHaveLength(1);
     expect(plan.waiting).toHaveLength(1);
+  });
+
+  it("expansion-hold: a non-website identified opp is HELD until the website closes", () => {
+    const locked = planOpportunityDispatch(
+      [row({ status: "identified", service_type: "chatbot", websiteUnlocked: false })],
+      REVIEW,
+    );
+    expect(locked.held).toHaveLength(1);
+    expect(locked.enqueue).toHaveLength(0);
+
+    const unlocked = planOpportunityDispatch(
+      [row({ status: "identified", service_type: "chatbot", websiteUnlocked: true })],
+      REVIEW,
+    );
+    expect(unlocked.held).toHaveLength(0);
+    expect(unlocked.enqueue).toMatchObject([{ queue: "agent:chatbot-plan" }]);
+  });
+
+  it("expansion-hold: a WEBSITE identified opp is never held (it's the cold pitch)", () => {
+    const plan = planOpportunityDispatch(
+      [row({ status: "identified", service_type: "website", websiteUnlocked: false })],
+      REVIEW,
+    );
+    expect(plan.held).toHaveLength(0);
+    expect(plan.enqueue).toMatchObject([{ queue: "agent:solution" }]);
+  });
+
+  it("expansion-hold: once past identified, an unlocked expansion opp flows through the gate", () => {
+    // a chatbot opp that has been proposed (already unlocked + advanced) parks at the gate normally
+    const plan = planOpportunityDispatch(
+      [row({ status: "proposed", service_type: "chatbot", websiteUnlocked: true })],
+      REVIEW,
+    );
+    expect(plan.held).toHaveLength(0);
+    expect(plan.parkAtGate).toHaveLength(1);
   });
 });
