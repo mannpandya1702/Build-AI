@@ -75,7 +75,13 @@ async function main(): Promise<void> {
     }
   }
 
-  const boss = new PgBoss({ connectionString: url, schema: "pgboss" });
+  // Cap pg-boss's own pool (default 10) to keep the worker's total Postgres connection footprint
+  // small on the shared managed pooler (see DB_POOL_MAX note in core/db.ts).
+  const boss = new PgBoss({
+    connectionString: url,
+    schema: "pgboss",
+    max: Number(process.env.PGBOSS_MAX) || 5,
+  });
   boss.on("error", (err) => console.error("[pg-boss]", err.message));
   await boss.start();
 
@@ -458,8 +464,12 @@ async function main(): Promise<void> {
         id: string;
         payload: { count?: number; vertical?: string; cities?: string[]; country?: string };
       }>(
+        // Skip gated healthcare verticals (Amendment A: no med spa / dental / mental health / chiro
+        // until BAA + E&O are on file). This also neutralizes any stale pre-deploy healthcare
+        // research requests so they never auto-run on worker bring-up.
         `select e.id, e.payload from agent_events e
          where e.type = 'research.requested'
+           and lower(coalesce(e.payload->>'vertical','')) !~ '(mental health|dental|dentist|med ?spa|chiro|derma|medical|psych|therap|clinic|orthodont|physician|urgent care)'
            and not exists (select 1 from agent_events s where s.type = 'research.started' and s.payload->>'request_id' = e.id::text)
          limit 5`,
       );

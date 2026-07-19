@@ -55,7 +55,11 @@ export function getPool(): DbPool {
   if (!pool) {
     const url = process.env.DATABASE_URL;
     if (!url) throw new Error("DATABASE_URL is not set (see .env.example)");
-    pool = createPoolForUrl(url);
+    // DB_POOL_MAX keeps the deployed worker's connection footprint small: the worker also runs a
+    // pg-boss pool and holds one advisory-lock client, and a managed Postgres (Supabase free-tier
+    // pooler) has a modest connection budget. Default 10 for local dev; the Fly worker sets it to 4
+    // so worker(4) + pg-boss(5) + lock(1) stays well under the pooler ceiling.
+    pool = createPoolForUrl(url, Number(process.env.DB_POOL_MAX) || 10);
   }
   return pool;
 }
