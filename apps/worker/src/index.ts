@@ -113,14 +113,38 @@ async function main(): Promise<void> {
     const token = process.env.RESET_STATE;
     const done = await pool.query("select 1 from settings where key = $1", [`reset_${token}`]);
     if (done.rowCount === 0) {
-      await pool.query("truncate table leads restart identity cascade");
-      await pool.query("truncate table agent_events restart identity");
-      await pool.query("delete from pgboss.job").catch(() => undefined);
-      await pool.query(
-        "insert into settings (key, value) values ($1, 'true'::jsonb) on conflict (key) do nothing",
-        [`reset_${token}`],
-      );
-      console.log(`[worker] RESET_STATE '${token}': wiped leads + agent_events + job queue`);
+      try {
+        // 1) Clear the job queue first — safe (the dashboard never locks pgboss.job) and it alone
+        //    stops any stale-job retry storm.
+        await pool.query("delete from pgboss.job").catch((e: Error) => console.error("[reset] jobs:", e.message));
+        // 2) Wipe leads with a bounded lock wait, retried across the gaps between dashboard reads, so
+        //    a truncate can never hang the worker on the dashboard's ACCESS SHARE lock.
+        await pool.query("set lock_timeout = '4s'");
+        let wiped = false;
+        for (let attempt = 0; attempt < 6 && !wiped; attempt++) {
+          try {
+            await pool.query("truncate table leads restart identity cascade");
+            wiped = true;
+          } catch (e) {
+            console.error(`[reset] leads wipe attempt ${attempt + 1} blocked:`, (e as Error).message);
+            await new Promise((r) => setTimeout(r, 3000));
+          }
+        }
+        await pool.query("set lock_timeout = 0").catch(() => undefined);
+        if (wiped) {
+          await pool.query("truncate table agent_events restart identity").catch(() => undefined);
+          console.log(`[worker] RESET_STATE '${token}': wiped leads + agent_events + job queue`);
+        } else {
+          console.error(`[worker] RESET_STATE '${token}': job queue cleared, but leads stayed locked; not wiped`);
+        }
+        // Mark done either way so we do not loop the reset; if leads did not wipe, re-run with a new token.
+        await pool.query(
+          "insert into settings (key, value) values ($1, 'true'::jsonb) on conflict (key) do nothing",
+          [`reset_${token}`],
+        );
+      } catch (e) {
+        console.error("[worker] RESET_STATE error (continuing):", (e as Error).message);
+      }
     }
   }
 
