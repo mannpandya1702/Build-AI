@@ -30,8 +30,10 @@ export async function analyzer(leadId: string): Promise<void> {
 
   // Idempotency guard (spec §4.4): a duplicate job can fire after the lead already advanced
   // (singleton window race). Re-running would burn a Sonnet call, write a duplicate audit, and
-  // throw on an illegal transition. If the lead has left `qualified`, this work is already done.
-  if (lead.status !== "qualified") {
+  // throw on an illegal transition. The analyzer's TRIGGER is `awaiting_build_approval` (the spend
+  // gate admits approved leads here), so that — not `qualified` — is the status to expect; if the
+  // lead has already left it, this work is done.
+  if (lead.status !== "awaiting_build_approval") {
     await emitEvent({
       agent: "analyzer",
       leadId,
