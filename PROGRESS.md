@@ -561,3 +561,28 @@ review. Cold outreach is UNCHANGED (demo-first, one move).
 - Events: `agent.verb` types (`lead.status_changed`, `build.deployed`, `email.sent`).
 - Local dev DB: `postgres://autopilot:autopilot_local_dev@localhost:5432/agency_autopilot`
   (dev-only credentials, documented here intentionally).
+
+## Worker deployed to Fly.io — production worker online (2026-07-19)
+
+The always-on worker now runs on **Fly.io** (app `agency-autopilot-worker`, region `iad`, one
+shared-cpu-1x / 1GB machine) against the **shared Supabase Postgres** — the same DB the dashboard
+uses. Because `DATABASE_URL_NEON` is unset, the split-brain bridge (`apps/worker/src/bridge.ts`) is a
+no-op: one database, one source of truth. This supersedes the local-worker + Neon-bridge setup that
+the sandbox's TCP:5432 block forced during the build.
+
+Deploy mechanics (the sandbox blocks flyctl's GitHub binary download and apt-over-proxy, so the
+usual `fly deploy` path is unavailable): Docker image built locally from `Dockerfile.worker`
+(full `node:22` base for CA certs, `tsx` runtime, `PUPPETEER_SKIP_DOWNLOAD=true`), pushed to
+`registry.fly.io`, machine created via the Machines API; app secrets (`DATABASE_URL`,
+`ANTHROPIC_API_KEY`, `GOOGLE_PLACES_API_KEY`) set via the Fly GraphQL API (never committed).
+
+Verified live: `worker.started (mock=false)`, `worker.heartbeat` every 60s, zero error events,
+no pooler connection-limit issues. Spend gate intact: `MOCK_MODE=false`, `BUILD_MODE=review`,
+`OUTREACH_MODE=review`. Worker boots **paused** (`worker_enabled=false`); discovery runs only when
+the operator enables it and targets a niche/metro.
+
+Follow-ups: (1) add a Chromium layer to `Dockerfile.worker` before any build is approved (QA
+screenshots need it; skipped for now). (2) Two stale `research.requested` events (mental health
+clinics, Dallas, 2026-07-17) are parked; neutralize before enabling — healthcare is gated
+(Amendment A: BAA + E&O). (3) Rotate all chat-exposed keys. (4) Brand rename pending (Maana -> TBD);
+reconcile `agency-facts.yaml` once chosen.
