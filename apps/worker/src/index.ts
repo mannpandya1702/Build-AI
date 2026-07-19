@@ -5,6 +5,7 @@
 // inside advanceLead and surface as error events.
 
 import { loadCaps, resolveBuildMode, usedToday } from "@autopilot/adapters";
+import { LOOKS } from "@autopilot/blocks";
 import {
   AGENTS,
   AGENT_BY_TRIGGER,
@@ -163,6 +164,20 @@ async function main(): Promise<void> {
       lockClient.release();
       process.exit(1);
     }
+  }
+
+  // Seed the design "looks" registry if empty (the uiux agent reads it; a fresh DB needs this once).
+  // Idempotent upsert from @autopilot/blocks — cheap (~34 rows), so guard on an empty-table check.
+  const looksN = await pool.query<{ n: number }>("select count(*)::int n from looks").catch(() => null);
+  if (looksN && looksN.rows[0].n === 0) {
+    for (const l of LOOKS) {
+      await pool.query(
+        `insert into looks (preset, name, palette, type_pairing, hero_variant) values ($1,$2,$3,$4,$5)
+         on conflict (preset, name) do nothing`,
+        [l.preset, l.name, JSON.stringify(l.palette), JSON.stringify(l.typePairing), l.heroVariant],
+      );
+    }
+    console.log(`[worker] seeded ${LOOKS.length} design looks`);
   }
 
   // Cap pg-boss's own pool (default 10) to keep the worker's total Postgres connection footprint
