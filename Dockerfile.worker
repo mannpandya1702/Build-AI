@@ -5,15 +5,26 @@
 # so we cannot add them there — hence the full image.
 FROM node:22
 
+# Chromium for the analyzer + QA screenshot steps (adapters -> puppeteer). This build environment's
+# proxy is CONNECT-only and rejects apt's default HTTP repos (405), so switch APT to HTTPS first,
+# then install the system Chromium + its runtime libs. Puppeteer uses this binary (its own download
+# stays skipped). apt reads the proxy from the build's HTTPS_PROXY/HTTP_PROXY build-args.
+RUN set -eux; \
+    for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do \
+      [ -f "$f" ] && sed -i 's|http://|https://|g' "$f" || true; \
+    done; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends chromium fonts-liberation; \
+    rm -rf /var/lib/apt/lists/*
+
 # pnpm via corepack, pinned to the repo's packageManager.
 RUN corepack enable && corepack prepare pnpm@11.9.0 --activate
 
 WORKDIR /app
 
-# The QA screenshot step (adapters -> puppeteer) only runs in the build phase, which is gated behind
-# operator approval (BUILD_MODE=review). Skip the ~150MB Chromium download for a fast, reliable image;
-# a Chromium layer gets added before builds are enabled.
+# Use the system Chromium installed above; skip Puppeteer's own ~150MB download.
 ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Copy the monorepo (node_modules/.git/etc. excluded via .dockerignore) and install fresh.
 COPY . .

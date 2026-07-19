@@ -223,15 +223,16 @@ async function main(): Promise<void> {
       if (!workerEnabled) return;
       const handler = handlers[agent.name];
       if (!handler) return; // not yet implemented for this mode: lead waits, nothing fabricated
-      // Stale-job guard: a retried job derived from an earlier status is worthless once the lead has
-      // reached a terminal state. Skip it (complete, no retry) instead of forcing an illegal
-      // transition — that retry churn was part of the crash-loop.
-      const cur = await pool.query<{ status: string }>("select status from leads where id = $1", [
+      // Stale-job guard: the scheduler enqueues a job for a lead sitting in this agent's trigger
+      // status, but a re-delivered or retried pg-boss job can arrive after the lead has already moved
+      // on. That was the scrape retry storm — scrape jobs re-firing on parked awaiting_build_approval
+      // leads, hitting an illegal transition and starving real work. If the lead is no longer in one
+      // of THIS agent's trigger statuses, the job is stale: complete it as a no-op.
+      const cur = await pool.query<{ status: LeadStatus }>("select status from leads where id = $1", [
         job.data.leadId,
       ]);
       if (cur.rowCount === 0) return;
-      if (["disqualified", "suppressed", "closed_won", "closed_lost", "delivered"].includes(cur.rows[0].status))
-        return;
+      if (!agent.triggers.includes(cur.rows[0].status)) return;
       try {
         await handler(job.data.leadId);
       } catch (err) {
