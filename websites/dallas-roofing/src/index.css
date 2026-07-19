@@ -1,0 +1,111 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Design tokens. Palette per brief:
+   base charcoal -> slate, warm copper accent, off-white / muted text.
+   Exposed to Tailwind v4 via @theme so `bg-charcoal`, `text-copper`, etc. work.
+--------------------------------------------------------------------------- */
+@theme {
+  --color-charcoal: #0e0f12;
+  --color-slate: #1a1d22;
+  --color-slate-2: #23272e;
+  --color-copper: #e0863a;
+  --color-copper-soft: #f0a860;
+  --color-offwhite: #f4f1ec;
+  --color-muted: #9aa0a6;
+
+  --font-sans:
+    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-script: 'Dancing Script Variable', 'Segoe Script', cursive;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  /* Lenis drives scrolling; keep the native behavior out of its way. */
+  scroll-behavior: auto;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-charcoal);
+  color: var(--color-offwhite);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  min-height: 100svh;
+  width: 100%;
+}
+
+/* Lenis smooth-scroll base state. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Thin, technical selection color that matches the blueprint feel. */
+::selection {
+  background: rgba(224, 134, 58, 0.28);
+  color: var(--color-offwhite);
+}
+
+/* Utility helpers used across sections. */
+.font-script {
+  font-family: var(--font-script);
+  font-weight: 600;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Frosted-glass surface used by the services cards. */
+.glass {
+  background: linear-gradient(
+    180deg,
+    rgba(36, 39, 46, 0.55) 0%,
+    rgba(20, 22, 26, 0.5) 100%
+  );
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(244, 241, 236, 0.08);
+}
+
+/* Blueprint grid backdrop for calmer sections. */
+.blueprint-grid {
+  background-image:
+    linear-gradient(rgba(224, 134, 58, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(224, 134, 58, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+/* ---------------------------------------------------------------------------
+   Reduced motion. When the user prefers reduced motion we drop the pinned
+   scroll choreography entirely (handled in JS) and also neutralize any
+   incidental CSS transitions/animations so nothing drifts or fades.
+--------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
