@@ -36,6 +36,8 @@ apps/worker/data/
 # PII — prospect data lives only in Postgres (MASTER_SPEC §9); full history purge in Phase 1
 data/leads.json
 data/research/
+legacy/data/cache/
+legacy/data/research/
 drafts/
 
 # Vercel CLI local link + build state (not committed; recreated on deploy)
