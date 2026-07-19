@@ -45,6 +45,19 @@ async function main(): Promise<void> {
   if (!url) throw new Error("DATABASE_URL is not set");
   const pool = getPool();
 
+  // Safety net: a long-running worker must not die on a stray unhandled rejection/exception (that was
+  // the Fly crash-loop). Log it AND surface it to agent_events so the reason is visible on the
+  // dashboard (Fly logs aren't easily reachable from the build environment), then keep running.
+  const logFatal = (kind: string, e: unknown) => {
+    console.error(`[worker] ${kind}:`, e instanceof Error ? e.stack : e);
+    const msg = e instanceof Error ? e.message : String(e);
+    emitEvent({ agent: "worker", level: "error", type: `worker.${kind}`, message: msg.slice(0, 500) }).catch(
+      () => undefined,
+    );
+  };
+  process.on("unhandledRejection", (reason) => logFatal("unhandled_rejection", reason));
+  process.on("uncaughtException", (err) => logFatal("uncaught_exception", err));
+
   // Single-worker advisory lock (Phase 7 hardening; PROGRESS.md incidents: a second worker running
   // stale code twice caused retry storms and fixture contamination). The lock is session-scoped on a
   // dedicated client held for the process lifetime; a second worker exits instead of double-running.
@@ -71,6 +84,25 @@ async function main(): Promise<void> {
     lockClient.query("select 1").catch((e: Error) => console.error("[worker] lock keepalive failed:", e.message));
   }, 30_000);
   lockKeepalive.unref?.();
+
+  // One-time operator state reset (RESET_STATE=<token>): wipe all lead state + the stale job queue
+  // for a clean slate, guarded by a settings marker so it runs exactly once per token even across
+  // restarts. NEVER touches suppression_list (§3: the do-not-contact list is sacred; it has no FK to
+  // leads, so the cascade below cannot reach it).
+  if (process.env.RESET_STATE) {
+    const token = process.env.RESET_STATE;
+    const done = await pool.query("select 1 from settings where key = $1", [`reset_${token}`]);
+    if (done.rowCount === 0) {
+      await pool.query("truncate table leads restart identity cascade");
+      await pool.query("truncate table agent_events restart identity");
+      await pool.query("delete from pgboss.job").catch(() => undefined);
+      await pool.query(
+        "insert into settings (key, value) values ($1, 'true'::jsonb) on conflict (key) do nothing",
+        [`reset_${token}`],
+      );
+      console.log(`[worker] RESET_STATE '${token}': wiped leads + agent_events + job queue`);
+    }
+  }
 
   // Mock-on-real-data guard (Phase 7; this class of incident happened TWICE): fixture stubs must
   // never run against a database holding real leads — they fixture-advance real prospects and
@@ -147,6 +179,15 @@ async function main(): Promise<void> {
       if (!workerEnabled) return;
       const handler = handlers[agent.name];
       if (!handler) return; // not yet implemented for this mode: lead waits, nothing fabricated
+      // Stale-job guard: a retried job derived from an earlier status is worthless once the lead has
+      // reached a terminal state. Skip it (complete, no retry) instead of forcing an illegal
+      // transition — that retry churn was part of the crash-loop.
+      const cur = await pool.query<{ status: string }>("select status from leads where id = $1", [
+        job.data.leadId,
+      ]);
+      if (cur.rowCount === 0) return;
+      if (["disqualified", "suppressed", "closed_won", "closed_lost", "delivered"].includes(cur.rows[0].status))
+        return;
       try {
         await handler(job.data.leadId);
       } catch (err) {
