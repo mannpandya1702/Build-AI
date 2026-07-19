@@ -20,6 +20,12 @@ RUN set -eux; \
 # pnpm via corepack, pinned to the repo's packageManager.
 RUN corepack enable && corepack prepare pnpm@11.9.0 --activate
 
+# Vercel CLI for the builder's deploy step (adapters/vercel.ts spawns `vercel`). The demo builder
+# uploads Next.js source and Vercel builds it server-side; auth is via the VERCEL_TOKEN env the
+# adapter passes through. The commands used (deploy, alias set) are stable across majors; latest
+# tracks current Node 22 + Vercel API compatibility.
+RUN npm install -g vercel@latest
+
 WORKDIR /app
 
 # Use the system Chromium installed above; skip Puppeteer's own ~150MB download.
