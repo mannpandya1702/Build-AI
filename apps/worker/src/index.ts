@@ -62,13 +62,33 @@ async function main(): Promise<void> {
   // stale code twice caused retry storms and fixture contamination). The lock is session-scoped on a
   // dedicated client held for the process lifetime; a second worker exits instead of double-running.
   const lockClient = await pool.connect();
-  const lock = await lockClient.query<{ ok: boolean }>(
-    "select pg_try_advisory_lock(hashtext('autopilot_worker')) as ok",
-  );
-  if (!lock.rows[0].ok) {
-    console.error("[worker] another worker already holds the advisory lock for this database. Exiting.");
-    lockClient.release();
-    process.exit(1);
+  const tryLock = async () =>
+    (await lockClient.query<{ ok: boolean }>("select pg_try_advisory_lock(hashtext('autopilot_worker')) as ok"))
+      .rows[0].ok;
+  if (!(await tryLock())) {
+    // The lock is held. A LIVE worker holding it (a fresh heartbeat exists) means single-worker is
+    // working: exit. But rapid restarts and pooled connections that outlive their process leave
+    // ZOMBIE holders with no recent heartbeat. The local supervisor used to clear those (RUNBOOK §3);
+    // on Fly there is none, so self-heal here: terminate the stale holder and re-acquire.
+    const fresh = await pool.query<{ n: number }>(
+      "select count(*)::int n from agent_events where type in ('worker.heartbeat','worker.started') and created_at > now() - interval '3 minutes'",
+    );
+    if (fresh.rows[0].n > 0) {
+      console.error("[worker] a live worker holds the advisory lock (recent heartbeat). Exiting.");
+      lockClient.release();
+      process.exit(1);
+    }
+    console.error("[worker] stale advisory lock, no recent heartbeat: clearing zombie holder(s).");
+    await pool
+      .query("select pg_terminate_backend(pid) from pg_locks where locktype = 'advisory' and pid <> pg_backend_pid()")
+      .catch((e: Error) => console.error("[worker] zombie terminate failed:", e.message));
+    await new Promise((r) => setTimeout(r, 2000));
+    if (!(await tryLock())) {
+      console.error("[worker] could not acquire the advisory lock after clearing zombies. Exiting.");
+      lockClient.release();
+      process.exit(1);
+    }
+    console.error("[worker] acquired the advisory lock after clearing a zombie holder.");
   }
 
   // The lock client is a single dedicated connection held idle for the process lifetime. Managed
