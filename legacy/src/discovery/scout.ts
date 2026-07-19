@@ -170,7 +170,24 @@ async function scoutCombo(niche: string, metro: string): Promise<ComboReport> {
   };
   const report: ComboReport = { ...metrics, opportunity: scoreCombo(metrics), scoutedAt: new Date().toISOString() };
   writeFileSync(cachePath, JSON.stringify(report, null, 2), "utf8");
-  void withSite; // (kept for future per-site drill-down)
+
+  // Per-business drill-down from the SAME billed request, so a winner's flagged sites can be
+  // hand-verified (probe verdicts lie: WAF/geo-blocks read as "dead") without a second paid search.
+  // Side-effect only; does not touch scoring.
+  const detailDir = resolve(SCOUT_CACHE, "detail");
+  mkdirSync(detailDir, { recursive: true });
+  const detail = open.map((c, i) => ({
+    name: c.displayName?.text ?? "(unknown)",
+    address: c.formattedAddress ?? null,
+    reviews: c.userRatingCount ?? 0,
+    rating: c.rating ?? null,
+    website: c.websiteUri ?? null,
+    phone: c.nationalPhoneNumber ?? null,
+    verdict: verdicts[i].status,
+    email: verdicts[i].email,
+  }));
+  writeFileSync(resolve(detailDir, `${slugify(niche)}--${slugify(metro)}.json`), JSON.stringify(detail, null, 2), "utf8");
+  void withSite; // (superseded by the detail dump above; kept to preserve the metrics shape)
   return report;
 }
 
