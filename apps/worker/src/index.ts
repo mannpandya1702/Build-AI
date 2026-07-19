@@ -58,6 +58,20 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // The lock client is a single dedicated connection held idle for the process lifetime. Managed
+  // Postgres and the network reap idle connections (~45s on the Supabase direct connection); its
+  // 'error' event with no listener is an UNHANDLED exception that crashes the worker (observed on
+  // Fly: connect, run ~45s, exit 1, crash-loop). Handle it (exit cleanly so Fly restarts and
+  // re-acquires the lock) and keep the connection warm so it is not reaped in the first place.
+  lockClient.on("error", (e: Error) => {
+    console.error("[worker] advisory-lock connection lost; exiting for a clean restart:", e.message);
+    process.exit(1);
+  });
+  const lockKeepalive = setInterval(() => {
+    lockClient.query("select 1").catch((e: Error) => console.error("[worker] lock keepalive failed:", e.message));
+  }, 30_000);
+  lockKeepalive.unref?.();
+
   // Mock-on-real-data guard (Phase 7; this class of incident happened TWICE): fixture stubs must
   // never run against a database holding real leads — they fixture-advance real prospects and
   // contaminate the CRM. If MOCK_MODE=true and real-sourced leads exist, refuse to start unless

@@ -37,18 +37,26 @@ export function createPoolForUrl(url: string, max = 10): DbPool {
       neon.neonConfig.webSocketConstructor = require("ws");
     }
     neon.neonConfig.poolQueryViaFetch = true; // one-shot queries ride plain HTTPS
-    return new neon.Pool({ connectionString: url, max }) as unknown as DbPool;
+    const neonPool = new neon.Pool({ connectionString: url, max });
+    neonPool.on("error", (err: Error) => console.error("[neon pool] client error:", err.message));
+    return neonPool as unknown as DbPool;
   }
   // Managed Postgres (Supabase pooler, RDS, …) requires TLS; local Postgres does not. Enable SSL for
   // any non-local host so a hosted DATABASE_URL connects. rejectUnauthorized:false keeps encryption on
   // without bundling the provider's CA (standard for managed Postgres; tighten to a CA + verify-full
   // if the deployment demands strict chain validation).
   const isLocal = /@(localhost|127\.0\.0\.1|\[::1\]|\[?::1\]?)[:/]/i.test(url);
-  return new pg.Pool({
+  const pgPool = new pg.Pool({
     connectionString: url,
     max,
     ssl: isLocal ? undefined : { rejectUnauthorized: false },
   });
+  // A dropped idle connection (managed Postgres reaping idle clients, an IPv6 blip on the direct
+  // connection) makes node-postgres emit 'error' on the pool. With no listener that becomes an
+  // unhandled exception that CRASHES the process (observed on Fly: worker connected, ran ~40s, died).
+  // Log it and let the pool discard the bad client and reconnect on the next query.
+  pgPool.on("error", (err: Error) => console.error("[pg pool] idle client error:", err.message));
+  return pgPool;
 }
 
 export function getPool(): DbPool {
