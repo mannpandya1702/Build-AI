@@ -586,3 +586,39 @@ screenshots need it; skipped for now). (2) Two stale `research.requested` events
 clinics, Dallas, 2026-07-17) are parked; neutralize before enabling — healthcare is gated
 (Amendment A: BAA + E&O). (3) Rotate all chat-exposed keys. (4) Brand rename pending (Maana -> TBD);
 reconcile `agency-facts.yaml` once chosen.
+
+---
+
+### 2026-07-19 — First end-to-end autonomous demo build + deploy (Two Brothers Roofing)
+
+The full pipeline ran unattended on the deployed Fly worker + Vercel, for a real operator-approved
+lead, start to finish:
+
+`qualified -> (operator approves at spend gate) -> analyzed -> solution_ready -> design_ready ->
+demo_building -> BUILD + DEPLOY -> demo_qa (9 checks green) -> outreach_ready -> Touch-1 drafted ->
+awaiting_approval`.
+
+Deliverables: live demo at `https://two-brothers-roofing-demo-tradecraft.vercel.app` (HTTP 200,
+0.59s load, mobile-first, sticky tap-to-call, real branded-truck photo, real 4.9★/190-review stats,
+no SSO wall), plus a voice-clean Touch-1 email in the Outbox with the demo link + CAN-SPAM footer,
+held for operator approval (review mode, nothing sent).
+
+Fixes that unblocked it:
+- **Chromium layer** added to `Dockerfile.worker` (apt sources switched HTTP->HTTPS so the
+  CONNECT-only proxy tunnels apt; `docker build --network=host` so the build reaches the host proxy).
+  Resolves the earlier follow-up (1); analyzer + QA screenshots now work.
+- **Vercel CLI** added to the image (`npm install -g vercel@latest`). The builder's deploy adapter
+  spawns `vercel`; without it every real deploy died `spawn vercel ENOENT` and leads stalled at
+  demo_building. This was the v10->v11 change.
+- Image v11 pushed to `registry.fly.io`; machine `7812454bd2d998` updated via the Machines API
+  (env preserved: `BUILD_MODE=review`, `MOCK_MODE=false`, `DB_POOL_MAX=4`, `PGBOSS_MAX=3`).
+
+Real marginal cost for this lead: **$0.32** of Anthropic spend across 12 Sonnet calls (inflated by
+the ENOENT deploy retries re-running builder copy ~7x; a clean build is ~4 calls ≈ $0.15). The
+`usd_per_lead: 6` cap in `caps.yaml` is the safety ceiling, ~20x the real cost. Places + PageSpeed +
+Vercel free-tier are pennies/free on top.
+
+Polish items (non-blocking, demo is a preview): (a) hero subline is a grammatical run-on
+("...insurance 190 Google reviews and counting") — LLM copy variance, passed voice/schema guards;
+(b) Touch-1 email says "190 five-star reviews" where the data is 190 reviews at 4.9★ — tighten to
+"190 reviews at 4.9 stars" before send to stay literally exact (§0.1).
