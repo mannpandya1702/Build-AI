@@ -36,12 +36,14 @@ gsap.registerPlugin(ScrollTrigger)
 // Code-split the R3F scene so Three.js only loads when we actually mount it.
 const RoofScene = lazy(() => import('./RoofScene'))
 
-/** CSS-only dawn-sky poster. Doubles as the lazy-load placeholder. */
+/** CSS-only golden-hour sky. The transparent canvas renders over this, so it
+ *  is both the lazy-load poster AND the live sky of the 3D scene. */
 function HeroPoster() {
   return (
-    <div className="absolute inset-0 bg-gradient-to-b from-[#12161f] via-[#0e0f12] to-[#0e0f12]">
-      <div className="absolute inset-0 blueprint-grid opacity-40" />
-      <div className="absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-copper/10 blur-3xl" />
+    <div className="golden-sky absolute inset-0">
+      {/* low sun glow on the horizon */}
+      <div className="absolute right-[12%] top-[38%] h-80 w-80 rounded-full bg-[#ffdf9e]/70 blur-3xl" />
+      <div className="absolute right-[16%] top-[44%] h-40 w-40 rounded-full bg-[#fff3d0]/80 blur-2xl" />
     </div>
   )
 }
@@ -56,11 +58,13 @@ function StaticHero() {
       <div className="relative z-10 flex max-w-3xl flex-col items-center gap-10">
         {phases.map((ph, i) => (
           <div key={i} className="flex flex-col items-center">
-            <h2 className="text-balance text-3xl font-light leading-tight tracking-tight text-offwhite sm:text-5xl">
+            <h2 className="text-balance text-3xl font-light leading-tight tracking-tight text-ink sm:text-5xl">
               {ph.headline.split(' ').map((w, j, arr) => (
                 <span key={j}>
                   {norm(w) === ph.accent.toLowerCase() ? (
-                    <span className="font-script italic text-copper">{w}</span>
+                    <span className="font-script italic text-copper-deep">
+                      {w}
+                    </span>
                   ) : (
                     w
                   )}
@@ -68,15 +72,15 @@ function StaticHero() {
                 </span>
               ))}
             </h2>
-            <p className="mt-3 max-w-xl text-sm text-muted sm:text-base">
+            <p className="mt-3 max-w-xl text-sm text-ink/70 sm:text-base">
               {ph.sub}
             </p>
           </div>
         ))}
-        <div className="mt-2 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs uppercase tracking-[0.2em] text-muted">
+        <div className="mt-2 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs uppercase tracking-[0.2em] text-ink/60">
           {sideCaptions.map((c) => (
             <span key={c} className="flex items-center gap-2">
-              <span className="h-1 w-1 rounded-full bg-copper" />
+              <span className="h-1 w-1 rounded-full bg-copper-deep" />
               {c}
             </span>
           ))}
@@ -189,8 +193,9 @@ export default function Hero() {
             </div>
           </Suspense>
         )}
-        {/* Vignette for legibility of the overlay text */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(14,15,18,0.65)_100%)]" />
+        {/* Soft cream band at the bottom so the dark headline text stays
+            legible over the warm ground */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[38vh] bg-gradient-to-t from-cream/90 via-cream/40 to-transparent" />
         <HeroOverlay />
       </div>
     </section>

@@ -17,7 +17,7 @@ export default function TrustBand() {
   useReveal(ref, '[data-reveal]', 0.06)
 
   return (
-    <section ref={ref} className="relative bg-charcoal py-16">
+    <section ref={ref} className="relative bg-cream py-16">
       <div className="mx-auto max-w-6xl px-5 md:px-8">
         <p
           className="mb-8 text-center text-xs font-semibold uppercase tracking-[0.3em] text-muted"
@@ -30,11 +30,11 @@ export default function TrustBand() {
             <div
               key={t.label}
               data-reveal
-              className="flex items-center gap-3 rounded-xl border border-white/8 bg-slate/50 px-4 py-3"
+              className="flex items-center gap-3 rounded-xl border border-ink/10 bg-surface px-4 py-3 shadow-[0_8px_20px_-14px_rgba(43,38,32,0.25)]"
             >
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-copper" strokeWidth={1.6} />
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-copper-deep" strokeWidth={1.6} />
               <div className="text-left">
-                <p className="text-sm font-semibold text-offwhite">{t.label}</p>
+                <p className="text-sm font-semibold text-ink">{t.label}</p>
                 <p className="text-xs text-muted">{t.detail}</p>
               </div>
             </div>

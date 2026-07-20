@@ -15,14 +15,14 @@ export default function Materials() {
     <section
       ref={ref}
       id="materials"
-      className="relative bg-charcoal py-24 md:py-32"
+      className="relative bg-cream py-24 md:py-32"
     >
       <div className="mx-auto max-w-6xl px-5 md:px-8">
         <div className="max-w-2xl" data-reveal>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-copper">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-copper-deep">
             Materials
           </p>
-          <h2 className="mt-4 text-3xl font-light leading-tight tracking-tight text-offwhite sm:text-4xl md:text-5xl">
+          <h2 className="mt-4 text-3xl font-light leading-tight tracking-tight text-ink sm:text-4xl md:text-5xl">
             Pick the roof that fits your home.
           </h2>
           <p className="mt-4 text-muted">
@@ -36,7 +36,7 @@ export default function Materials() {
             <article
               key={m.name}
               data-reveal
-              className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/8 bg-slate/50 transition-colors duration-300 hover:border-copper/40"
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-[0_10px_28px_-16px_rgba(43,38,32,0.25)] transition-colors duration-300 hover:border-copper-deep/50"
             >
               {/* Swatch band */}
               <div
@@ -49,14 +49,14 @@ export default function Materials() {
                 </span>
               </div>
               <div className="flex flex-1 flex-col p-6">
-                <h3 className="text-lg font-semibold text-offwhite">
+                <h3 className="text-lg font-semibold text-ink">
                   {m.name}
                 </h3>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
                   {m.blurb}
                 </p>
-                <p className="mt-5 border-t border-white/8 pt-4 text-xs uppercase tracking-[0.15em] text-copper">
-                  Best for: <span className="text-offwhite/80">{m.bestFor}</span>
+                <p className="mt-5 border-t border-ink/10 pt-4 text-xs uppercase tracking-[0.15em] text-copper-deep">
+                  Best for: <span className="text-ink/75">{m.bestFor}</span>
                 </p>
               </div>
             </article>

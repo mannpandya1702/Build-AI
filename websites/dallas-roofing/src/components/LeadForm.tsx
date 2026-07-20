@@ -55,42 +55,42 @@ export default function LeadForm() {
   }
 
   const fieldClass = (key: keyof FormState) =>
-    `w-full rounded-xl border bg-charcoal/60 px-4 py-3 text-sm text-offwhite placeholder:text-muted/70 outline-none transition-colors focus:border-copper ${
-      errors[key] ? 'border-red-400/70' : 'border-white/10'
+    `w-full rounded-xl border bg-surface px-4 py-3 text-sm text-ink placeholder:text-muted/70 outline-none transition-colors focus:border-copper-deep ${
+      errors[key] ? 'border-red-500/70' : 'border-ink/15'
     }`
 
   return (
     <section
       ref={ref}
       id="book"
-      className="relative overflow-hidden bg-gradient-to-b from-charcoal via-slate to-charcoal py-24 md:py-32"
+      className="relative overflow-hidden bg-gradient-to-b from-sand via-cream to-sand py-24 md:py-32"
     >
-      <div className="pointer-events-none absolute inset-0 blueprint-grid opacity-[0.12]" />
-      <div className="pointer-events-none absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-copper/8 blur-3xl" />
+      <div className="pointer-events-none absolute inset-0 blueprint-grid opacity-40" />
+      <div className="pointer-events-none absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-copper/12 blur-3xl" />
 
       <div className="relative mx-auto grid max-w-6xl gap-12 px-5 md:grid-cols-2 md:px-8">
         {/* Pitch + prominent phone */}
         <div data-reveal>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-copper">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-copper-deep">
             Get started
           </p>
-          <h2 className="mt-4 text-3xl font-light leading-tight tracking-tight text-offwhite sm:text-4xl md:text-5xl">
+          <h2 className="mt-4 text-3xl font-light leading-tight tracking-tight text-ink sm:text-4xl md:text-5xl">
             Book your{' '}
-            <span className="font-script italic text-copper">free</span> roof
+            <span className="font-script italic text-copper-deep">free</span> roof
             inspection.
           </h2>
           <p className="mt-4 max-w-md text-muted">{cta.sub}</p>
 
           <a
             href={company.phoneHref}
-            className="mt-8 inline-flex items-center gap-3 rounded-2xl border border-copper/40 bg-copper/10 px-5 py-4 transition-colors hover:bg-copper/20"
+            className="mt-8 inline-flex items-center gap-3 rounded-2xl border border-copper-deep/40 bg-copper/10 px-5 py-4 transition-colors hover:bg-copper/20"
           >
-            <Phone className="h-5 w-5 text-copper" />
+            <Phone className="h-5 w-5 text-copper-deep" />
             <span>
               <span className="block text-xs uppercase tracking-[0.2em] text-muted">
                 Or call us now
               </span>
-              <span className="block text-xl font-semibold text-offwhite">
+              <span className="block text-xl font-semibold text-ink">
                 {company.phone}
               </span>
             </span>
@@ -102,8 +102,8 @@ export default function LeadForm() {
         <div data-reveal className="glass rounded-3xl p-6 md:p-8">
           {submitted ? (
             <div className="flex h-full min-h-72 flex-col items-center justify-center text-center">
-              <CheckCircle2 className="h-14 w-14 text-copper" strokeWidth={1.4} />
-              <h3 className="mt-5 text-2xl font-semibold text-offwhite">
+              <CheckCircle2 className="h-14 w-14 text-copper-deep" strokeWidth={1.4} />
+              <h3 className="mt-5 text-2xl font-semibold text-ink">
                 {cta.successTitle}
               </h3>
               <p className="mt-3 max-w-sm text-muted">{cta.successBody}</p>
@@ -113,7 +113,7 @@ export default function LeadForm() {
                   setForm(EMPTY)
                   setSubmitted(false)
                 }}
-                className="mt-6 text-sm font-medium text-copper underline-offset-4 hover:underline"
+                className="mt-6 text-sm font-medium text-copper-deep underline-offset-4 hover:underline"
               >
                 Book another inspection
               </button>
@@ -121,7 +121,7 @@ export default function LeadForm() {
           ) : (
             <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
               <div>
-                <label htmlFor="lf-name" className="mb-1.5 block text-sm text-offwhite/90">
+                <label htmlFor="lf-name" className="mb-1.5 block text-sm text-ink/85">
                   Full name
                 </label>
                 <input
@@ -134,12 +134,12 @@ export default function LeadForm() {
                   placeholder="Jordan Ramirez"
                 />
                 {errors.name && (
-                  <p className="mt-1 text-xs text-red-300">{errors.name}</p>
+                  <p className="mt-1 text-xs text-red-600">{errors.name}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="lf-address" className="mb-1.5 block text-sm text-offwhite/90">
+                <label htmlFor="lf-address" className="mb-1.5 block text-sm text-ink/85">
                   Property address
                 </label>
                 <input
@@ -152,12 +152,12 @@ export default function LeadForm() {
                   placeholder="123 Oak St, Dallas, TX"
                 />
                 {errors.address && (
-                  <p className="mt-1 text-xs text-red-300">{errors.address}</p>
+                  <p className="mt-1 text-xs text-red-600">{errors.address}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="lf-phone" className="mb-1.5 block text-sm text-offwhite/90">
+                <label htmlFor="lf-phone" className="mb-1.5 block text-sm text-ink/85">
                   Phone
                 </label>
                 <input
@@ -170,12 +170,12 @@ export default function LeadForm() {
                   placeholder="(214) 555-0148"
                 />
                 {errors.phone && (
-                  <p className="mt-1 text-xs text-red-300">{errors.phone}</p>
+                  <p className="mt-1 text-xs text-red-600">{errors.phone}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="lf-damage" className="mb-1.5 block text-sm text-offwhite/90">
+                <label htmlFor="lf-damage" className="mb-1.5 block text-sm text-ink/85">
                   Type of damage
                 </label>
                 <select
@@ -188,19 +188,19 @@ export default function LeadForm() {
                     Select one
                   </option>
                   {cta.damageTypes.map((d) => (
-                    <option key={d.value} value={d.value} className="bg-slate">
+                    <option key={d.value} value={d.value}>
                       {d.label}
                     </option>
                   ))}
                 </select>
                 {errors.damage && (
-                  <p className="mt-1 text-xs text-red-300">{errors.damage}</p>
+                  <p className="mt-1 text-xs text-red-600">{errors.damage}</p>
                 )}
               </div>
 
               <button
                 type="submit"
-                className="mt-2 rounded-xl bg-copper px-5 py-3.5 text-sm font-semibold text-charcoal transition-transform duration-300 hover:-translate-y-0.5 hover:bg-copper-soft"
+                className="mt-2 rounded-xl bg-copper-deep px-5 py-3.5 text-sm font-semibold text-cream transition-transform duration-300 hover:-translate-y-0.5 hover:bg-copper"
               >
                 Request my free inspection
               </button>

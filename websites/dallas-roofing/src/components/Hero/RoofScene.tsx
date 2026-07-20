@@ -1,18 +1,18 @@
 /**
  * RoofScene.tsx
  * -----------------------------------------------------------------------------
- * The R3F Canvas: camera rig, lighting, and the procedural roof.
+ * The R3F Canvas: camera rig, golden-hour lighting, and the procedural house.
  *
- * This is the single component that owns the scroll-driven 3D visual. The rest
- * of the page (overlay, sections) knows nothing about Three.js, so a
- * pre-rendered frame-sequence hero could drop in here later without touching
- * anything else.
+ * The canvas is TRANSPARENT: the golden-hour sky is a CSS gradient behind it
+ * (HeroPoster), which keeps the sky perfectly smooth at any resolution and
+ * doubles as the lazy-load poster. Warm fog fades the ground plane into the
+ * horizon so the 3D blends seamlessly into the gradient.
  *
- * Performance:
- *  - dpr capped to [1, 1.75]
- *  - frameloop switches to "never" when the hero scrolls out of view
- *  - camera + lights read progress via getProgress() inside useFrame (no React
- *    re-render per frame)
+ * This is the single component that owns the scroll-driven 3D visual; the rest
+ * of the page knows nothing about Three.js.
+ *
+ * Performance: dpr capped [1, 1.75]; frameloop "never" when the hero is out of
+ * view; camera + lights read progress via getProgress() inside useFrame.
  */
 
 import { useMemo, useRef } from 'react'
@@ -27,25 +27,28 @@ interface Keyframe {
   radius: number
   theta: number // azimuth around Y
   phi: number // polar from +Y
-  ty: number // target height
+  ty: number // look-at height (world)
 }
 
 // Camera choreography: wide -> dolly in -> arc to show the slope -> settle.
+// Radii are generous on purpose: the WHOLE house must stay in frame with
+// margin at every phase (fov 42). House spans roughly y -1.35..1.85, x ±2.8.
 const DESKTOP_KEYS: Keyframe[] = [
-  { p: 0.0, radius: 10.6, theta: 0.26, phi: 1.16, ty: 0.5 },
-  { p: 0.15, radius: 9.6, theta: 0.31, phi: 1.1, ty: 0.6 },
-  { p: 0.4, radius: 7.3, theta: 0.56, phi: 1.02, ty: 0.78 },
-  { p: 0.65, radius: 6.7, theta: 1.0, phi: 0.92, ty: 0.88 },
-  { p: 0.9, radius: 6.8, theta: 0.75, phi: 0.95, ty: 0.88 },
-  { p: 1.0, radius: 7.0, theta: 0.71, phi: 0.97, ty: 0.88 },
+  { p: 0.0, radius: 13.6, theta: 0.3, phi: 1.22, ty: 0.15 },
+  { p: 0.15, radius: 12.4, theta: 0.36, phi: 1.16, ty: 0.2 },
+  { p: 0.4, radius: 11.2, theta: 0.62, phi: 1.12, ty: 0.3 },
+  { p: 0.65, radius: 10.8, theta: 1.05, phi: 1.08, ty: 0.35 },
+  { p: 0.9, radius: 11.3, theta: 0.78, phi: 1.12, ty: 0.32 },
+  { p: 1.0, radius: 11.5, theta: 0.74, phi: 1.13, ty: 0.32 },
 ]
 
-// Mobile: keep it simple. A gentle vertical pan, almost no orbit.
+// Mobile: gentle vertical pan, almost no orbit, extra distance for the
+// narrow viewport.
 const MOBILE_KEYS: Keyframe[] = [
-  { p: 0.0, radius: 11.6, theta: 0.12, phi: 1.2, ty: 0.5 },
-  { p: 0.4, radius: 10.2, theta: 0.16, phi: 1.05, ty: 0.75 },
-  { p: 0.7, radius: 9.6, theta: 0.2, phi: 0.96, ty: 0.9 },
-  { p: 1.0, radius: 9.6, theta: 0.18, phi: 0.98, ty: 0.9 },
+  { p: 0.0, radius: 16.4, theta: 0.14, phi: 1.24, ty: 0.15 },
+  { p: 0.4, radius: 14.6, theta: 0.18, phi: 1.12, ty: 0.25 },
+  { p: 0.7, radius: 13.8, theta: 0.22, phi: 1.04, ty: 0.32 },
+  { p: 1.0, radius: 13.8, theta: 0.2, phi: 1.06, ty: 0.3 },
 ]
 
 function interpKeys(keys: Keyframe[], p: number): Keyframe {
@@ -71,8 +74,9 @@ function interpKeys(keys: Keyframe[], p: number): Keyframe {
 
 function CameraRig({ simplified }: { simplified: boolean }) {
   const keys = simplified ? MOBILE_KEYS : DESKTOP_KEYS
-  const target = useRef(new THREE.Vector3(0, 0.6, 0))
+  const target = useRef(new THREE.Vector3(0, 0.2, 0))
   const desired = useRef(new THREE.Vector3())
+  const desiredTarget = useRef(new THREE.Vector3())
 
   useFrame((state) => {
     const p = getProgress()
@@ -83,9 +87,10 @@ function CameraRig({ simplified }: { simplified: boolean }) {
       k.radius * Math.cos(k.phi),
       k.radius * sinPhi * Math.cos(k.theta),
     )
+    desiredTarget.current.set(0, k.ty, 0)
     // Weighted follow for a slow, non-jittery feel.
     state.camera.position.lerp(desired.current, 0.06)
-    target.current.lerp(new THREE.Vector3(0, k.ty, 0), 0.06)
+    target.current.lerp(desiredTarget.current, 0.06)
     state.camera.lookAt(target.current)
   })
 
@@ -93,55 +98,52 @@ function CameraRig({ simplified }: { simplified: boolean }) {
 }
 
 /**
- * Lighting shifts from cool dawn blue to warm daylight as scroll progresses,
- * plus a copper glint light that sweeps across during the shingle phase.
+ * Golden-hour lighting: a warm low sun, a soft blue-sky hemisphere fill, and
+ * a copper glint that sweeps the roof during the shingle phase. Scroll warms
+ * the sun slightly further; the scene is bright from the very start.
  */
 function Lights() {
-  const keyLight = useRef<THREE.DirectionalLight>(null)
-  const ambient = useRef<THREE.AmbientLight>(null)
+  const sun = useRef<THREE.DirectionalLight>(null)
   const glint = useRef<THREE.PointLight>(null)
 
-  const dawn = useMemo(() => new THREE.Color('#6f86b8'), [])
-  const day = useMemo(() => new THREE.Color('#ffe2b8'), [])
+  const sunEarly = useMemo(() => new THREE.Color('#ffe4b8'), [])
+  const sunLate = useMemo(() => new THREE.Color('#ffcf94'), [])
   const tmp = useMemo(() => new THREE.Color(), [])
 
   useFrame(() => {
     const p = getProgress()
-    if (keyLight.current) {
-      tmp.copy(dawn).lerp(day, p)
-      keyLight.current.color.copy(tmp)
-      keyLight.current.intensity = lerp(0.55, 1.5, p)
-    }
-    if (ambient.current) {
-      tmp.copy(dawn).lerp(day, p)
-      ambient.current.color.copy(tmp)
-      ambient.current.intensity = lerp(0.35, 0.65, p)
+    if (sun.current) {
+      tmp.copy(sunEarly).lerp(sunLate, p)
+      sun.current.color.copy(tmp)
+      sun.current.intensity = lerp(1.7, 2.1, p)
     }
     if (glint.current) {
       const g = Math.sin(Math.PI * clamp01(range(p, 0.65, 0.92)))
-      glint.current.intensity = g * 3.2
+      glint.current.intensity = g * 2.6
       glint.current.position.x = lerp(-3.2, 3.2, clamp01(range(p, 0.65, 0.92)))
     }
   })
 
   return (
     <>
-      <ambientLight ref={ambient} intensity={0.35} />
+      {/* blue sky above, warm bounce from the ground below */}
+      <hemisphereLight args={['#cfe0f0', '#e8cfa4', 0.85]} />
+      {/* low warm sun */}
       <directionalLight
-        ref={keyLight}
-        position={[4, 6, 3]}
-        intensity={0.55}
+        ref={sun}
+        position={[6, 5, 4]}
+        intensity={1.7}
         castShadow={false}
       />
-      {/* cool rim from behind to separate the frame from the dark canvas */}
-      <directionalLight position={[-5, 3, -4]} intensity={0.4} color="#5a6f9c" />
+      {/* soft cool fill from the opposite side so shadows stay readable */}
+      <directionalLight position={[-6, 3, -4]} intensity={0.5} color="#bcd0e6" />
       {/* copper glint that sweeps across during the shingle phase */}
       <pointLight
         ref={glint}
-        position={[0, 2.2, 1.4]}
+        position={[0, 3.2, 1.6]}
         intensity={0}
         color="#ffb066"
-        distance={9}
+        distance={10}
         decay={1.4}
       />
     </>
@@ -165,10 +167,11 @@ export default function RoofScene({
       dpr={[1, 1.75]}
       frameloop={active ? 'always' : 'never'}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-      camera={{ position: [0, 4, 10], fov: 42, near: 0.1, far: 100 }}
+      camera={{ position: [4, 3, 13], fov: 42, near: 0.1, far: 120 }}
     >
-      <color attach="background" args={['#0e0f12']} />
-      <fog attach="fog" args={['#0e0f12', 12, 26]} />
+      {/* No scene background: the CSS golden sky shows through. Warm haze
+          fades the ground disc into the horizon gradient. */}
+      <fog attach="fog" args={['#eed7b0', 16, 44]} />
       <Lights />
       <CameraRig simplified={simplified} />
       <RoofModel rafterCount={rafterCount} />

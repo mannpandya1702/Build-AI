@@ -14,14 +14,14 @@ export default function Process() {
     <section
       ref={ref}
       id="process"
-      className="relative bg-gradient-to-b from-charcoal via-slate to-charcoal py-24 md:py-32"
+      className="relative bg-gradient-to-b from-cream via-sand to-cream py-24 md:py-32"
     >
       <div className="mx-auto max-w-6xl px-5 md:px-8">
         <div className="max-w-2xl" data-reveal>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-copper">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-copper-deep">
             How it goes
           </p>
-          <h2 className="mt-4 text-3xl font-light leading-tight tracking-tight text-offwhite sm:text-4xl md:text-5xl">
+          <h2 className="mt-4 text-3xl font-light leading-tight tracking-tight text-ink sm:text-4xl md:text-5xl">
             Four steps. No surprises.
           </h2>
         </div>
@@ -31,19 +31,19 @@ export default function Process() {
             <li
               key={step.title}
               data-reveal
-              className="relative rounded-2xl border border-white/8 bg-slate/40 p-6"
+              className="relative rounded-2xl border border-ink/10 bg-surface/80 p-6 shadow-[0_10px_28px_-18px_rgba(43,38,32,0.25)]"
             >
-              <span className="font-script text-5xl leading-none text-copper/80">
+              <span className="font-script text-5xl leading-none text-copper-deep/80">
                 {i + 1}
               </span>
-              <h3 className="mt-4 text-lg font-semibold text-offwhite">
+              <h3 className="mt-4 text-lg font-semibold text-ink">
                 {step.title}
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-muted">
                 {step.description}
               </p>
               {i < siteConfig.process.length - 1 && (
-                <span className="absolute right-5 top-7 hidden text-copper/30 lg:block">
+                <span className="absolute right-5 top-7 hidden text-copper-deep/40 lg:block">
                   &rarr;
                 </span>
               )}

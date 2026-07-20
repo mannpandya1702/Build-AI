@@ -25,7 +25,7 @@ function Headline({ headline, accent }: { headline: string; accent: string }) {
         return (
           <span key={i}>
             {isAccent ? (
-              <span className="font-script text-copper italic">{w}</span>
+              <span className="font-script text-copper-deep italic">{w}</span>
             ) : (
               w
             )}
@@ -118,18 +118,18 @@ export default function HeroOverlay() {
   return (
     <div className="pointer-events-none absolute inset-0 z-10 select-none">
       {/* Left progress rail */}
-      <div className="absolute left-5 top-1/2 hidden h-48 w-px -translate-y-1/2 bg-white/12 sm:block md:left-8">
+      <div className="absolute left-5 top-1/2 hidden h-48 w-px -translate-y-1/2 bg-ink/15 sm:block md:left-8">
         <div
           ref={railFillRef}
-          className="absolute inset-x-0 top-0 h-full origin-top bg-copper"
+          className="absolute inset-x-0 top-0 h-full origin-top bg-copper-deep"
           style={{ transform: 'scaleY(0)' }}
         />
         <div
           ref={railDotRef}
-          className="absolute left-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-copper shadow-[0_0_10px_2px_rgba(224,134,58,0.6)]"
+          className="absolute left-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-copper-deep shadow-[0_0_10px_2px_rgba(168,87,28,0.5)]"
           style={{ top: '0%', opacity: 0 }}
         />
-        <span className="absolute -left-1 top-full mt-3 -rotate-90 whitespace-nowrap text-[10px] uppercase tracking-[0.3em] text-muted">
+        <span className="absolute -left-1 top-full mt-3 -rotate-90 whitespace-nowrap text-[10px] uppercase tracking-[0.3em] text-ink/50">
           Progress
         </span>
       </div>
@@ -142,10 +142,10 @@ export default function HeroOverlay() {
             ref={(el) => {
               captionRefs.current[i] = el
             }}
-            className="absolute right-0 flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted"
+            className="absolute right-0 flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-ink/60"
             style={{ opacity: 0 }}
           >
-            <span className="h-1 w-1 rounded-full bg-copper" />
+            <span className="h-1 w-1 rounded-full bg-copper-deep" />
             {c}
           </div>
         ))}
@@ -157,15 +157,15 @@ export default function HeroOverlay() {
         className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
       >
         <div className="relative h-16 w-16">
-          <div className="absolute inset-0 rounded-full border border-copper/50" />
-          <div className="absolute inset-[6px] rounded-full border border-white/15" />
-          <span className="absolute left-1/2 top-0 h-4 w-px -translate-x-1/2 bg-copper/60" />
-          <span className="absolute bottom-0 left-1/2 h-4 w-px -translate-x-1/2 bg-copper/60" />
-          <span className="absolute left-0 top-1/2 h-px w-4 -translate-y-1/2 bg-copper/60" />
-          <span className="absolute right-0 top-1/2 h-px w-4 -translate-y-1/2 bg-copper/60" />
-          <span className="absolute left-1/2 top-1/2 h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-copper" />
+          <div className="absolute inset-0 rounded-full border border-copper-deep/60" />
+          <div className="absolute inset-[6px] rounded-full border border-ink/15" />
+          <span className="absolute left-1/2 top-0 h-4 w-px -translate-x-1/2 bg-copper-deep/70" />
+          <span className="absolute bottom-0 left-1/2 h-4 w-px -translate-x-1/2 bg-copper-deep/70" />
+          <span className="absolute left-0 top-1/2 h-px w-4 -translate-y-1/2 bg-copper-deep/70" />
+          <span className="absolute right-0 top-1/2 h-px w-4 -translate-y-1/2 bg-copper-deep/70" />
+          <span className="absolute left-1/2 top-1/2 h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-copper-deep" />
         </div>
-        <span className="mt-4 text-[11px] uppercase tracking-[0.4em] text-muted">
+        <span className="mt-4 text-[11px] uppercase tracking-[0.4em] text-ink/60">
           {reticleLabel}
         </span>
       </div>
@@ -182,10 +182,10 @@ export default function HeroOverlay() {
               className="absolute inset-x-0 bottom-0 flex flex-col items-center"
               style={{ opacity: 0 }}
             >
-              <h2 className="text-balance text-4xl font-light leading-tight tracking-tight text-offwhite sm:text-5xl md:text-6xl">
+              <h2 className="text-balance text-4xl font-light leading-tight tracking-tight text-ink sm:text-5xl md:text-6xl">
                 <Headline headline={ph.headline} accent={ph.accent} />
               </h2>
-              <p className="mt-4 max-w-xl text-balance text-sm text-muted sm:text-base">
+              <p className="mt-4 max-w-xl text-balance text-sm text-ink/70 sm:text-base">
                 {ph.sub}
               </p>
             </div>

@@ -22,7 +22,7 @@ export default function App() {
   }, [])
 
   return (
-    <div id="top" className="min-h-screen bg-charcoal text-offwhite">
+    <div id="top" className="min-h-screen bg-cream text-ink">
       <Header />
       <main>
         <Hero />

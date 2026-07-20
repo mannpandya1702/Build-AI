@@ -27,9 +27,9 @@ export default function Header() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 md:px-8">
         <a
           href="#top"
-          className="flex items-center gap-2 text-sm font-semibold tracking-[0.18em] text-offwhite"
+          className="flex items-center gap-2 text-sm font-semibold tracking-[0.18em] text-ink"
         >
-          <span className="grid h-7 w-7 place-items-center rounded-sm border border-copper/60 text-copper">
+          <span className="grid h-7 w-7 place-items-center rounded-sm border border-copper-deep/70 text-copper-deep">
             <span className="text-[13px] font-bold">L</span>
           </span>
           <span className="hidden sm:inline">{company.logoMark}</span>
@@ -38,14 +38,14 @@ export default function Header() {
         <div className="flex items-center gap-3 md:gap-5">
           <a
             href={company.phoneHref}
-            className="flex items-center gap-2 text-sm font-medium text-offwhite/90 transition-colors hover:text-copper"
+            className="flex items-center gap-2 text-sm font-medium text-ink/85 transition-colors hover:text-copper-deep"
           >
-            <Phone className="h-4 w-4 text-copper" />
+            <Phone className="h-4 w-4 text-copper-deep" />
             <span className="hidden md:inline">{company.phone}</span>
           </a>
           <a
             href="#book"
-            className="rounded-full bg-copper px-4 py-2 text-sm font-semibold text-charcoal transition-transform duration-300 hover:-translate-y-0.5 hover:bg-copper-soft"
+            className="rounded-full bg-copper-deep px-4 py-2 text-sm font-semibold text-cream transition-transform duration-300 hover:-translate-y-0.5 hover:bg-copper"
           >
             Free Inspection
           </a>
