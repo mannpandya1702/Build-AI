@@ -33,8 +33,10 @@ import HeroOverlay from './HeroOverlay'
 
 gsap.registerPlugin(ScrollTrigger)
 
-// Code-split the R3F scene so Three.js only loads when we actually mount it.
-const RoofScene = lazy(() => import('./RoofScene'))
+// Code-split the frame player (and its preloading) until the hero is near.
+// The photoreal pre-rendered sequence replaced the live WebGL scene; RoofScene
+// remains in the repo if a real-time variant is ever wanted again.
+const FrameScene = lazy(() => import('./FrameScene'))
 
 /** CSS-only golden-hour sky. The transparent canvas renders over this, so it
  *  is both the lazy-load poster AND the live sky of the 3D scene. */
@@ -48,13 +50,25 @@ function HeroPoster() {
   )
 }
 
-/** Static hero used for reduced-motion and low-performance fallbacks. */
+/** Static hero used for reduced-motion and low-performance fallbacks. Shows
+ *  the final rendered still of the finished house under the stacked
+ *  headlines; falls back to the CSS sky if the image is unavailable. */
 function StaticHero() {
   const { phases, sideCaptions } = siteConfig.hero
   const norm = (w: string) => w.replace(/[.,!?]/g, '').toLowerCase()
   return (
     <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-6 py-28 text-center">
       <HeroPoster />
+      <img
+        src="/frames/frame_0071.webp"
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover opacity-90"
+        onError={(e) => {
+          ;(e.currentTarget as HTMLImageElement).style.display = 'none'
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-cream/85 via-cream/35 to-transparent" />
       <div className="relative z-10 flex max-w-3xl flex-col items-center gap-10">
         {phases.map((ph, i) => (
           <div key={i} className="flex flex-col items-center">
@@ -167,8 +181,6 @@ export default function Hero() {
     return <StaticHero />
   }
 
-  const rafterCount = isMobile ? 5 : 9
-
   return (
     <section
       ref={sectionRef}
@@ -185,11 +197,7 @@ export default function Hero() {
         {mounted && (
           <Suspense fallback={null}>
             <div className="absolute inset-0">
-              <RoofScene
-                active={heroInView}
-                simplified={isMobile}
-                rafterCount={rafterCount}
-              />
+              <FrameScene active={heroInView} simplified={isMobile} />
             </div>
           </Suspense>
         )}
