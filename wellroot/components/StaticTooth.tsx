@@ -27,10 +27,10 @@ export default function StaticTooth({
     >
       <defs>
         <radialGradient id="wr-enamel" cx="46%" cy="30%" r="78%">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="42%" stopColor={colors.enamel} />
-          <stop offset="78%" stopColor="#e6f4f2" />
-          <stop offset="100%" stopColor="#d3ebe9" />
+          <stop offset="0%" stopColor="#fffdf8" />
+          <stop offset="42%" stopColor="#f6f1e7" />
+          <stop offset="78%" stopColor="#efe6d5" />
+          <stop offset="100%" stopColor="#e4d8c2" />
         </radialGradient>
 
         <radialGradient id="wr-aura" cx="50%" cy="50%" r="50%">
@@ -78,7 +78,7 @@ export default function StaticTooth({
            C 68 162, 55 146, 52 122
            C 48 96, 58 74, 78 66 Z"
         fill="url(#wr-enamel)"
-        stroke="#cfe8e6"
+        stroke="#e0d3ba"
         strokeWidth="1.5"
       />
 

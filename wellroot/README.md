@@ -11,7 +11,7 @@ node at each section.
 - Next.js 16 (App Router) + TypeScript — note: brief asked for Next 15; the
   current release is 16, a backward-compatible superset, and the whole R3F stack
   supports React 19, so it was kept.
-- `three`, `@react-three/fiber`, `@react-three/drei`, `@react-three/postprocessing`
+- `three`, `@react-three/fiber`, `@react-three/drei`
 - `gsap` + `ScrollTrigger`, `lenis` for smooth scroll
 - Tailwind CSS v4 (tokens live in `app/globals.css` `@theme`, mirrored in
   `lib/tokens.ts`)
@@ -30,12 +30,23 @@ npm start       # serve the production build
 The hero is built to drive a **real** GLB, not the procedural placeholder.
 Everything (material, lighting, heartbeat, scroll morph) targets the real mesh.
 
-- Drop a clean single molar/incisor at `public/models/tooth.glb`.
+- Drop a clean molar at `public/models/tooth.glb`.
 - Open `components/tooth/ToothModel.tsx` and flip **one line**:
   `const HAS_GLB = false;` → `true`.
 
-Until then a smooth single-lathe placeholder renders so layout, lighting, and
-motion can be evaluated. It is deliberately a placeholder; do not polish it.
+Until then `components/tooth/toothGeometry.ts` builds a **procedural molar**
+(placeholder, 0 KB asset weight): a rounded-box crown with four cusps and a
+cross-shaped occlusal fissure, two tapered roots swept along Catmull-Rom curves
+with rounded apices, welded to the crown through a collar trunk (mergeVertices +
+a single smooth normal pass so the cementoenamel junction has no seam).
+
+Rendering: warm-ivory `MeshPhysicalMaterial` (clearcoat, subtle transmission +
+attenuation, sheen, low-frequency noise roughness map), a RoomEnvironment IBL
+built locally via PMREM (no network HDRI), a three-point rig whose teal rim is
+the heartbeat, ContactShadows, ACESFilmic tone mapping at 1.05 exposure. The
+tooth sits in a 3/4 view with a slow float + oscillation. No postprocessing
+bloom — the shine comes from the IBL, clearcoat, rim, and Fresnel, which keeps
+the white page from greying.
 
 ## Progressive enhancement (three tiers)
 
@@ -43,10 +54,9 @@ motion can be evaluated. It is deliberately a placeholder; do not polish it.
 tooth first (the LCP element) and crossfades to the canvas when its first frame
 is ready.
 
-- **full** — WebGL, capable device, motion allowed: physical enamel, three-point
-  rig with a heartbeat-driven teal rim, breathing aura, and selective bloom
-  (tooth only, so a white page never greys out).
-- **lite** — low-power / coarse-pointer: DPR capped at 1.5, no bloom, gentler.
+- **full** — WebGL, capable device, motion allowed: physical enamel, RoomEnv
+  IBL, three-point rig with a heartbeat-driven teal rim, breathing aura.
+- **lite** — low-power / coarse-pointer: DPR capped at 1.5, no aura, gentler.
 - **static** — no WebGL, or `prefers-reduced-motion`: the composed inline-SVG
   tooth, full spine drawn, nodes lit. No pulse, no parallax, no scroll morph.
 

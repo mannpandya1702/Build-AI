@@ -42,29 +42,28 @@ export default function Lights({
 
   return (
     <>
-      <hemisphereLight
-        args={["#ffffff", colors.mist, 0.55]}
-      />
-      {/* Key */}
+      {/* RoomEnvironment already supplies ambient bounce; keep this low. */}
+      <hemisphereLight args={["#ffffff", "#efe7d6", 0.28]} />
+      {/* Key — upper left */}
       <directionalLight
-        position={[2.6, 4.2, 3.2]}
-        intensity={1.45}
-        color="#ffffff"
+        position={[-3.6, 4.6, 3.0]}
+        intensity={1.25}
+        color="#fffaf0"
       />
-      {/* Fill */}
+      {/* Fill — lower right, soft */}
       <directionalLight
-        position={[-3.4, -0.6, 2.2]}
-        intensity={0.32}
-        color="#eaf6f5"
+        position={[3.6, -1.6, 2.6]}
+        intensity={0.35}
+        color="#fbf6ec"
       />
-      {/* Teal rim / back light — heartbeat-driven */}
+      {/* Teal rim / back light — catches the enamel edge, heartbeat-driven */}
       <pointLight
         ref={rim}
-        position={[-1.4, 2.4, -3.0]}
+        position={[1.2, 2.2, -3.6]}
         intensity={RIM_BASE}
         color={colors.teal}
         distance={12}
-        decay={1.4}
+        decay={1.3}
       />
     </>
   );
