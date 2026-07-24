@@ -34,6 +34,18 @@ function StudioEnvironment({ intensity = 1.1 }: { intensity?: number }) {
   return null;
 }
 
+/** Slowly rotates the image-based lighting so the clearcoat highlights travel
+ *  across the enamel — a living "shine" sweep without a moving light. */
+function ShineSweep() {
+  const { scene } = useThree();
+  useFrame((_, dt) => {
+    const rot = (scene as THREE.Scene & { environmentRotation?: THREE.Euler })
+      .environmentRotation;
+    if (rot) rot.y += dt * 0.14;
+  });
+  return null;
+}
+
 /** Calls onReady once the first real frame has painted (for the crossfade). */
 function FirstFrame({ onReady }: { onReady: () => void }) {
   const frames = useRef(0);
@@ -64,25 +76,23 @@ function useScrollProgress(reduced: boolean) {
 }
 
 function Scene({
-  tier,
   onReady,
   reveal,
   scrollRef,
 }: {
-  tier: HeroTier;
   onReady: () => void;
   reveal: boolean;
   scrollRef: React.RefObject<number>;
 }) {
   const hoveredRef = useRef(false);
   const rimRef = useRef<THREE.PointLight>(null);
-  const full = tier === "full";
 
   return (
     <>
       <StudioEnvironment intensity={1.1} />
+      <ShineSweep />
       <Lights hoveredRef={hoveredRef} scrollDimRef={scrollRef} rimRef={rimRef} />
-      {full && <Aura scrollDimRef={scrollRef} />}
+      <Aura scrollDimRef={scrollRef} />
 
       <ToothModel
         hoveredRef={hoveredRef}
@@ -154,7 +164,6 @@ export default function ToothCanvas({
         style={{ background: "transparent" }}
       >
         <Scene
-          tier={tier}
           reveal={reveal}
           scrollRef={scrollRef}
           onReady={() => onReady?.()}

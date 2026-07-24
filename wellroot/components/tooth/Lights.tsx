@@ -28,8 +28,8 @@ export default function Lights({
   const rim = rimRef ?? internal;
   const { sample } = useHeartbeat();
 
-  const RIM_BASE = 0.55;
-  const RIM_PULSE = 1.7;
+  const RIM_BASE = 0.6;
+  const RIM_PULSE = 2.4;
 
   useFrame(({ clock }) => {
     if (!rim.current) return;

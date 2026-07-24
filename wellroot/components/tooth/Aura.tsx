@@ -49,11 +49,11 @@ export default function Aura({
     const p = sample(clock.elapsedTime);
     const dim = 1 - 0.6 * (scrollDimRef.current ?? 0);
     if (mesh.current) {
-      const s = 5.2 * (1 + p * 0.1);
+      const s = 5.8 * (1 + p * 0.18); // breathes more visibly with the beat
       mesh.current.scale.setScalar(s);
     }
     if (mat.current) {
-      mat.current.opacity = (0.18 + p * 0.32) * dim;
+      mat.current.opacity = (0.26 + p * 0.5) * dim;
     }
   });
 

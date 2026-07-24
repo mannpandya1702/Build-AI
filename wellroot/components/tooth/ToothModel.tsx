@@ -115,6 +115,9 @@ export default function ToothModel({
   const { sample, reduced } = useHeartbeat();
   const { camera, gl } = useThree();
   const tmp = useMemo(() => new THREE.Vector3(), []);
+  const spin = useRef(BASE_ROT_Y); // continuous idle rotation, seeded at the 3/4 pose
+  const paraY = useRef(0);
+  const paraX = useRef(0);
 
   // Project the root apex to document coordinates for FlowSpine.
   useEffect(() => {
@@ -149,8 +152,9 @@ export default function ToothModel({
     const t = state.clock.elapsedTime;
     const p = sample(t);
 
-    // Heartbeat -> whisper-white fresnel edge (no body tint).
-    fresnel.current.uFresnelStrength.value = (0.05 + p * 0.5) * (1 - 0.5 * s);
+    // Heartbeat -> whisper-white fresnel edge (no body tint), pushed up so the
+    // beat clearly reads on white.
+    fresnel.current.uFresnelStrength.value = (0.1 + p * 0.85) * (1 - 0.5 * s);
 
     if (reduced) {
       // Static single pose.
@@ -160,15 +164,17 @@ export default function ToothModel({
       return;
     }
 
-    // Slow oscillation (~±11deg) on a long ease + damped cursor parallax.
+    // Continuous slow spin (~one turn / 20s), easing to a stop and tipping the
+    // roots downward as the hero settles into the scroll. Damped cursor
+    // parallax rides on top.
     const px = THREE.MathUtils.clamp(state.pointer.x, -1, 1);
     const py = THREE.MathUtils.clamp(state.pointer.y, -1, 1);
-    const oscY = Math.sin(t * 0.32) * 0.2;
-    const targetY = BASE_ROT_Y + oscY + px * 0.28 * (1 - s);
-    const targetX = BASE_ROT_X - py * 0.16 * (1 - s) + s * 0.5; // roots tip down as it settles
-    g.rotation.y = THREE.MathUtils.damp(g.rotation.y, targetY, 3.5, delta);
-    g.rotation.x = THREE.MathUtils.damp(g.rotation.x, targetX, 3.5, delta);
-    g.rotation.z = THREE.MathUtils.damp(g.rotation.z, BASE_ROT_Z, 3, delta);
+    spin.current += delta * 0.32 * (1 - 0.92 * s);
+    paraY.current = THREE.MathUtils.damp(paraY.current, px * 0.16 * (1 - s), 4, delta);
+    paraX.current = THREE.MathUtils.damp(paraX.current, -py * 0.12 * (1 - s), 4, delta);
+    g.rotation.y = spin.current + paraY.current;
+    g.rotation.x = BASE_ROT_X + paraX.current + s * 0.5;
+    g.rotation.z = BASE_ROT_Z;
 
     // Gentle float + settle drift + hover + reveal.
     const float = Math.sin(t * 0.5) * 0.05;
