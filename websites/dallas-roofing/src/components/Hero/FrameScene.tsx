@@ -19,7 +19,7 @@ import { useEffect, useRef } from 'react'
 import { getHeroInView, getProgress } from '../../store/useScrollStore'
 import { clamp01 } from '../../lib/math'
 
-export const FRAME_COUNT = 72
+export const FRAME_COUNT = 60
 
 interface FrameSceneProps {
   active: boolean
