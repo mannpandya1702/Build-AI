@@ -60,7 +60,7 @@ function StaticHero() {
     <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-6 py-28 text-center">
       <HeroPoster />
       <img
-        src="/frames/frame_0071.webp"
+        src="/frames/frame_0059.webp"
         alt=""
         aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover opacity-90"
