@@ -622,3 +622,32 @@ Polish items (non-blocking, demo is a preview): (a) hero subline is a grammatica
 ("...insurance 190 Google reviews and counting") — LLM copy variance, passed voice/schema guards;
 (b) Touch-1 email says "190 five-star reviews" where the data is 190 reviews at 4.9★ — tighten to
 "190 reviews at 4.9 stars" before send to stay literally exact (§0.1).
+
+---
+
+### 2026-07-25 — Dental niche opened (Boise), scored + capped to 30 on operator request
+
+Operator asked for dental leads. Two blockers surfaced and were handled honestly:
+- **Compliance gate.** The worker skipped all healthcare verticals (Amendment A). Un-gated *general
+  dental for DISCOVERY only* (med spa / ortho / mental health / clinics stay gated); demos stay
+  deferred until a PHI-free dental template exists, so no patient data is ever collected. Worker
+  rebuilt v11->v12 and redeployed.
+- **No dental template.** Only roofing is `live: true`. Dental discovery + qualification work; the
+  demo build is the piece still pending a dental template. Operator chose "discover leads only".
+
+Market-scout picked **Boise, ID** (Treasure Valley): 20/20 sampled practices independent (zero DSO
+chains — the cleanest field of any metro tested), 100% with 40+ reviews (avg 508), Idaho a top-10
+dentist-shortage state so practices are busier/better-funded, low agency competition. Fired
+discovery for Boise + Meridian + Nampa.
+
+Places returned ~85 for the target 60. Operator then capped it to **30 leads only**. Delivered
+exactly **30 scored Boise dental** on the Shortlist (5 at score 100 incl. Ustick Dental — the
+scout's flagged strongest lead; 25 at 75). Pre-existing San Antonio dental leads (a prior run, mostly
+DSO chains) were filtered out of the batch.
+
+New operator capability built for this (the console had no way to remove/trim leads): **POST
+`/api/leads/disqualify`** with `action: disqualify | reactivate`. Disqualify sets `disqualified`
+(guarded to pre-outreach states, a legal transition); reactivate re-enters a lead at `discovered` so
+the worker re-qualifies it (not a jump onto the Shortlist unscored). Dashboard redeployed. All trim
+ops went through this endpoint; the worker was paused during the trim to avoid a qualify race, then
+resumed (verified healthy, Two Brothers untouched at awaiting_approval throughout).
