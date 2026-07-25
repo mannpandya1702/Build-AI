@@ -579,12 +579,15 @@ async function main(): Promise<void> {
         id: string;
         payload: { count?: number; vertical?: string; cities?: string[]; country?: string };
       }>(
-        // Skip gated healthcare verticals (Amendment A: no med spa / dental / mental health / chiro
-        // until BAA + E&O are on file). This also neutralizes any stale pre-deploy healthcare
-        // research requests so they never auto-run on worker bring-up.
+        // Skip gated healthcare verticals (Amendment A: no med spa / mental health / chiro until
+        // BAA + E&O are on file). This also neutralizes any stale pre-deploy healthcare research
+        // requests so they never auto-run on worker bring-up.
+        // Operator decision 2026-07-20: general DENTAL is un-gated for DISCOVERY only. Demos stay
+        // deferred until a PHI-free dental template exists, so no patient data is ever collected;
+        // med spa / ortho / mental health / clinics remain gated pending BAA + E&O.
         `select e.id, e.payload from agent_events e
          where e.type = 'research.requested'
-           and lower(coalesce(e.payload->>'vertical','')) !~ '(mental health|dental|dentist|med ?spa|chiro|derma|medical|psych|therap|clinic|orthodont|physician|urgent care)'
+           and lower(coalesce(e.payload->>'vertical','')) !~ '(mental health|med ?spa|chiro|derma|medical|psych|therap|clinic|orthodont|physician|urgent care)'
            and not exists (select 1 from agent_events s where s.type = 'research.started' and s.payload->>'request_id' = e.id::text)
          limit 5`,
       );
