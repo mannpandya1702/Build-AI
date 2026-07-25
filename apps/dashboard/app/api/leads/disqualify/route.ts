@@ -8,8 +8,10 @@ export const dynamic = "force-dynamic";
 //     legal transition from every pre-outreach state (core statuses.ts TRANSITIONS), and the status
 //     guard protects anything already in outreach/won from being nuked. Used to trim an over-sized
 //     discovery batch to a target count, or drop a stray lead.
-//   action "reactivate": undo a batch disqualify — return leads to the Shortlist gate
-//     (awaiting_build_approval) and clear disqualify_reason. Only affects rows currently disqualified.
+//   action "reactivate": undo a batch disqualify — re-enter leads into the pipeline at `discovered`
+//     (so the worker re-scrapes and re-scores them) and clear disqualify_reason. Only affects rows
+//     currently disqualified. Re-entering at discovered (not the gate) means a reactivated lead is
+//     properly re-qualified rather than jumping onto the Shortlist unscored.
 // Each affected lead gets one event so the Activity feed and Timeline reflect the change.
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
@@ -24,12 +26,12 @@ export async function POST(req: Request) {
   if (action === "reactivate") {
     const r = await db().query<{ id: string }>(
       `with upd as (
-         update leads set status = 'awaiting_build_approval', disqualify_reason = null
+         update leads set status = 'discovered', disqualify_reason = null
           where id = any($1::uuid[]) and status = 'disqualified'
           returning id
        ), ev as (
          insert into agent_events (agent, lead_id, level, type, message)
-         select 'dashboard', id, 'info', 'lead.reactivated', 'operator reactivated to shortlist' from upd
+         select 'dashboard', id, 'info', 'lead.reactivated', 'operator reactivated into pipeline' from upd
        )
        select id from upd`,
       [ids],
