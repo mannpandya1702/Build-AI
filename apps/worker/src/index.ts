@@ -760,6 +760,45 @@ async function main(): Promise<void> {
     }
   }, 60_000);
 
+  // Batch mode (WORKER_MODE=batch): for cron-triggered runs (GitHub Actions) instead of an always-on
+  // host. All the intervals above still run and drain the pipeline; this watcher ends the process once
+  // the pg-boss queue has been idle for a short window (every reachable lead has been advanced as far
+  // as it can go without operator input) or a hard time budget elapses, so a scheduled run is bounded
+  // and cheap. Persistent mode (the default, used on Fly) never arms it, so that path is unchanged.
+  if (process.env.WORKER_MODE === "batch") {
+    const MAX_MS = Number(process.env.BATCH_MAX_MS) || 12 * 60 * 1000;
+    const GRACE_MS = Number(process.env.BATCH_GRACE_MS) || 20_000; // let the scheduler enqueue first
+    const startedAt = Date.now();
+    let idle = 0;
+    const finish = async (why: string) => {
+      clearInterval(watch);
+      await emitEvent({ agent: "worker", type: "worker.batch_done", level: "info", message: why }).catch(
+        () => undefined,
+      );
+      await boss.stop({ graceful: true, timeout: 8000 }).catch(() => undefined);
+      console.log(`[worker] batch done: ${why}`);
+      process.exit(0);
+    };
+    const watch: NodeJS.Timeout = setInterval(() => {
+      void (async () => {
+        try {
+          if (Date.now() - startedAt > MAX_MS) return finish("time budget reached");
+          if (Date.now() - startedAt < GRACE_MS) return; // warming up: let the first scan enqueue work
+          const q = await pool.query<{ n: number }>(
+            "select count(*)::int n from pgboss.job where state in ('created','active','retry')",
+          );
+          if ((q.rows[0]?.n ?? 0) === 0) {
+            if (++idle >= 3) return finish("pipeline idle (queue drained)"); // ~15s of quiet
+          } else {
+            idle = 0;
+          }
+        } catch (err) {
+          console.error("[batch-watch]", (err as Error).message);
+        }
+      })();
+    }, 5000);
+  }
+
   console.log(`[worker] up. agents: ${AGENTS.map((a) => a.name).join(", ")} | mock=${MOCK}`);
 }
 
