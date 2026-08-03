@@ -22,12 +22,13 @@ export const site = {
   email: "info@vocabric.com",
 };
 
+// Absolute (/#…) so the links work from any route, including /blog.
 export const nav = [
-  { label: "Services", href: "#services" },
-  { label: "Reviews", href: "#reviews" },
-  { label: "Voice", href: "#voice" },
-  { label: "Process", href: "#process" },
-  { label: "FAQ", href: "#faq" },
+  { label: "Services", href: "/#services" },
+  { label: "Reviews", href: "/#reviews" },
+  { label: "Voice", href: "/#voice" },
+  { label: "Blog", href: "/blog" },
+  { label: "FAQ", href: "/#faq" },
 ] as const;
 
 export type Service = {

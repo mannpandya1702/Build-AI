@@ -28,7 +28,7 @@ export function SiteNav() {
       >
         {/* Wordmark */}
         <a
-          href="#top"
+          href="/#top"
           className="group flex items-center gap-2.5"
           aria-label={`${site.name} — home`}
         >
