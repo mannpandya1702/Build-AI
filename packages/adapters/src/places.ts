@@ -46,6 +46,9 @@ export async function searchPlaces(
       })),
     };
   }
+  // Provider swap: DISCOVERY_PROVIDER=apify routes discovery to the Apify Google Maps scraper.
+  if (process.env.DISCOVERY_PROVIDER === "apify")
+    return (await import("./apify.js")).apifySearch(query, maxResultCount);
   await checkPlacesCap();
   const res = await fetch(`${BASE}/places:searchText`, {
     method: "POST",
@@ -81,6 +84,8 @@ export async function placeDetails(placeId: string): Promise<PlaceHit> {
       ],
     };
   }
+  if (process.env.DISCOVERY_PROVIDER === "apify")
+    return (await import("./apify.js")).apifyDetails(placeId);
   await checkPlacesCap();
   const res = await fetch(`${BASE}/places/${placeId}`, {
     headers: { "X-Goog-Api-Key": apiKey(), "X-Goog-FieldMask": DETAILS_MASK },
@@ -99,6 +104,10 @@ const MOCK_PNG = Buffer.from(
 );
 export async function fetchPhotoBytes(photoName: string, maxWidthPx = 1280): Promise<Buffer> {
   if (MOCK()) return MOCK_PNG;
+  // Apify stores photos as direct URLs (not Places resource names): fetch them straight. Routing by
+  // the http prefix works for either provider, so a lead discovered via Apify renders correctly even
+  // if the flag later changes.
+  if (/^https?:\/\//.test(photoName)) return (await import("./apify.js")).apifyPhotoBytes(photoName);
   await checkPlacesCap();
   const meta = await fetch(`${BASE}/${photoName}/media?maxWidthPx=${maxWidthPx}&skipHttpRedirect=true`, {
     headers: { "X-Goog-Api-Key": apiKey() },
