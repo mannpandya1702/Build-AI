@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { processSteps } from "@/lib/site";
 import { EASE } from "@/lib/motion";
-import { SectionHeading } from "./service-cards";
+import { SectionHeading } from "./primitives";
 
 export function Process() {
   return (
@@ -25,7 +25,7 @@ export function Process() {
             className="group relative bg-canvas p-8 sm:p-10"
           >
             <span className="font-mono text-sm text-accent">
-              {step.index} / {step.title}
+              {step.index}
             </span>
             <h3 className="mt-6 font-display text-2xl font-semibold tracking-tight">
               {step.title}

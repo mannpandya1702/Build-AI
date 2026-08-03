@@ -1,24 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Star, Quote } from "lucide-react";
+import { Quote } from "lucide-react";
 import { testimonials, trust, type Testimonial } from "@/lib/site";
-import { SectionHeading } from "./service-cards";
+import { SectionHeading, Stars } from "./primitives";
 import { EASE } from "@/lib/motion";
-
-function Stars({ n }: { n: number }) {
-  return (
-    <div className="flex gap-0.5" aria-label={`${n} out of 5 stars`}>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={i < n ? "fill-accent text-accent" : "text-line-strong"}
-          style={{ width: 15, height: 15 }}
-        />
-      ))}
-    </div>
-  );
-}
 
 function initials(name: string) {
   return name
@@ -77,7 +63,7 @@ export function Testimonials() {
         />
 
         {/* aggregate rating badge */}
-        <div className="flex items-center gap-4 rounded-2xl border border-line bg-panel/50 px-5 py-4">
+        <div className="flex items-center gap-4 rounded-[var(--radius-card)] border border-line bg-panel/50 px-5 py-4">
           <div className="font-display text-4xl font-semibold tabular-nums text-ink">
             {trust.rating}
           </div>

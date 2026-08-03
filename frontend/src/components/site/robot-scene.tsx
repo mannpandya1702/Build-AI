@@ -229,22 +229,21 @@ function RobotEye({
   );
 }
 
-function RobotPrototype({ reduced }: { reduced: boolean }) {
+function RobotPrototype() {
   const isLovedRef = useRef(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bodyRef = useRef<THREE.Group>(null);
   const headRef = useRef<THREE.Group>(null);
 
   const design = {
-    separacionOjos: 0.07,
-    tamañoOrejas: 1.3,
-    escalaOjos: 1.1,
-    alturaCabeza: 0.6,
+    eyeSeparation: 0.07,
+    earScale: 1.3,
+    eyeScale: 1.1,
+    headHeight: 0.6,
   };
 
   // Calmer than the original: softer look, gentler tracking.
   const config = {
-    moveSpeed: 0.28,
     bodyRotSpeed: 7.0,
     headRotSpeed: 12.0,
     bodyTiltY: 0.7,
@@ -273,27 +272,17 @@ function RobotPrototype({ reduced }: { reduced: boolean }) {
     if (!bodyRef.current || !headRef.current) return;
     const dt = Math.min(delta, 0.1);
 
-    if (reduced) {
-      // idle: a slow breathing sway, no pointer coupling
-      const t = state.clock.getElapsedTime();
-      bodyRef.current.rotation.y = Math.sin(t * 0.4) * 0.15;
-      headRef.current.rotation.y = Math.sin(t * 0.4) * 0.1;
-      headRef.current.rotation.x = Math.sin(t * 0.6) * 0.03;
-      return;
-    }
-
     const tx = state.pointer.x;
     const ty = state.pointer.y;
-    const relativeX = tx;
 
-    const bodyTargetRotY = -relativeX * config.bodyTiltY;
+    const bodyTargetRotY = -tx * config.bodyTiltY;
     const bodyTargetRotX = -ty * 0.18;
-    const bodyTargetRotZ = -relativeX * 0.1;
+    const bodyTargetRotZ = -tx * 0.1;
     bodyRef.current.rotation.y = THREE.MathUtils.lerp(bodyRef.current.rotation.y, bodyTargetRotY, config.bodyRotSpeed * dt);
     bodyRef.current.rotation.x = THREE.MathUtils.lerp(bodyRef.current.rotation.x, bodyTargetRotX, config.bodyRotSpeed * dt);
     bodyRef.current.rotation.z = THREE.MathUtils.lerp(bodyRef.current.rotation.z, bodyTargetRotZ, config.bodyRotSpeed * dt);
 
-    headRef.current.rotation.y = THREE.MathUtils.lerp(headRef.current.rotation.y, relativeX * config.headLookY, config.headRotSpeed * dt);
+    headRef.current.rotation.y = THREE.MathUtils.lerp(headRef.current.rotation.y, tx * config.headLookY, config.headRotSpeed * dt);
     headRef.current.rotation.x = THREE.MathUtils.lerp(headRef.current.rotation.x, -ty * config.headLookX, config.headRotSpeed * dt);
   });
 
@@ -328,31 +317,30 @@ function RobotPrototype({ reduced }: { reduced: boolean }) {
       </mesh>
 
       {/* head */}
-      <group ref={headRef} position={[0, design.alturaCabeza, 0]}>
+      <group ref={headRef} position={[0, design.headHeight, 0]}>
         <mesh material={darkMat} castShadow>
           <sphereGeometry args={[0.28, 64, 64, 0, Math.PI * 2, 0, Math.PI]} />
         </mesh>
         <GlassCapsule />
         <group position={[0, -0.02, 0.29]}>
-          <RobotEye position={[-design.separacionOjos, 0, 0]} rotation={[0, -0.2, 0]} scale={design.escalaOjos} isLovedRef={isLovedRef} />
-          <RobotEye position={[design.separacionOjos, 0, 0]} rotation={[0, 0.2, 0]} scale={design.escalaOjos} isLovedRef={isLovedRef} />
+          <RobotEye position={[-design.eyeSeparation, 0, 0]} rotation={[0, -0.2, 0]} scale={design.eyeScale} isLovedRef={isLovedRef} />
+          <RobotEye position={[design.eyeSeparation, 0, 0]} rotation={[0, 0.2, 0]} scale={design.eyeScale} isLovedRef={isLovedRef} />
         </group>
-        <RobotEar position={[-0.29, 0, 0]} isLeft scale={design.tamañoOrejas} />
-        <RobotEar position={[0.29, 0, 0]} scale={design.tamañoOrejas} />
+        <RobotEar position={[-0.29, 0, 0]} isLeft scale={design.earScale} />
+        <RobotEar position={[0.29, 0, 0]} scale={design.earScale} />
       </group>
     </group>
   );
 }
 
-export default function RobotScene() {
-  const reduced =
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
+/** `active` drives the render loop: when the section scrolls off-screen the
+ *  parent flips it false and the WebGL loop halts entirely (frameloop="never"). */
+export default function RobotScene({ active = true }: { active?: boolean }) {
   return (
     <Canvas
       shadows
-      dpr={[1, 1.75]}
+      dpr={[1, 1.5]}
+      frameloop={active ? "always" : "never"}
       camera={{ position: [0, 0.2, 6], fov: 40 }}
       gl={{ alpha: true, antialias: true }}
       style={{ background: "transparent" }}
@@ -360,7 +348,7 @@ export default function RobotScene() {
       {/* dark, moody base */}
       <ambientLight intensity={0.35} />
       {/* key */}
-      <directionalLight position={[3, 5, 4]} intensity={0.8} color="#ffffff" castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0005}>
+      <directionalLight position={[3, 5, 4]} intensity={0.8} color="#ffffff" castShadow shadow-mapSize={[1024, 1024]} shadow-bias={-0.0005}>
         <orthographicCamera attach="shadow-camera" args={[-1.5, 1.5, 1.5, -1.5, 0.1, 20]} />
       </directionalLight>
       {/* violet rim light from behind */}
@@ -378,8 +366,8 @@ export default function RobotScene() {
         </Environment>
 
         <ResponsiveGroup>
-          <ContactShadows position={[0, -0.8, 0]} opacity={0.6} scale={12} resolution={1024} blur={2.2} far={2.5} color="#000000" />
-          <RobotPrototype reduced={reduced} />
+          <ContactShadows position={[0, -0.8, 0]} opacity={0.6} scale={12} resolution={512} blur={2.2} far={2.5} color="#000000" />
+          <RobotPrototype />
         </ResponsiveGroup>
       </Suspense>
     </Canvas>

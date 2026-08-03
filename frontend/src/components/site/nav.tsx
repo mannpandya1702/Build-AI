@@ -42,6 +42,7 @@ export function SiteNav() {
 
         {/* Center nav — glassy pill, collapses on mobile */}
         <nav
+          aria-label="Primary"
           className={`hidden items-center gap-1 rounded-full border border-line px-1.5 py-1.5 backdrop-blur-xl transition-colors duration-500 md:flex ${
             scrolled ? "bg-panel/70" : "bg-white/[0.02]"
           }`}
@@ -62,7 +63,7 @@ export function SiteNav() {
           href={BOOKING_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="group inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white shadow-[0_0_24px_-4px_var(--color-accent)] transition-all hover:shadow-[0_0_36px_-2px_var(--color-accent)] sm:px-5"
+          className="group inline-flex items-center gap-1.5 rounded-full bg-accent-strong px-4 py-2 text-sm font-semibold text-white shadow-[0_0_24px_-4px_var(--color-accent)] transition-all hover:shadow-[0_0_36px_-2px_var(--color-accent)] sm:px-5"
         >
           <span>Book a call</span>
           <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -91,7 +92,8 @@ export function StickyBookBar() {
       initial={false}
       animate={{ y: show ? 0 : 120, opacity: show ? 1 : 0 }}
       transition={{ duration: 0.4, ease: EASE }}
-      className="fixed inset-x-4 bottom-4 z-50 flex items-center justify-center gap-2 rounded-full bg-accent py-3.5 text-sm font-semibold text-white shadow-[0_10px_40px_-8px_var(--color-accent)] md:hidden"
+      style={{ bottom: "max(1rem, env(safe-area-inset-bottom))" }}
+      className="fixed inset-x-4 z-50 flex items-center justify-center gap-2 rounded-full bg-accent-strong py-3.5 text-sm font-semibold text-white shadow-[0_10px_40px_-8px_var(--color-accent)] md:hidden"
     >
       Book a call — free 20 min
       <ArrowUpRight className="h-4 w-4" />

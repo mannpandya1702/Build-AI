@@ -4,14 +4,12 @@ import { motion } from "framer-motion";
 import { X, Check } from "lucide-react";
 import { comparison } from "@/lib/site";
 import { EASE } from "@/lib/motion";
+import { Eyebrow } from "./primitives";
 
 export function Comparison() {
   return (
-    <section className="relative mx-auto max-w-[1400px] px-5 py-28 sm:px-8 sm:py-32">
-      <p className="mb-4 flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-accent">
-        <span className="h-px w-8 bg-accent/50" />
-        The difference
-      </p>
+    <section className="relative mx-auto max-w-[1400px] px-5 py-28 sm:px-8 sm:py-36">
+      <Eyebrow label="The difference" />
       <h2 className="max-w-2xl font-display text-[clamp(2rem,4.5vw,3.5rem)] font-semibold leading-[1.02] tracking-[-0.02em]">
         Two ways to run the next quarter.
       </h2>

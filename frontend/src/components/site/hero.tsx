@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowUpRight, ArrowDown, Star } from "lucide-react";
+import { ArrowUpRight, ArrowDown } from "lucide-react";
 import { GradientMesh } from "./gradient-mesh";
+import { Stars } from "./primitives";
 import { useCursorGlow } from "@/hooks/use-cursor-glow";
 import { BOOKING_URL, metrics, trust } from "@/lib/site";
 import { EASE } from "@/lib/motion";
@@ -101,7 +102,7 @@ export function Hero() {
             href={BOOKING_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="group inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3.5 text-base font-semibold text-white shadow-[0_0_32px_-6px_var(--color-accent)] transition-all hover:shadow-[0_0_48px_-4px_var(--color-accent)]"
+            className="group inline-flex items-center gap-2 rounded-full bg-accent-strong px-6 py-3.5 text-base font-semibold text-white shadow-[0_0_32px_-6px_var(--color-accent)] transition-all hover:shadow-[0_0_48px_-4px_var(--color-accent)]"
           >
             Book a call
             <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -123,11 +124,7 @@ export function Hero() {
           animate="show"
           className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted"
         >
-          <span className="flex gap-0.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} className="fill-accent text-accent" style={{ width: 15, height: 15 }} />
-            ))}
-          </span>
+          <Stars n={5} />
           <span className="font-semibold text-ink">{trust.rating}</span>
           <span aria-hidden className="text-line-strong">
             ·
@@ -144,7 +141,7 @@ export function Hero() {
           variants={rise}
           initial="hidden"
           animate="show"
-          className="mt-16 grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-4"
+          className="mt-16 grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-card)] border border-line bg-line sm:grid-cols-4"
         >
           {metrics.map((m) => (
             <div key={m.label} className="bg-canvas px-5 py-6">

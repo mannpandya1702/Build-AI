@@ -43,7 +43,7 @@ function Stat({ to, suffix, label, sub }: (typeof numbers)[number]) {
         <span className="text-accent">{suffix}</span>
       </div>
       <div className="mt-3 text-sm font-medium text-ink">{label}</div>
-      <div className="mt-1 font-mono text-xs text-muted">{sub}</div>
+      <div className="mt-1 text-xs text-muted">{sub}</div>
     </div>
   );
 }
@@ -56,10 +56,10 @@ export function StatsCounter() {
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_60%_at_50%_0%,rgba(123,92,255,0.10),transparent_70%)]"
       />
       <div className="relative mx-auto max-w-[1400px] px-5 py-16 sm:px-8">
-        <p className="mb-2 flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-accent">
+        <h2 className="mb-4 flex items-center gap-2 font-mono text-xs font-normal uppercase tracking-[0.2em] text-accent">
           <span className="h-px w-8 bg-accent/50" />
           Maana in numbers
-        </p>
+        </h2>
         <div className="grid grid-cols-1 gap-px overflow-hidden rounded-[var(--radius-card)] border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
           {numbers.map((n) => (
             <div key={n.label} className="bg-canvas">

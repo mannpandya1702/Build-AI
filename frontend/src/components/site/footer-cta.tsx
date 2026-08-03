@@ -34,7 +34,7 @@ export function FooterCta() {
             href={BOOKING_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="group mt-10 inline-flex items-center gap-2 rounded-full bg-accent px-8 py-4 text-lg font-semibold text-white shadow-[0_0_40px_-6px_var(--color-accent)] transition-all hover:shadow-[0_0_64px_-4px_var(--color-accent)]"
+            className="group mt-10 inline-flex items-center gap-2 rounded-full bg-accent-strong px-8 py-4 text-lg font-semibold text-white shadow-[0_0_40px_-6px_var(--color-accent)] transition-all hover:shadow-[0_0_64px_-4px_var(--color-accent)]"
           >
             Book your free AI audit
             <ArrowUpRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -50,7 +50,7 @@ export function FooterCta() {
       <div className="border-t border-line">
         <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-6 px-5 py-8 sm:flex-row sm:px-8">
           <div className="flex items-center gap-2.5">
-            <span className="grid h-7 w-7 place-items-center rounded-md border border-line-strong bg-panel">
+            <span className="grid h-7 w-7 place-items-center rounded-lg border border-line-strong bg-panel">
               <span className="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_10px_2px_var(--color-accent)]" />
             </span>
             <span className="font-display text-base font-semibold">{site.name}</span>
@@ -59,26 +59,29 @@ export function FooterCta() {
             </span>
           </div>
 
-          <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          <nav
+            aria-label="Footer"
+            className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1"
+          >
             {nav.map((item) => (
               <a
                 key={item.href}
                 href={item.href}
-                className="font-mono text-xs uppercase tracking-wider text-muted transition-colors hover:text-ink"
+                className="rounded px-1 py-2 font-mono text-xs uppercase tracking-wider text-muted transition-colors hover:text-ink"
               >
                 {item.label}
               </a>
             ))}
             <a
               href={`mailto:${site.email}`}
-              className="font-mono text-xs uppercase tracking-wider text-muted transition-colors hover:text-ink"
+              className="rounded px-1 py-2 font-mono text-xs uppercase tracking-wider text-muted transition-colors hover:text-ink"
             >
               {site.email}
             </a>
           </nav>
         </div>
-        <p className="pb-8 text-center font-mono text-[11px] text-muted/60">
-          © {2026} {site.name}. One accent, on purpose.
+        <p className="px-5 pb-24 text-center font-mono text-[11px] text-muted md:pb-8">
+          © 2026 {site.name}. One accent, on purpose.
         </p>
       </div>
     </footer>

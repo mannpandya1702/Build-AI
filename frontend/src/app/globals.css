@@ -21,6 +21,9 @@
   /* The one saturated color on the page — electric violet */
   --color-accent: #7b5cff;
   --color-accent-soft: #9b84ff;
+  /* Same hue, darkened just enough that white text on it clears WCAG AA
+     (5.5:1). Used ONLY as a solid button background, never as an accent. */
+  --color-accent-strong: #6a49f0;
 
   --font-display: var(--font-display-face), "Space Grotesk", sans-serif;
   --font-sans: var(--font-sans-face), ui-sans-serif, system-ui, sans-serif;
@@ -33,6 +36,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* keep in-page anchor targets clear of the fixed header */
+  scroll-padding-top: 5rem;
 }
 
 body {
@@ -47,6 +52,13 @@ body {
 ::selection {
   background: color-mix(in srgb, var(--color-accent) 32%, transparent);
   color: #fff;
+}
+
+/* Visible, on-brand keyboard focus — nothing had one before */
+:focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* Custom scrollbar — subtle, on-brand */
@@ -75,8 +87,9 @@ body {
   inset: 0;
   z-index: 100;
   pointer-events: none;
-  opacity: 0.05;
-  mix-blend-mode: overlay;
+  /* plain low-opacity noise (no mix-blend) so it isn't re-composited over
+     every animating layer each frame */
+  opacity: 0.04;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 200px 200px;
 }

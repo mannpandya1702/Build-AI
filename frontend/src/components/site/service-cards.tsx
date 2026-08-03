@@ -10,6 +10,7 @@ import {
 import { Plus, ArrowUpRight } from "lucide-react";
 import { services, type Service, BOOKING_URL } from "@/lib/site";
 import { EASE } from "@/lib/motion";
+import { SectionHeading } from "./primitives";
 
 export function ServiceCards() {
   const [active, setActive] = useState<string | null>("voice");
@@ -62,13 +63,20 @@ function ServiceCard({
   onToggle: () => void;
 }) {
   const Icon = service.icon;
+  const panelId = `${service.id}-panel`;
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onToggle();
+    }
+  };
 
   return (
     <motion.div
       layout
-      onClick={onToggle}
       transition={{ layout: { duration: 0.5, ease: EASE } }}
-      className={`group relative cursor-pointer overflow-hidden rounded-[var(--radius-card)] border p-6 transition-colors sm:p-8 ${
+      className={`group relative overflow-hidden rounded-[var(--radius-card)] border p-6 transition-colors sm:p-8 ${
         isActive
           ? "border-accent/40 bg-panel md:col-span-2"
           : "border-line bg-panel/50 hover:border-line-strong hover:bg-panel"
@@ -87,7 +95,17 @@ function ServiceCard({
         )}
       </AnimatePresence>
 
-      <motion.div layout="position" className="relative flex items-start justify-between gap-4">
+      {/* Header row IS the toggle — keyboard operable and announced. */}
+      <motion.div
+        layout="position"
+        role="button"
+        tabIndex={0}
+        aria-expanded={isActive}
+        aria-controls={panelId}
+        onClick={onToggle}
+        onKeyDown={onKeyDown}
+        className="relative flex cursor-pointer items-start justify-between gap-4 rounded-lg"
+      >
         <div className="flex items-start gap-4">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-line-strong bg-canvas text-accent">
             <Icon className="h-5 w-5" strokeWidth={1.75} />
@@ -125,6 +143,7 @@ function ServiceCard({
         {isActive && (
           <motion.div
             key="body"
+            id={panelId}
             layout
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
@@ -153,7 +172,7 @@ function ServiceCard({
 
               <motion.div
                 variants={itemVariants}
-                className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-line bg-canvas/60 p-5"
+                className="flex flex-col items-start justify-between gap-4 rounded-[var(--radius-card)] border border-line bg-canvas/60 p-5"
               >
                 <p className="text-sm text-muted">
                   Scoped to your stack and volume. We'll size it on the call.
@@ -162,8 +181,7 @@ function ServiceCard({
                   href={BOOKING_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="group/cta inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-all hover:shadow-[0_0_28px_-6px_var(--color-accent)]"
+                  className="group/cta inline-flex items-center gap-2 rounded-full bg-accent-strong px-5 py-2.5 text-sm font-semibold text-white transition-all hover:shadow-[0_0_28px_-6px_var(--color-accent)]"
                 >
                   {service.cta}
                   <ArrowUpRight className="h-4 w-4 transition-transform group-hover/cta:translate-x-0.5 group-hover/cta:-translate-y-0.5" />
@@ -174,28 +192,5 @@ function ServiceCard({
         )}
       </AnimatePresence>
     </motion.div>
-  );
-}
-
-export function SectionHeading({
-  eyebrow,
-  title,
-  blurb,
-}: {
-  eyebrow: string;
-  title: string;
-  blurb?: string;
-}) {
-  return (
-    <div className="max-w-2xl">
-      <p className="mb-4 flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-accent">
-        <span className="h-px w-8 bg-accent/50" />
-        {eyebrow}
-      </p>
-      <h2 className="font-display text-[clamp(2rem,4.5vw,3.5rem)] font-semibold leading-[1.02] tracking-[-0.02em]">
-        {title}
-      </h2>
-      {blurb && <p className="mt-5 text-lg leading-relaxed text-muted">{blurb}</p>}
-    </div>
   );
 }

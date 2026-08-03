@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { motion } from "framer-motion";
+import { motion, useInView, useReducedMotion } from "framer-motion";
 import { Phone, Calendar, PhoneForwarded } from "lucide-react";
-import { useInView } from "@/hooks/use-in-view";
 import { BOOKING_URL } from "@/lib/site";
+import { Eyebrow } from "./primitives";
 
 /* The Three.js scene is only ever loaded in the browser, and only after the
    section nears the viewport (gated by useInView below). */
@@ -17,7 +18,19 @@ const points = [
 ];
 
 export function VoiceBeat() {
-  const { ref, inView } = useInView<HTMLDivElement>("300px");
+  const ref = useRef<HTMLDivElement>(null);
+  // live (two-directional) so we can pause the render loop when off-screen
+  const inView = useInView(ref, { margin: "300px" });
+  const reduced = useReducedMotion();
+
+  // latch: once mounted, keep the scene mounted for the session
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    if (inView) setMounted(true);
+  }, [inView]);
+
+  // Reduced-motion users never pay the WebGL cost — they get the static stand-in.
+  const showRobot = mounted && !reduced;
 
   return (
     <section
@@ -33,10 +46,7 @@ export function VoiceBeat() {
       <div className="relative mx-auto grid max-w-[1400px] items-center gap-8 px-5 py-24 sm:px-8 lg:grid-cols-2 lg:py-28">
         {/* copy */}
         <div className="order-2 lg:order-1">
-          <p className="mb-4 flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-accent">
-            <span className="h-px w-8 bg-accent/50" />
-            03 — Voice
-          </p>
+          <Eyebrow label="03 — Voice" />
           <h2 className="max-w-[18ch] font-display text-[clamp(2rem,4.5vw,3.5rem)] font-semibold leading-[1.02] tracking-[-0.02em]">
             Meet the AI that answers your calls.
           </h2>
@@ -67,19 +77,21 @@ export function VoiceBeat() {
           </a>
         </div>
 
-        {/* the one 3D beat */}
+        {/* the one 3D beat — decorative */}
         <div
           ref={ref}
+          aria-hidden
           className="order-1 h-[380px] w-full sm:h-[460px] lg:order-2 lg:h-[560px]"
         >
-          {inView ? (
+          {showRobot ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8 }}
               className="h-full w-full"
             >
-              <RobotScene />
+              {/* pause the render loop entirely while scrolled off-screen */}
+              <RobotScene active={inView} />
             </motion.div>
           ) : (
             <RobotFallback />

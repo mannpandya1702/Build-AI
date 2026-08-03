@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus } from "lucide-react";
 import { faqs, BOOKING_URL } from "@/lib/site";
 import { EASE } from "@/lib/motion";
+import { Eyebrow } from "./primitives";
 
 function Item({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boolean; onToggle: () => void }) {
   return (
@@ -46,13 +47,10 @@ export function Faq() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="relative mx-auto max-w-[1400px] px-5 py-28 sm:px-8 sm:py-32">
+    <section id="faq" className="relative mx-auto max-w-[1400px] px-5 py-28 sm:px-8 sm:py-36">
       <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
         <div>
-          <p className="mb-4 flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-accent">
-            <span className="h-px w-8 bg-accent/50" />
-            FAQ
-          </p>
+          <Eyebrow label="FAQ" />
           <h2 className="font-display text-[clamp(2rem,4.5vw,3.5rem)] font-semibold leading-[1.02] tracking-[-0.02em]">
             The questions before the call.
           </h2>
