@@ -3,6 +3,7 @@ import { Hero } from "@/components/site/hero";
 import { ServiceCards } from "@/components/site/service-cards";
 import { StatsCounter } from "@/components/site/stats-counter";
 import { VoiceBeat } from "@/components/site/voice-beat";
+import { GlobalReach } from "@/components/site/global-reach";
 import { Comparison } from "@/components/site/comparison";
 import { Testimonials } from "@/components/site/testimonials";
 import { Marquee } from "@/components/site/marquee";
@@ -19,6 +20,7 @@ export default function Home() {
         <ServiceCards />
         <StatsCounter />
         <VoiceBeat />
+        <GlobalReach />
         <Comparison />
         <Testimonials />
         <Marquee />
