@@ -8,7 +8,7 @@ export const site = {
   name: "Vocabric AI",
   /** One accent, one idea, one clear next step. */
   tagline: "AI, engineered with restraint.",
-  email: "hello@vocabric.com",
+  email: "info@vocabric.com",
 };
 
 export const nav = [
