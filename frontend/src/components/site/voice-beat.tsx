@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { motion, useInView, useReducedMotion } from "framer-motion";
 import { Phone, Calendar, PhoneForwarded } from "lucide-react";
-import { BOOKING_URL } from "@/lib/site";
+import { BOOKING_URL, calAttrs } from "@/lib/site";
 import { Eyebrow } from "./primitives";
 
 /* The Three.js scene is only ever loaded in the browser, and only after the
@@ -67,7 +67,7 @@ export function VoiceBeat() {
           </ul>
 
           <a
-            href={BOOKING_URL}
+            href={BOOKING_URL} {...calAttrs}
             target="_blank"
             rel="noopener noreferrer"
             className="group mt-9 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-6 py-3 text-sm font-semibold text-ink transition-colors hover:bg-accent/20"

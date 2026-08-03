@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus } from "lucide-react";
-import { faqs, BOOKING_URL } from "@/lib/site";
+import { faqs, BOOKING_URL, calAttrs } from "@/lib/site";
 import { EASE } from "@/lib/motion";
 import { Eyebrow } from "./primitives";
 
@@ -57,7 +57,7 @@ export function Faq() {
           <p className="mt-5 max-w-sm text-muted">
             Still unsure?{" "}
             <a
-              href={BOOKING_URL}
+              href={BOOKING_URL} {...calAttrs}
               target="_blank"
               rel="noopener noreferrer"
               className="text-accent-soft underline underline-offset-4"

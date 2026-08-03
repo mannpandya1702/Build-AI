@@ -1,8 +1,19 @@
 import type { LucideIcon } from "lucide-react";
 import { Globe, MessagesSquare, AudioLines, Workflow } from "lucide-react";
 
-/** Swap this for your real scheduling link (Cal.com / Calendly). */
-export const BOOKING_URL = "https://cal.com/vocabric/intro";
+/** Public Cal.com booking link (safe to expose — it's the page you'd share). */
+export const CAL_LINK = "info-ai-ejzad0/20min";
+export const CAL_NAMESPACE = "20min";
+/** Full URL — used as the href fallback if the popup embed can't load. */
+export const BOOKING_URL = `https://cal.com/${CAL_LINK}`;
+
+/** Spread onto any CTA to make it open the Cal popup (themed dark + violet).
+ *  The embed intercepts the click; the href stays as a graceful fallback. */
+export const calAttrs = {
+  "data-cal-namespace": CAL_NAMESPACE,
+  "data-cal-link": CAL_LINK,
+  "data-cal-config": '{"layout":"month_view","theme":"dark"}',
+};
 
 export const site = {
   name: "Vocabric AI",

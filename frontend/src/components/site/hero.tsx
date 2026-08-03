@@ -5,7 +5,7 @@ import { ArrowUpRight, ArrowDown } from "lucide-react";
 import { GradientMesh } from "./gradient-mesh";
 import { Stars } from "./primitives";
 import { useCursorGlow } from "@/hooks/use-cursor-glow";
-import { BOOKING_URL, metrics, trust } from "@/lib/site";
+import { BOOKING_URL, metrics, trust, calAttrs } from "@/lib/site";
 import { EASE } from "@/lib/motion";
 
 const rise = {
@@ -99,7 +99,7 @@ export function Hero() {
           className="mt-10 flex flex-wrap items-center gap-3"
         >
           <a
-            href={BOOKING_URL}
+            href={BOOKING_URL} {...calAttrs}
             target="_blank"
             rel="noopener noreferrer"
             className="group inline-flex items-center gap-2 rounded-full bg-accent-strong px-6 py-3.5 text-base font-semibold text-white shadow-[0_0_32px_-6px_var(--color-accent)] transition-all hover:shadow-[0_0_48px_-4px_var(--color-accent)]"

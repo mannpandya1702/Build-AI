@@ -1,4 +1,5 @@
 import { SiteNav, StickyBookBar } from "@/components/site/nav";
+import { CalEmbedInit } from "@/components/site/cal-embed";
 import { Hero } from "@/components/site/hero";
 import { ServiceCards } from "@/components/site/service-cards";
 import { StatsCounter } from "@/components/site/stats-counter";
@@ -14,6 +15,7 @@ import { FooterCta } from "@/components/site/footer-cta";
 export default function Home() {
   return (
     <>
+      <CalEmbedInit />
       <SiteNav />
       <main>
         <Hero />

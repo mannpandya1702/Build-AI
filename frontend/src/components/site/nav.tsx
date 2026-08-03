@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
-import { nav, site, BOOKING_URL } from "@/lib/site";
+import { nav, site, BOOKING_URL, calAttrs } from "@/lib/site";
 import { EASE } from "@/lib/motion";
 
 export function SiteNav() {
@@ -60,7 +60,7 @@ export function SiteNav() {
 
         {/* The one thing that must never get buried */}
         <a
-          href={BOOKING_URL}
+          href={BOOKING_URL} {...calAttrs}
           target="_blank"
           rel="noopener noreferrer"
           className="group inline-flex items-center gap-1.5 rounded-full bg-accent-strong px-4 py-2 text-sm font-semibold text-white shadow-[0_0_24px_-4px_var(--color-accent)] transition-all hover:shadow-[0_0_36px_-2px_var(--color-accent)] sm:px-5"
@@ -86,7 +86,7 @@ export function StickyBookBar() {
 
   return (
     <motion.a
-      href={BOOKING_URL}
+      href={BOOKING_URL} {...calAttrs}
       target="_blank"
       rel="noopener noreferrer"
       initial={false}

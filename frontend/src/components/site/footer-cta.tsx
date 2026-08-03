@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
-import { BOOKING_URL, site, nav } from "@/lib/site";
+import { BOOKING_URL, site, nav, calAttrs } from "@/lib/site";
 import { EASE } from "@/lib/motion";
 
 export function FooterCta() {
@@ -31,7 +31,7 @@ export function FooterCta() {
           </p>
 
           <a
-            href={BOOKING_URL}
+            href={BOOKING_URL} {...calAttrs}
             target="_blank"
             rel="noopener noreferrer"
             className="group mt-10 inline-flex items-center gap-2 rounded-full bg-accent-strong px-8 py-4 text-lg font-semibold text-white shadow-[0_0_40px_-6px_var(--color-accent)] transition-all hover:shadow-[0_0_64px_-4px_var(--color-accent)]"

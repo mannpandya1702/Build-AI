@@ -8,7 +8,7 @@ import {
   type Variants,
 } from "framer-motion";
 import { Plus, ArrowUpRight } from "lucide-react";
-import { services, type Service, BOOKING_URL } from "@/lib/site";
+import { services, type Service, BOOKING_URL, calAttrs } from "@/lib/site";
 import { EASE } from "@/lib/motion";
 import { SectionHeading } from "./primitives";
 
@@ -178,7 +178,7 @@ function ServiceCard({
                   Scoped to your stack and volume. We'll size it on the call.
                 </p>
                 <a
-                  href={BOOKING_URL}
+                  href={BOOKING_URL} {...calAttrs}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group/cta inline-flex items-center gap-2 rounded-full bg-accent-strong px-5 py-2.5 text-sm font-semibold text-white transition-all hover:shadow-[0_0_28px_-6px_var(--color-accent)]"
