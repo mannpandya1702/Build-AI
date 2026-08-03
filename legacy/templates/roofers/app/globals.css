@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Anti-slop palette (CLAUDE.md §5b-bis): one dominant ink, warm paper, one sharp brand accent.
+   Colors are RGB channel triplets so Tailwind alpha modifiers (bg-ink/80 etc.) work; a hex value
+   here would make every /opacity class silently produce an invalid color. --brand is set per lead
+   from content.json in layout.tsx (converted from hex to channels there). */
+:root {
+  --brand: 180 56 13; /* brick / terracotta: the trade's own color */
+  --brand-ink: 255 255 255;
+  --ink: 16 24 31; /* deep slate, never pure black */
+  --paper: 250 247 242; /* warm off-white, never pure white */
+  --paper-2: 241 235 226; /* deeper paper for alternating sections */
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-size: 16px; /* body text min 16px (CLAUDE.md §5b) */
+  background: rgb(var(--paper));
+  color: rgb(var(--ink));
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Subtle diagonal shingle texture for atmosphere (CSS-only, no image cost). */
+.texture-shingle {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.035) 0px,
+    rgba(255, 255, 255, 0.035) 1px,
+    transparent 1px,
+    transparent 14px
+  );
+}
+
+/* Ink-based twin for LIGHT sections (white lines are invisible on paper): the same shingle
+   rhythm keeps the light bands from reading flat (§5b-bis atmosphere over flatness). */
+.texture-shingle-ink {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgb(var(--ink) / 0.025) 0px,
+    rgb(var(--ink) / 0.025) 1px,
+    transparent 1px,
+    transparent 14px
+  );
+}
+
+/* Photo color grade (§5b-bis "real photo with a color-graded overlay"): every photo gets a subtle
+   brand-hue wash + a grounding gradient, so mixed-quality GBP photos read as one art-directed set.
+   Pure CSS blend, zero bytes. */
+.photo-grade {
+  position: relative;
+}
+.photo-grade > img {
+  filter: grayscale(0.08) saturate(1.02) contrast(1.05);
+}
+.photo-grade::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgb(var(--brand));
+  mix-blend-mode: color;
+  opacity: 0.1;
+  pointer-events: none;
+}
+.photo-grade::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(to top, rgb(var(--ink) / 0.18) 0%, transparent 45%);
+  pointer-events: none;
+}
+
+/* Living atmosphere (§5c): a brand glow that slowly drifts and breathes. Pure transform/opacity,
+   GPU-composited, zeroed by the global reduced-motion rule below. */
+@keyframes glow-drift {
+  0%,
+  100% {
+    transform: translate3d(-6%, -4%, 0) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(6%, 5%, 0) scale(1.18);
+    opacity: 1;
+  }
+}
+.glow-drift {
+  animation: glow-drift 16s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Review marquee: CSS-driven infinite track (never <marquee>). The track holds the list twice;
+   -50% translate loops seamlessly. Pauses on hover so cards can be read (WCAG 2.2.2 pause intent). */
+@keyframes marquee-x {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  animation: marquee-x 45s linear infinite;
+  will-change: transform;
+}
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
+/* Never let motion stand between a customer and the tap-to-call button (CLAUDE.md §5c). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Outlined monumental wordmark (footer): brand type as architecture, not decoration. */
+.wordmark-outline {
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgb(255 255 255 / 0.14);
+  letter-spacing: -0.02em;
+}
+
+/* Ken Burns photo motion: their real photos, slowly alive (the video-feel without video).
+   GPU transform only; the global reduced-motion rule freezes it. */
+@keyframes kenburns {
+  0% {
+    transform: scale(1.02) translate3d(0, 0, 0);
+  }
+  100% {
+    transform: scale(1.1) translate3d(-1.5%, 1.5%, 0);
+  }
+}
+.kenburns > img {
+  animation: kenburns 26s ease-in-out infinite alternate;
+  will-change: transform;
+}

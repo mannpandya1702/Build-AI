@@ -1,0 +1,11 @@
+# Keep the worker image lean and secret-free.
+**/node_modules
+.git
+**/.next
+**/.turbo
+**/dist
+*.log
+.env
+.env.*
+.vercel
+data/screenshots

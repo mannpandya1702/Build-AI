@@ -1,0 +1,27 @@
+{
+  "name": "@autopilot/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "seed-event": "tsx src/seed-event.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "import-legacy": "tsx src/import-legacy.ts",
+    "finance": "tsx src/finance-report.ts"
+  },
+  "dependencies": {
+    "@autopilot/core": "workspace:*",
+    "pg-boss": "^9.0.3",
+    "tsx": "^4.16.0",
+    "@autopilot/agents": "workspace:*",
+    "@autopilot/adapters": "workspace:*",
+    "@autopilot/blocks": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}

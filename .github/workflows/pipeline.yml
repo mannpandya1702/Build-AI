@@ -1,0 +1,72 @@
+# Agency Autopilot pipeline on a schedule (the free replacement for the always-on Fly worker).
+# Each run boots the worker in WORKER_MODE=batch: it drains every reachable lead through the pipeline
+# (discover -> qualify -> analyze -> build -> qa -> draft), then exits once the queue goes idle or a
+# ~12 min budget elapses. `concurrency` guarantees two runs never overlap.
+#
+# COST: public repo = unlimited free Actions minutes (use */15). Private repo = 2,000 free min/month,
+# so keep it hourly (each run is short when there's little to do). Flip the cron below accordingly.
+#
+# SECRETS to set in GitHub -> Settings -> Secrets and variables -> Actions:
+#   DATABASE_URL            Supabase SESSION pooler URL (…pooler.supabase.com:5432) — NOT the 6543
+#                           transaction pooler (pg-boss needs session features) and NOT the IPv6
+#                           direct host (Actions runners are IPv4).
+#   ANTHROPIC_API_KEY       (until the Gemini cutover; keep both during A/B)
+#   GEMINI_API_KEY          Google AI Studio key (once the Gemini adapter lands)
+#   GOOGLE_PLACES_API_KEY   (until the Apify cutover)
+#   APIFY_TOKEN             Apify API token (once the Apify adapter lands)
+#   VERCEL_TOKEN            for the demo deploys
+name: pipeline
+
+on:
+  schedule:
+    - cron: "0 * * * *" # hourly (private-repo-safe). Change to "*/15 * * * *" on a PUBLIC repo.
+  workflow_dispatch: {} # manual "Run workflow" button — use this to test before trusting the schedule.
+
+concurrency:
+  group: agency-pipeline
+  cancel-in-progress: false # let an in-flight run finish; never process the queue twice at once.
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Vercel CLI (demo deploys)
+        run: npm install -g vercel@latest
+
+      # Reliable headless Chrome for the analyzer + QA screenshots (installs its own system deps).
+      - id: chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Run pipeline (drain then exit)
+        env:
+          WORKER_MODE: batch
+          MOCK_MODE: "false"
+          BUILD_MODE: review # spend gate stays on: nothing builds without operator approval
+          OUTREACH_MODE: review # nothing sends without operator approval
+          DB_POOL_MAX: "6"
+          PGBOSS_MAX: "4"
+          PUPPETEER_EXECUTABLE_PATH: ${{ steps.chrome.outputs.chrome-path }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: pnpm --filter @autopilot/worker dev

@@ -1,0 +1,28 @@
+{
+  "name": "qualify_v1",
+  "version": "1.0.0-placeholder",
+  "provenance": "placeholder",
+  "regressionThreshold": 2,
+  "cases": [
+    {
+      "id": "synthetic-strong-lead",
+      "input": { "review_count": 12, "rating": 3.9, "website_url": null, "has_gbp": true },
+      "expected": { "qualifies": true, "band": "high" }
+    },
+    {
+      "id": "synthetic-weak-site-lead",
+      "input": { "review_count": 40, "rating": 4.6, "website_url": "http://slow.example", "site_score": 22 },
+      "expected": { "qualifies": true, "band": "medium" }
+    },
+    {
+      "id": "synthetic-disqualified-strong-site",
+      "input": {
+        "review_count": 300,
+        "rating": 4.9,
+        "website_url": "https://great.example",
+        "site_score": 96
+      },
+      "expected": { "qualifies": false, "band": "none" }
+    }
+  ]
+}

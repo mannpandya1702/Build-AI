@@ -1,0 +1,24 @@
+{
+  "name": "agency-autopilot",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Agency Autopilot: autonomous lead-to-delivery pipeline for the Web Studio. Spec: AGENCY_AUTOPILOT_SPEC.md; behavior contract: CLAUDE.md.",
+  "packageManager": "pnpm@11.9.0",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "migrate": "pnpm --filter @autopilot/core migrate",
+    "seed-event": "pnpm --filter @autopilot/worker seed-event",
+    "legacy": "npm --prefix legacy run",
+    "lint": "biome check .",
+    "lint:ci": "biome ci .",
+    "format": "biome format --write ."
+  },
+  "devDependencies": {
+    "turbo": "^2.0.6",
+    "typescript": "^5.5.0",
+    "@biomejs/biome": "1.9.4"
+  }
+}

@@ -1,0 +1,20 @@
+# Agency Autopilot worker on Fly.io. Background process: no HTTP service, exactly one instance
+# (the Postgres advisory lock in apps/worker/src/index.ts guarantees single-worker even if two spawn).
+# Secrets (DATABASE_URL, ANTHROPIC_API_KEY, GOOGLE_PLACES_API_KEY) are set via `fly secrets set`,
+# never committed here.
+app = "agency-autopilot-worker"
+primary_region = "iad"  # close to Supabase us-east-1
+
+[build]
+  dockerfile = "Dockerfile.worker"
+
+[env]
+  NODE_ENV = "production"
+  MOCK_MODE = "false"      # live agents
+  BUILD_MODE = "review"    # spend gate: no paid build without operator approval
+  OUTREACH_MODE = "review" # no email leaves without operator approval
+
+# Single always-on machine. No [http_service] block => Fly never auto-stops it for lack of traffic.
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"

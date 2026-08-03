@@ -1,0 +1,43 @@
+# Agency Autopilot worker — background pg-boss consumer (RUNBOOK §3). Workspace packages export
+# src/*.ts, so tsx runs them directly with no build step. Build context = repo root (monorepo).
+# Full node image (buildpack-deps base) ships ca-certificates for TLS to Supabase / Anthropic /
+# Places. The -slim variant omits them, and this build environment's proxy blocks apt (HTTP repos),
+# so we cannot add them there — hence the full image.
+FROM node:22
+
+# Chromium for the analyzer + QA screenshot steps (adapters -> puppeteer). This build environment's
+# proxy is CONNECT-only and rejects apt's default HTTP repos (405), so switch APT to HTTPS first,
+# then install the system Chromium + its runtime libs. Puppeteer uses this binary (its own download
+# stays skipped). apt reads the proxy from the build's HTTPS_PROXY/HTTP_PROXY build-args.
+RUN set -eux; \
+    for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do \
+      [ -f "$f" ] && sed -i 's|http://|https://|g' "$f" || true; \
+    done; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends chromium fonts-liberation; \
+    rm -rf /var/lib/apt/lists/*
+
+# pnpm via corepack, pinned to the repo's packageManager.
+RUN corepack enable && corepack prepare pnpm@11.9.0 --activate
+
+# Vercel CLI for the builder's deploy step (adapters/vercel.ts spawns `vercel`). The demo builder
+# uploads Next.js source and Vercel builds it server-side; auth is via the VERCEL_TOKEN env the
+# adapter passes through. The commands used (deploy, alias set) are stable across majors; latest
+# tracks current Node 22 + Vercel API compatibility.
+RUN npm install -g vercel@latest
+
+WORKDIR /app
+
+# Use the system Chromium installed above; skip Puppeteer's own ~150MB download.
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+# Copy the monorepo (node_modules/.git/etc. excluded via .dockerignore) and install fresh.
+COPY . .
+RUN pnpm install --frozen-lockfile --prod=false
+
+ENV NODE_ENV=production
+
+# One worker per database (a Postgres advisory lock enforces it; a second instance exits at boot).
+# No HTTP port — this is a background process.
+CMD ["pnpm", "--filter", "@autopilot/worker", "dev"]

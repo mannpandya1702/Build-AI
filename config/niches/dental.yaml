@@ -1,0 +1,13 @@
+# High-ticket healthcare niche (Amendment A). HIPAA covered entity: cannot activate until the
+# operator's BAA template, E&O insurance, and PHI handling are on file (assertNicheActivatable).
+niche: dental
+vertical: dentist
+display_name: "Dental practices"
+tier: high_ticket
+compliance:
+  regime: healthcare
+  requires_baa: true
+  phi_handling: true
+  insurance_required: ["E&O 1M/2M"]
+pricing_tier: high_ticket
+playbook_skill: niche-playbook-dental
