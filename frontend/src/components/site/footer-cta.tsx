@@ -26,8 +26,8 @@ export function FooterCta() {
             One call. One clear next step.
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-lg text-muted">
-            Twenty minutes, no deck, no pressure. We&apos;ll tell you the one thing
-            worth automating first — even if it isn&apos;t with us.
+            Book a free 20-minute AI audit. No deck, no pressure. We&apos;ll tell you
+            the one thing worth automating first — even if it isn&apos;t with us.
           </p>
 
           <a
@@ -36,9 +36,13 @@ export function FooterCta() {
             rel="noopener noreferrer"
             className="group mt-10 inline-flex items-center gap-2 rounded-full bg-accent px-8 py-4 text-lg font-semibold text-white shadow-[0_0_40px_-6px_var(--color-accent)] transition-all hover:shadow-[0_0_64px_-4px_var(--color-accent)]"
           >
-            Book a call
+            Book your free AI audit
             <ArrowUpRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </a>
+
+          <p className="mt-5 font-mono text-xs text-muted">
+            Free · 20 minutes · one clear recommendation
+          </p>
         </motion.div>
       </div>
 

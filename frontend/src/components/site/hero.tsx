@@ -1,10 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowUpRight, ArrowDown } from "lucide-react";
+import { ArrowUpRight, ArrowDown, Star } from "lucide-react";
 import { GradientMesh } from "./gradient-mesh";
 import { useCursorGlow } from "@/hooks/use-cursor-glow";
-import { BOOKING_URL, metrics } from "@/lib/site";
+import { BOOKING_URL, metrics, trust } from "@/lib/site";
 import { EASE } from "@/lib/motion";
 
 const rise = {
@@ -115,13 +115,36 @@ export function Hero() {
           </a>
         </motion.div>
 
-        {/* metrics — mono, quiet, factual */}
-        <motion.dl
+        {/* social proof — quiet, immediately after the ask */}
+        <motion.div
           custom={4}
           variants={rise}
           initial="hidden"
           animate="show"
-          className="mt-20 grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-4"
+          className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted"
+        >
+          <span className="flex gap-0.5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star key={i} className="fill-accent text-accent" style={{ width: 15, height: 15 }} />
+            ))}
+          </span>
+          <span className="font-semibold text-ink">{trust.rating}</span>
+          <span aria-hidden className="text-line-strong">
+            ·
+          </span>
+          <span>
+            Trusted by{" "}
+            <span className="font-semibold text-ink">{trust.clientCount}</span> {trust.blurb}
+          </span>
+        </motion.div>
+
+        {/* metrics — mono, quiet, factual */}
+        <motion.dl
+          custom={5}
+          variants={rise}
+          initial="hidden"
+          animate="show"
+          className="mt-16 grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-4"
         >
           {metrics.map((m) => (
             <div key={m.label} className="bg-canvas px-5 py-6">

@@ -1,9 +1,13 @@
 import { SiteNav, StickyBookBar } from "@/components/site/nav";
 import { Hero } from "@/components/site/hero";
 import { ServiceCards } from "@/components/site/service-cards";
+import { StatsCounter } from "@/components/site/stats-counter";
 import { VoiceBeat } from "@/components/site/voice-beat";
+import { Comparison } from "@/components/site/comparison";
+import { Testimonials } from "@/components/site/testimonials";
 import { Marquee } from "@/components/site/marquee";
 import { Process } from "@/components/site/process";
+import { Faq } from "@/components/site/faq";
 import { FooterCta } from "@/components/site/footer-cta";
 
 export default function Home() {
@@ -13,9 +17,13 @@ export default function Home() {
       <main>
         <Hero />
         <ServiceCards />
+        <StatsCounter />
         <VoiceBeat />
+        <Comparison />
+        <Testimonials />
         <Marquee />
         <Process />
+        <Faq />
         <FooterCta />
       </main>
       <StickyBookBar />
