@@ -66,7 +66,7 @@ export function Hero() {
           className="mb-6 inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.02] px-3 py-1.5 font-mono text-xs uppercase tracking-[0.2em] text-muted"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_10px_2px_var(--color-accent)]" />
-          Maana — AI agency
+          Vocabric AI · Agency
         </motion.p>
 
         <motion.h1

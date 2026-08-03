@@ -1,6 +1,6 @@
 "use client";
 
-// Adapted from the "wireframe-dotted-globe" component and tuned to the Maana
+// Adapted from the "wireframe-dotted-globe" component and tuned to the Vocabric AI
 // system: near-black ocean, muted halftone land, and violet great-circle "call
 // routes" with travelling pulses to suggest calls answered around the world.
 // Differences from the source: bundled map data (same-origin, no runtime GitHub

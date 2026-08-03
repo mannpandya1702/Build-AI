@@ -1,7 +1,7 @@
 /* eslint-disable */
 // ---------------------------------------------------------------------------
 // Vendored reference component (uithefactory "robot-hero").
-// Kept verbatim as the integration source. Maana does NOT use this as the hero;
+// Kept verbatim as the integration source. Vocabric AI does NOT use this as the hero;
 // the character is reskinned to dark chrome + violet and mounted lower on the
 // page — see src/components/site/robot-scene.tsx and voice-beat.tsx.
 // ---------------------------------------------------------------------------

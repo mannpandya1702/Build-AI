@@ -58,7 +58,7 @@ export function StatsCounter() {
       <div className="relative mx-auto max-w-[1400px] px-5 py-16 sm:px-8">
         <h2 className="mb-4 flex items-center gap-2 font-mono text-xs font-normal uppercase tracking-[0.2em] text-accent">
           <span className="h-px w-8 bg-accent/50" />
-          Maana in numbers
+          Vocabric AI in numbers
         </h2>
         <div className="grid grid-cols-1 gap-px overflow-hidden rounded-[var(--radius-card)] border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
           {numbers.map((n) => (

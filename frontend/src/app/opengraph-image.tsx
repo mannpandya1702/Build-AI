@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Maana — AI, engineered with restraint";
+export const alt = "Vocabric AI — AI, engineered with restraint";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -45,7 +45,7 @@ export default function OpengraphImage() {
             />
           </div>
           <div style={{ fontSize: 34, fontWeight: 600, letterSpacing: -1 }}>
-            Maana
+            Vocabric AI
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export default function OpengraphImage() {
             />
             AI agency, engineered with restraint
           </div>
-          <div style={{ color: "#ededf2" }}>maana.agency</div>
+          <div style={{ color: "#ededf2" }}>vocabric.com</div>
         </div>
       </div>
     ),

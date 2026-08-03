@@ -24,7 +24,7 @@ export function Comparison() {
           className="rounded-[var(--radius-card)] border border-line bg-panel/30 p-7 sm:p-9"
         >
           <div className="mb-6 font-mono text-xs uppercase tracking-wider text-muted">
-            Without Maana
+            Without Vocabric AI
           </div>
           <ul className="grid gap-4">
             {comparison.without.map((item) => (
@@ -51,7 +51,7 @@ export function Comparison() {
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_100%_at_100%_0%,rgba(123,92,255,0.16),transparent_60%)]"
           />
           <div className="relative mb-6 font-mono text-xs uppercase tracking-wider text-accent">
-            With Maana
+            With Vocabric AI
           </div>
           <ul className="relative grid gap-4">
             {comparison.with.map((item) => (

@@ -47,7 +47,7 @@ export function GlobalReach() {
             Built for a world that never stops calling.
           </h2>
           <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted">
-            Your customers don&apos;t keep your office hours. Maana picks up every
+            Your customers don&apos;t keep your office hours. Vocabric AI picks up every
             call, in every time zone — so a lead at 3am on the other side of the
             planet is still a lead you booked by morning.
           </p>

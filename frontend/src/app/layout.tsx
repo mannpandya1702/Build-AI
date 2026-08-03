@@ -24,13 +24,13 @@ const mono = JetBrains_Mono({
   weight: ["400"],
 });
 
-const SITE_URL = "https://maana.agency";
+const SITE_URL = "https://vocabric.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "Maana — AI that works quietly, ships loudly",
+  title: "Vocabric AI — the AI that works quietly, ships loudly",
   description:
-    "Maana is an AI agency building websites, chatbots, voice agents, and automations. Quiet confidence, engineered.",
+    "Vocabric AI is an agency building websites, chatbots, voice agents, and automations. Quiet confidence, engineered.",
   alternates: { canonical: "/" },
   keywords: [
     "AI agency",
@@ -40,16 +40,16 @@ export const metadata: Metadata = {
     "AI websites",
   ],
   openGraph: {
-    title: "Maana — AI, engineered",
+    title: "Vocabric AI — AI, engineered",
     description:
       "Websites, chatbots, voice agents, and automations built with restraint.",
     url: SITE_URL,
-    siteName: "Maana",
+    siteName: "Vocabric AI",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Maana — AI, engineered",
+    title: "Vocabric AI — AI, engineered",
     description:
       "Websites, chatbots, voice agents, and automations built with restraint.",
   },

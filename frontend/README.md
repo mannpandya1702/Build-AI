@@ -1,6 +1,6 @@
-# Maana — Frontend
+# Vocabric AI — Frontend
 
-Marketing site for **Maana**, an AI agency. Dark-first, near-monochrome, one
+Marketing site for **Vocabric AI**, an AI agency. Dark-first, near-monochrome, one
 luminous violet accent. Built to read as *quiet confidence* — restraint as a
 proxy for engineering competence.
 

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Maana's voice agent, embodied. This is the robot-hero character reskinned for
+ * Vocabric AI's voice agent, embodied. This is the robot-hero character reskinned for
  * the brand: dark chrome chassis, a single violet rim light, a violet screen and
  * eyes — calmed down and stripped of the retail chrome (no navbar, no shopping
  * bag, no background wordmark). It is the one deliberate 3D beat on the page and

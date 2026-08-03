@@ -2,13 +2,13 @@ import type { LucideIcon } from "lucide-react";
 import { Globe, MessagesSquare, AudioLines, Workflow } from "lucide-react";
 
 /** Swap this for your real scheduling link (Cal.com / Calendly). */
-export const BOOKING_URL = "https://cal.com/maana/intro";
+export const BOOKING_URL = "https://cal.com/vocabric/intro";
 
 export const site = {
-  name: "Maana",
-  /** "Una = one" — one accent, one idea, one clear next step. */
+  name: "Vocabric AI",
+  /** One accent, one idea, one clear next step. */
   tagline: "AI, engineered with restraint.",
-  email: "hello@maana.agency",
+  email: "hello@vocabric.com",
 };
 
 export const nav = [
@@ -129,10 +129,10 @@ export const trust = {
   rating: "4.9",
   ratingCount: "38",
   clientCount: "40+",
-  blurb: "teams shipping with Maana",
+  blurb: "teams shipping with Vocabric AI",
 };
 
-/** Animated "Maana in numbers" counters. `to` is the numeric target. */
+/** Animated "Vocabric AI in numbers" counters. `to` is the numeric target. */
 export const numbers = [
   { to: 40, suffix: "+", label: "teams shipped with", sub: "startups to clinics to agencies" },
   { to: 120, suffix: "k+", label: "calls & chats handled", sub: "answered, qualified, routed / month" },
@@ -152,7 +152,7 @@ export type Testimonial = {
 export const testimonials: Testimonial[] = [
   {
     quote:
-      "Our phones used to ring out after hours. Maana's voice agent booked appointments on calls we'd have lost — in the first month.",
+      "Our phones used to ring out after hours. Vocabric AI's voice agent booked appointments on calls we'd have lost — in the first month.",
     name: "Sarah Chen",
     role: "Operations Lead",
     company: "Northlight Dental",
@@ -188,7 +188,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     quote:
-      "What sold me was the restraint. Everyone else pitched a platform; Maana shipped one thing that worked on day one.",
+      "What sold me was the restraint. Everyone else pitched a platform; Vocabric AI shipped one thing that worked on day one.",
     name: "Elena García",
     role: "Chief Operating Officer",
     company: "Vanta Health",
@@ -220,7 +220,7 @@ export type Faq = { q: string; a: string };
 export const faqs: Faq[] = [
   {
     q: "Are you replacing my team?",
-    a: "No. Maana takes the repetitive first line — the after-hours calls, the same ten questions, the copy-paste between tools — so your people spend time on the work that actually needs a human.",
+    a: "No. Vocabric AI takes the repetitive first line — the after-hours calls, the same ten questions, the copy-paste between tools — so your people spend time on the work that actually needs a human.",
   },
   {
     q: "How fast can we launch?",

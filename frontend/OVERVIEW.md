@@ -1,6 +1,6 @@
-# Maana Frontend — What We've Built
+# Vocabric AI Frontend — What We've Built
 
-_A build log and design rationale for the Maana AI agency site. First pass,
+_A build log and design rationale for the Vocabric AI AI agency site. First pass,
 front-end only, no backend wired._
 
 ---
