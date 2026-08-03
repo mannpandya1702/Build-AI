@@ -45,6 +45,9 @@ function buildContent(prompt: string, images?: string[]): unknown {
 
 export async function llm(call: LlmCall): Promise<string> {
   if (MOCK()) return call.mockResponse ?? "{}";
+  // Provider swap (LLM_PROVIDER=gemini) routes every agent to the free-tier Gemini adapter without
+  // touching call sites. Default (unset) keeps Anthropic. Lazy import avoids a load-time cycle.
+  if (process.env.LLM_PROVIDER === "gemini") return (await import("./gemini.js")).geminiLlm(call);
 
   const caps = loadCaps();
   const spent = await anthropicSpendToday();
