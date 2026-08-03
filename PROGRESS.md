@@ -651,3 +651,34 @@ New operator capability built for this (the console had no way to remove/trim le
 the worker re-qualifies it (not a jump onto the Shortlist unscored). Dashboard redeployed. All trim
 ops went through this endpoint; the worker was paused during the trim to avoid a qualify race, then
 resumed (verified healthy, Two Brothers untouched at awaiting_approval throughout).
+
+---
+
+### 2026-07-25 — Cost-reduction migration (operator: max-free stack), staged behind flags
+
+Operator directed: replace Fly (fixed cost) with GitHub Actions cron, and swap Anthropic->Gemini +
+Google Places->Apify. Flagged honestly first: Places is almost certainly already free (Google's
+monthly free tier), Anthropic is pennies and gated, and only Fly (~$5/mo) is a real fixed cost;
+Gemini/Apify trade quality/stability for near-zero cost. Operator chose the max-free path anyway.
+Built it SAFELY — every swap behind a flag, defaults unchanged, nothing cut over yet:
+
+- **Worker batch mode** (`WORKER_MODE=batch`, apps/worker/src/index.ts): drains the pipeline then
+  exits, so it runs on a cron instead of always-on. Persistent Fly mode untouched (still default).
+- **`.github/workflows/pipeline.yml`**: hourly (private-repo-safe) / */15 (public); concurrency-guarded;
+  documents the exact secrets. DATABASE_URL must be the Supabase SESSION pooler (5432, IPv4) — not the
+  6543 transaction pooler (pg-boss needs session features) and not the IPv6 direct host.
+- **Gemini adapter** (`LLM_PROVIDER=gemini`, packages/adapters/src/gemini.ts): matches the llm()
+  contract (tiers, vision, cost event). Uses gemini-flash-latest / -lite-latest — the pinned versions
+  are quota-walled on the free tier; the -latest aliases work. Verified: complete parseable JSON for
+  agent prompts; generous maxOutputTokens floor handles the thinking-model budget.
+- **Apify adapter** (`DISCOVERY_PROVIDER=apify`, packages/adapters/src/apify.ts): mirrors places.ts
+  (search/details/photos) with the same PlaceHit shape; reviews inline, photos as direct URLs. Actor
+  compass~crawler-google-places, verified against real Boise data. ToS/stability trade-off noted.
+
+Both operator keys validated (Apify free plan OK; Gemini key valid via -latest models). Keys live only
+in scratchpad + must be set as GitHub secrets (operator) — never committed.
+
+REMAINING (blocked on operator): set GitHub secrets; confirm repo public/private (cron cadence); a
+workflow_dispatch test run to prove the pipeline drains on Actions; A/B Gemini vs Claude on a real
+demo before trusting it on outreach; then flip the flags in prod and retire Fly (keep image as
+rollback).
