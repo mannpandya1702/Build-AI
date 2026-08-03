@@ -22,17 +22,36 @@ export function Eyebrow({
   );
 }
 
-/** Five-star row. `n` filled stars, rest are hairline outlines. */
-export function Stars({ n }: { n: number }) {
+/**
+ * Five-star row. Pass `n` for a whole number of filled stars, or `value` for a
+ * fractional rating (e.g. 4.9 → four full stars + one 90%-filled). Partial fill
+ * is done by clipping a filled star over an outline one.
+ */
+export function Stars({ n, value, size = 15 }: { n?: number; value?: number; size?: number }) {
+  const rating = value ?? n ?? 0;
   return (
-    <div className="flex gap-0.5" aria-label={`${n} out of 5 stars`}>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={i < n ? "fill-accent text-accent" : "text-line-strong"}
-          style={{ width: 15, height: 15 }}
-        />
-      ))}
+    <div className="flex gap-0.5" aria-label={`${rating} out of 5 stars`} role="img">
+      {Array.from({ length: 5 }).map((_, i) => {
+        const frac = Math.max(0, Math.min(1, rating - i));
+        return (
+          <span
+            key={i}
+            className="relative inline-block shrink-0"
+            style={{ width: size, height: size }}
+            aria-hidden
+          >
+            <Star className="absolute inset-0 text-line-strong" style={{ width: size, height: size }} />
+            {frac > 0 && (
+              <span
+                className="absolute inset-0 overflow-hidden"
+                style={{ width: `${frac * 100}%` }}
+              >
+                <Star className="fill-accent text-accent" style={{ width: size, height: size }} />
+              </span>
+            )}
+          </span>
+        );
+      })}
     </div>
   );
 }

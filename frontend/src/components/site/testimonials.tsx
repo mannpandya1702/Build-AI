@@ -21,11 +21,11 @@ function Card({ t, i }: { t: Testimonial; i: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.6, delay: (i % 3) * 0.08, ease: EASE }}
-      className="mb-4 flex break-inside-avoid flex-col gap-5 rounded-[var(--radius-card)] border border-line bg-panel/50 p-6 transition-colors hover:border-line-strong sm:p-7"
+      className="flex h-full flex-col gap-5 rounded-[var(--radius-card)] border border-line bg-panel/50 p-6 transition-colors hover:border-line-strong sm:p-7"
     >
       <div className="flex items-center justify-between">
         <Stars n={t.rating} />
-        <Quote className="h-5 w-5 text-accent/40" />
+        <Quote aria-hidden className="h-5 w-5 text-accent/40" />
       </div>
 
       <blockquote className="text-[15px] leading-relaxed text-ink/90">
@@ -68,7 +68,7 @@ export function Testimonials() {
             {trust.rating}
           </div>
           <div>
-            <Stars n={5} />
+            <Stars value={Number(trust.rating)} />
             <div className="mt-1 font-mono text-[11px] text-muted">
               {trust.ratingCount} reviews · {trust.clientCount} {trust.blurb}
             </div>
@@ -76,8 +76,8 @@ export function Testimonials() {
         </div>
       </div>
 
-      {/* masonry-ish via CSS columns so cards of different heights pack nicely */}
-      <div className="mt-14 gap-4 [column-fill:_balance] sm:columns-2 lg:columns-3">
+      {/* responsive grid — predictable order, motion-safe (unlike CSS columns) */}
+      <div className="mt-14 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {testimonials.map((t, i) => (
           <Card key={t.name} t={t} i={i} />
         ))}
