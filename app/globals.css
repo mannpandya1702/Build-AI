@@ -1,0 +1,241 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --chandni: #fbfaf6;
+    --pista: #c9d8be;
+    --pista-deep: #7e9470;
+    --ink: #22271f;
+    --stone: #6e7269;
+    --ease-riwaaya: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--chandni);
+    color: var(--ink);
+    font-feature-settings: "kern" 1, "liga" 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* The custom cursor is an enhancement; the native cursor stays as a fallback
+       and is restored entirely under pointer: coarse. */
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: var(--pista);
+    color: var(--ink);
+  }
+
+  /* Focus rings are pista-deep everywhere, never removed. */
+  :focus-visible {
+    outline: 2px solid var(--pista-deep);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* Only hide the ring for pointer users who did not tab to the element. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer components {
+  .shell {
+    @apply mx-auto w-full max-w-shell px-gutter;
+  }
+
+  /* The taak niche — a pointed arch. Used as a photo crop and section divider.
+     Capped at two uses per page; it is a shape, not a mark. */
+  .taak {
+    border-radius: 50% 50% 0 0 / 32% 32% 0 0;
+  }
+
+  .taak-sm {
+    border-radius: 50% 50% 0.75rem 0.75rem / 26% 26% 0 0;
+  }
+
+  /* Link underline sweeps in from the left rather than flipping colour. */
+  .sweep-underline {
+    position: relative;
+    display: inline-block;
+  }
+
+  .sweep-underline::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -0.15em;
+    height: 1px;
+    width: 100%;
+    transform: scaleX(0);
+    transform-origin: left;
+    background-color: currentColor;
+    transition: transform 250ms var(--ease-riwaaya);
+  }
+
+  .sweep-underline:hover::after,
+  .sweep-underline:focus-visible::after {
+    transform: scaleX(1);
+  }
+
+  /* Buttons fill from the left on hover. */
+  .sweep-fill {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .sweep-fill::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 250ms var(--ease-riwaaya);
+  }
+
+  .sweep-fill:hover::before,
+  .sweep-fill:focus-visible::before {
+    transform: scaleX(1);
+  }
+
+  .hairline {
+    border-color: rgba(34, 39, 31, 0.12);
+  }
+
+  /**
+   * Hero entrance, in CSS rather than Framer Motion.
+   *
+   * The h1 is the page's LCP element. Driving its reveal from JS meant the
+   * headline stayed behind its mask until hydration finished, pushing LCP past
+   * 3s on mobile. As CSS it animates from the very first paint and LCP lands
+   * with FCP. Same durations and easing as the JS motion spec.
+   *
+   * All three use `both` fill mode, so the reduced-motion block further down —
+   * which collapses every duration to 0.01ms — lands them on their end state
+   * instantly instead of leaving them mid-animation.
+   */
+  .hero-line {
+    animation: hero-line-wipe 0.7s var(--ease-riwaaya) both;
+  }
+
+  .rise-in {
+    animation: rise-in 0.7s var(--ease-riwaaya) both;
+  }
+
+  .hero-zoom {
+    animation: hero-zoom 1.2s var(--ease-riwaaya) both;
+  }
+
+  /* Skeleton shimmer for the lazily embedded enquiry form. */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      rgba(251, 250, 246, 0) 0%,
+      rgba(251, 250, 246, 0.65) 50%,
+      rgba(251, 250, 246, 0) 100%
+    );
+    animation: shimmer 1.8s infinite;
+  }
+}
+
+@keyframes hero-line-wipe {
+  from {
+    transform: translateY(110%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-zoom {
+  from {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@layer utilities {
+  .track-wordmark {
+    letter-spacing: 0.18em;
+  }
+
+  /* Hides scrollbars on the enquiry iframe wrapper without hiding overflow. */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Touch devices get no custom cursor and no hover-only affordances. */
+@media (pointer: coarse) {
+  .cursor-dot {
+    display: none !important;
+  }
+}
+
+/* Everything collapses to a simple fade. Framer Motion variants read
+   useReducedMotion() as well; this covers the CSS-driven motion. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .sweep-underline::after,
+  .sweep-fill::before {
+    transition: opacity 150ms linear;
+  }
+}
