@@ -15,7 +15,13 @@ export function Stats() {
             <Reveal asChild key={stat.id}>
               <div className="flex flex-col gap-2">
                 <p className="font-display text-display-md font-light leading-none text-ink">
-                  <Counter value={stat.value} suffix={stat.suffix} />
+                  {/* "24/7" is a fixed string, not a quantity — counting it up
+                      would be meaningless, so it renders as written. */}
+                  {stat.literal ? (
+                    <span className="tabular-nums">{stat.literal}</span>
+                  ) : (
+                    <Counter value={stat.value} suffix={stat.suffix} />
+                  )}
                 </p>
                 <p className="font-sans text-micro uppercase tracking-[0.14em] text-ink/70">
                   {stat.label}

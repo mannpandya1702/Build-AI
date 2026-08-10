@@ -12,6 +12,10 @@ export function localBusinessSchema() {
     "@type": "LocalBusiness",
     "@id": `${site.url}/#business`,
     name: site.name,
+    legalName: site.legalName,
+    alternateName: site.legalName,
+    slogan: site.tagline,
+    founder: { "@type": "Person", name: site.founder },
     description: site.description,
     url: site.url,
     telephone: `+${WHATSAPP_NUMBER}`,
@@ -64,7 +68,7 @@ export function eventSchema(slug: string) {
     eventStatus: "https://schema.org/EventScheduled",
     organizer: {
       "@type": "Organization",
-      name: site.name,
+      name: site.legalName,
       url: site.url,
     },
     location: site.cities.map((city) => ({

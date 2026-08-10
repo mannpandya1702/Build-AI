@@ -13,9 +13,11 @@ export function Footer() {
     <footer className="bg-ink text-chandni">
       <div className="shell py-section-sm">
         <Stagger className="grid gap-12 border-b border-chandni/15 pb-14 md:grid-cols-12 md:gap-8">
-          <Reveal asChild className="md:col-span-5">
+          <Reveal asChild className="md:col-span-4">
             <div className="flex flex-col gap-6">
-              <Wordmark size="lg" tone="chandni" />
+              {/* The deck's stacked signature lockup — the one place the full
+                  "by Bhumi Sandhu" line belongs. */}
+              <Wordmark size="lg" tone="chandni" signature />
               <p className="max-w-measure font-sans text-body text-chandni/70">
                 {site.tagline}
               </p>
@@ -23,17 +25,18 @@ export function Footer() {
             </div>
           </Reveal>
 
-          <Reveal asChild className="md:col-span-3">
+          <Reveal asChild className="md:col-span-4">
             <nav aria-label="Services">
               <h2 className="mb-5 font-sans text-eyebrow font-semibold uppercase text-pista">
-                Services
+                Eleven lines of work
               </h2>
-              <ul className="flex flex-col gap-3">
+              {/* Two columns so eleven links do not tower over the others. */}
+              <ul className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
                 {services.map((service) => (
                   <li key={service.slug}>
                     <Link
                       href={`/services/${service.slug}`}
-                      className="sweep-underline font-sans text-body text-chandni/75 transition-colors duration-[250ms] ease-riwaaya hover:text-chandni"
+                      className="sweep-underline font-sans text-micro text-chandni/75 transition-colors duration-[250ms] ease-riwaaya hover:text-chandni"
                     >
                       {service.title}
                     </Link>

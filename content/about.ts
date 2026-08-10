@@ -1,6 +1,9 @@
 /**
- * About page content — story, philosophy and team slots.
- * Team headshots are placeholders until the client supplies photography.
+ * About page content.
+ *
+ * The name explanation, positioning and the is / is not list are taken from
+ * the Riwaaya Brand Identity Deck (2026) and kept close to its wording — it is
+ * the brand's own voice and should not be paraphrased into something softer.
  */
 
 export type Principle = {
@@ -19,65 +22,99 @@ export type TeamMember = {
 };
 
 export const story = {
-  lede: "Riwaaya comes from riwaayat — custom, tradition. We read it as singular: not tradition in the abstract, but one family's version of it.",
+  lede: "Riwaaya is riwaayat in the singular — not tradition in general, but this family's version of it.",
+  /** From the deck: what was taken from the word. */
+  fromTheName: ["Inherited, not invented", "Specific to one family", "Meant to be passed on"],
   paragraphs: [
-    "We started because the weddings we were being asked to work on kept getting bigger and saying less. Every brief arrived with the same references, and the parts families actually talked about afterwards — the haldi in a courtyard, the taak their grandmother lit — were the parts nobody had planned.",
-    "So we plan those first. We ask what your families already do before we ask what you want to build. Then we design outward from there, and we say no to the things that only exist for the photographs.",
-    "The work is quieter than most of what the industry puts out. That is deliberate. A wedding should look like the people in it.",
+    "Riwaayat is an Urdu and Hindi noun: custom, tradition — the practice a family repeats until it belongs to them. The brand exists to find that one thread in every wedding and build the celebration around it.",
+    "So we take on a small number of weddings each year, for families who want the rituals taken seriously and would rather their celebration feel quietly theirs than loudly grand. The work is full-service: eleven lines of it, from the first roadmap to the final payment sheet.",
+    "Every choice we make exists to keep one thing legible — that this wedding belongs to this family, and no one else.",
   ],
 };
 
+/** The deck's "Riwaaya is / is not" list, verbatim in substance. */
+export const isIsNot: { is: string; isNot: string }[] = [
+  {
+    is: "Restrained. Pastel, paper, daylight.",
+    isNot: "Maximal. No gold-on-gold, no spotlights.",
+  },
+  {
+    is: "Ritual-first. The ceremony leads the design.",
+    isNot: "Trend-led. No theme borrowed from a feed.",
+  },
+  {
+    is: "Documented. Sheets, timelines, receipts.",
+    isNot: "Volume. Not many weddings at once.",
+  },
+  {
+    is: "Present. A named person on the ground.",
+    isNot: "Anonymous. No faceless coordination.",
+  },
+];
+
 export const principles: Principle[] = [
   {
-    id: "p-ritual",
-    title: "Ritual first",
-    body: "We begin with what your family keeps, not with a venue. The design follows the rituals; it does not replace them.",
+    id: "p-roots",
+    title: "Roots",
+    body: "We start with the family's own customs, not a moodboard. The ritual sets the palette.",
   },
   {
-    id: "p-one",
-    title: "One wedding a week",
-    body: "The team you meet is the team on the ground. Nobody is at another function on your haldi morning.",
+    id: "p-order",
+    title: "Order",
+    body: "Roadmaps, vendor sheets, payment schedules. Calm is a document, not a mood.",
   },
   {
-    id: "p-money",
-    title: "No vendor commission",
-    body: "We charge a flat planning fee and pass every vendor quote to you unmarked. What you pay them is what they quoted.",
+    id: "p-welcome",
+    title: "Welcome",
+    body: "A desk that never closes, a call to every room. Guests should never have to ask twice.",
   },
   {
-    id: "p-less",
-    title: "Fewer, better decisions",
-    body: "We would rather do six things properly than twenty adequately. We will tell you which six.",
+    id: "p-presence",
+    title: "Presence",
+    body: "Shadows for the couple, showrunners for the day, a debrief after. We stay to the end.",
   },
 ];
 
 export const team: TeamMember[] = [
-  // PLACEHOLDER — replace names, roles and headshots with the real team.
   {
     id: "team-1",
-    name: "Team member",
-    role: "Founder, planning",
-    imageSlot: "team-01-headshot",
-    alt: "Portrait of Riwaaya's founder and head of planning.",
+    name: "Bhumi Sandhu",
+    role: "Founder",
+    imageSlot: "team-01-bhumi-sandhu",
+    alt: "Portrait of Bhumi Sandhu, founder of Riwaaya.",
   },
+  // PLACEHOLDER — replace names, roles and headshots with the real team.
   {
     id: "team-2",
     name: "Team member",
-    role: "Design direction",
+    role: "Planning & budget",
     imageSlot: "team-02-headshot",
-    alt: "Portrait of Riwaaya's design director.",
+    alt: "Portrait of Riwaaya's planning and budget lead.",
   },
   {
     id: "team-3",
     name: "Team member",
-    role: "Production",
+    role: "Hospitality",
     imageSlot: "team-03-headshot",
-    alt: "Portrait of Riwaaya's head of production.",
+    alt: "Portrait of Riwaaya's hospitality lead.",
   },
   {
     id: "team-4",
     name: "Team member",
-    role: "Guest logistics",
+    role: "On-site production",
     imageSlot: "team-04-headshot",
-    alt: "Portrait of Riwaaya's guest logistics lead.",
+    alt: "Portrait of Riwaaya's on-site production lead.",
   },
 ];
+
+/** The eight on-site departments, from the scope of work. */
+export const departments = [
+  "Hospitality & check-ins",
+  "Bride & groom concierge",
+  "Food & dining",
+  "Bar management",
+  "Floral & decor",
+  "Sound & production",
+  "Vendor audit",
+  "Payments",
+] as const;

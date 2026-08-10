@@ -17,13 +17,22 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        chandni: "#FBFAF6",
-        pista: "#C9D8BE",
+        /**
+         * chandni and pista are the exact values from the brand identity deck
+         * — the pistachio-and-white pairing the client signed off on.
+         *
+         * The deck's other three (gulaab rose, baingani aubergine, sona gold)
+         * are deliberately NOT here: the brief rules out purple and gold and
+         * asks for a two-colour site. ink stays as the dark rather than the
+         * deck's baingani for the same reason.
+         */
+        chandni: "#F8F4ED",
+        pista: "#C7D4B2",
         "pista-deep": "#7E9470",
         ink: "#22271F",
         stone: "#6E7269",
         // Steps derived from the two brand colours only — no new hues.
-        "pista-mist": "#E7EEE1",
+        "pista-mist": "#ECECDE",
         "ink-soft": "#31382D",
         /**
          * Accessibility steps. The brand's pista-deep (#7E9470) measures

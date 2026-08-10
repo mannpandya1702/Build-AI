@@ -14,8 +14,8 @@ export type GalleryCategory =
   | "Mehndi & Haldi"
   | "Sangeet"
   | "Engagements"
-  | "Corporate"
-  | "Destination";
+  | "Destination"
+  | "Hospitality";
 
 export type GalleryItem = {
   id: string;
@@ -146,11 +146,11 @@ export const galleryItems: GalleryItem[] = [
   },
   {
     id: "g-12",
-    slot: "gallery-12-corporate-stage",
-    category: "Corporate",
-    caption: "Annual day, stage set",
+    slot: "gallery-12-hospitality-desk",
+    category: "Hospitality",
+    caption: "The desk, before the guests",
     aspect: "16 / 9",
-    alt: "Corporate annual day stage with branded backdrop and seating in rows.",
+    alt: "The 24-hour hospitality desk set up in a hotel lobby before guests arrive.",
   },
   {
     id: "g-13",
@@ -178,11 +178,11 @@ export const galleryItems: GalleryItem[] = [
   },
   {
     id: "g-16",
-    slot: "gallery-16-corporate-launch",
-    category: "Corporate",
-    caption: "Product launch, floor plan",
+    slot: "gallery-16-rooming-check-in",
+    category: "Hospitality",
+    caption: "Check-in, first morning",
     aspect: "16 / 10",
-    alt: "Product launch floor with demo stations and guests moving between them.",
+    alt: "Guests checking in at the hospitality desk on the first morning of the wedding.",
   },
   {
     id: "g-17",
@@ -207,8 +207,8 @@ export const galleryCategories: GalleryCategory[] = [
   "Mehndi & Haldi",
   "Sangeet",
   "Engagements",
-  "Corporate",
   "Destination",
+  "Hospitality",
 ];
 
 /** The 8 images used by the home page editorial grid, in order. */

@@ -81,15 +81,18 @@ export function Testimonials() {
             </AnimatePresence>
           </div>
 
-          <div className="mt-10 flex items-center gap-3" role="tablist" aria-label="Testimonials">
+          <div className="mt-10 flex items-center gap-3" role="group" aria-label="Choose a testimonial">
             {testimonials.map((item, dotIndex) => {
               const active = dotIndex === index;
               return (
                 <button
                   key={item.id}
                   type="button"
-                  role="tab"
-                  aria-selected={active}
+                  // Not role="tab": these control a live region, not tabpanels,
+                  // and tab roles without panels are invalid ARIA. aria-current
+                  // says which one is showing without claiming a widget that
+                  // isn't here.
+                  aria-current={active ? "true" : undefined}
                   aria-label={`Show testimonial from ${item.name}`}
                   onClick={() => setIndex(dotIndex)}
                   // 44px target via padding; the visible bar stays hairline.

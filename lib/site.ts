@@ -1,32 +1,42 @@
 /**
- * Single source of truth for contact details, URLs and the WhatsApp deep link.
+ * Single source of truth for identity, contact details and the WhatsApp link.
  * Everything a client would want to change without touching a component.
+ *
+ * Positioning and voice come from the Riwaaya Brand Identity Deck (2026).
  */
 
 export const site = {
+  /** Short form, used in the wordmark and most copy. */
   name: "Riwaaya",
+  /** Full signature lockup, per the deck. Used in the footer and JSON-LD. */
+  legalName: "Riwaaya by Bhumi Sandhu",
+  founder: "Bhumi Sandhu",
   /** Used for canonical URLs, OG tags, sitemap and JSON-LD. */
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://riwaaya.in",
-  tagline: "We design the small rituals, not just the big day.",
+  /** The deck's line. Kept verbatim. */
+  tagline: "Weddings held in the old way, made new",
+  positioning:
+    "Riwaaya plans a small number of weddings each year for families who want the rituals taken seriously — and who would rather their celebration feel quietly theirs than loudly grand.",
+  category: "Full-service wedding planning & hospitality",
   description:
-    "Riwaaya is a wedding and events studio in India. We plan weddings, mehndi and haldi, sangeet, engagements and private events around the rituals a family already keeps.",
-  /** PLACEHOLDER — client to confirm the registered trading address. */
+    "Riwaaya by Bhumi Sandhu plans a small number of weddings each year — eleven lines of work, from the first roadmap to the final payment sheet, with a named person beside you the whole way.",
+  /** PLACEHOLDER — the deck's social lockup reads Chandigarh; confirm the studio address. */
   address: {
     street: "Studio address to be confirmed",
-    locality: "Bengaluru",
-    region: "Karnataka",
-    postalCode: "560001",
+    locality: "Chandigarh",
+    region: "Chandigarh",
+    postalCode: "160001",
     country: "IN",
   },
-  /** PLACEHOLDER — client to confirm coordinates for the contact map. */
-  geo: { lat: 12.9716, lng: 77.5946 },
+  /** PLACEHOLDER — Chandigarh city centre; confirm coordinates for the map. */
+  geo: { lat: 30.7333, lng: 76.7794 },
   email: "hello@riwaaya.in",
-  cities: ["Bengaluru", "Jaipur", "Udaipur", "Goa", "Delhi NCR"],
+  /** PLACEHOLDER — confirm the list of cities worked in. */
+  cities: ["Chandigarh", "Kasauli", "Delhi NCR", "Jaipur", "Udaipur"],
   socials: [
-    // PLACEHOLDER — swap in the real handles before launch.
+    // PLACEHOLDER — the deck names @riwaaya; confirm before launch.
     { label: "Instagram", href: "https://instagram.com/riwaaya" },
     { label: "Pinterest", href: "https://pinterest.com/riwaaya" },
-    { label: "YouTube", href: "https://youtube.com/@riwaaya" },
   ],
 } as const;
 
@@ -36,7 +46,7 @@ export const WHATSAPP_NUMBER = "918352813340";
 /** Human-readable form for display next to the link. */
 export const WHATSAPP_DISPLAY = "+91 83528 13340";
 
-export const DEFAULT_WHATSAPP_MESSAGE = "Hi Riwaaya, I'd like to plan an event.";
+export const DEFAULT_WHATSAPP_MESSAGE = "Hi Riwaaya, I'd like to plan a wedding.";
 
 /**
  * Builds a wa.me link with a URL-encoded prefill.
@@ -46,9 +56,10 @@ export function whatsappHref(message: string = DEFAULT_WHATSAPP_MESSAGE): string
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
+/** Labels follow the deck's own website draft. */
 export const nav = [
+  { label: "Approach", href: "/about" },
   { label: "Services", href: "/#services" },
-  { label: "Work", href: "/gallery" },
-  { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
+  { label: "Weddings", href: "/gallery" },
+  { label: "Enquire", href: "/contact" },
 ] as const;

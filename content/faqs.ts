@@ -1,6 +1,9 @@
 /**
- * FAQ accordion content. Answers stay short and direct — if an answer needs
- * more than four sentences it probably belongs on a service page instead.
+ * FAQ accordion content.
+ *
+ * Answers are grounded in the signed scope of work, so nothing here promises
+ * something the contract does not cover. Keep them short — if an answer needs
+ * more than four sentences it belongs on a service page.
  */
 
 export type Faq = {
@@ -11,45 +14,51 @@ export type Faq = {
 
 export const faqs: Faq[] = [
   {
-    id: "faq-cost",
-    question: "How do you charge?",
+    id: "faq-scope",
+    question: "What does full-service actually cover?",
     answer:
-      "A flat planning fee based on the scale of the event, agreed before we start. We do not take commission from vendors, and every vendor quote comes to you unmarked.",
+      "Eleven contracted lines of work: planning and consultations, budget, timeline, venue, vendors, payments, guest logistics, food and beverage, on-ground personnel, on-site coordination and post-event follow-up. Each one is listed on its own page.",
   },
   {
-    id: "faq-scale",
-    question: "Is there a minimum event size?",
+    id: "faq-partial",
+    question: "Can we book only part of it?",
     answer:
-      "No. We have run a sixty-guest wedding at home and a four-day one for three hundred and forty. The planning is the same discipline at either end.",
+      "The engagement is built to cover a wedding whole, because the lines depend on each other — a timeline without vendor coordination does not hold. Tell us what you have already arranged and we will tell you honestly whether we are the right fit.",
+  },
+  {
+    id: "faq-volume",
+    question: "How many weddings do you take?",
+    answer:
+      "A small number each year, and one at a time on the ground. The people you plan with are the people at your functions — that is the reason the calendar is capped.",
   },
   {
     id: "faq-vendors",
     question: "Can we keep our own vendors?",
     answer:
-      "Yes. If your family has used a caterer for thirty years, that caterer stays. We will brief them and hold them to the run sheet like anyone else.",
+      "Yes. If your family has used a caterer for thirty years, that caterer stays. Our recommendations come from vendors we already have a working relationship with, but you are never restricted to them.",
+  },
+  {
+    id: "faq-money",
+    question: "How do payments work?",
+    answer:
+      "We build payment sheets for the venue and every vendor — advances, due dates, particulars — and you review and approve them before anything is processed. We send reminders ahead of each payment and chase the vendors, but the money goes from you to them.",
+  },
+  {
+    id: "faq-onground",
+    question: "Who is actually there on the day?",
+    answer:
+      "A designated representative plus a team organised into eight departments, including a shadow each for the bride and groom and showrunners for whatever was not on the schedule.",
+  },
+  {
+    id: "faq-after",
+    question: "What happens after the wedding?",
+    answer:
+      "A debrief with you, then a written report breaking down every expense across planning and execution, with any outstanding vendor payment identified.",
   },
   {
     id: "faq-when",
     question: "When should we get in touch?",
     answer:
-      "As soon as you have a rough date and a rough number. Six to nine months of runway is comfortable; we have worked with three, and we will tell you what changes when it is tight.",
-  },
-  {
-    id: "faq-where",
-    question: "Where do you work?",
-    answer:
-      "Bengaluru, Jaipur, Udaipur, Goa and Delhi NCR regularly. Elsewhere in India on request — travel and stay are quoted separately and shown to you at cost.",
-  },
-  {
-    id: "faq-rituals",
-    question: "We are not sure which rituals to keep.",
-    answer:
-      "That conversation is most of our first meeting. We will ask what your families actually do, what has quietly stopped, and what you want back. Nothing gets added because it photographs well.",
-  },
-  {
-    id: "faq-team",
-    question: "Who will actually be at our wedding?",
-    answer:
-      "The people you meet in the first meeting. We take one wedding per week so the team that planned it is the team on the ground.",
+      "As soon as you have a rough date and a rough number. The roadmap runs month by month, so the earlier it starts the more of it is useful.",
   },
 ];

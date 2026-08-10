@@ -1,66 +1,93 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
-import { ImageSlot } from "@/components/media/ImageSlot";
 import { Reveal, Stagger } from "@/components/motion/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { services } from "@/content/services";
+import { functions, pillars, services } from "@/content/services";
 
 /**
- * Six service cards. The image crop is the taak niche — this is one of the two
- * permitted uses of the shape on the home page (the other is the divider above
- * the enquiry section).
+ * The eleven lines of work, as a numbered index rather than a card grid.
  *
- * The whole card is one link, so keyboard users get a single stop per card
- * rather than a title and an arrow.
+ * This follows the studio's own website draft: a numbered list, one line per
+ * service, grouped by pillar. Eleven photo cards would bury the point — the
+ * offering is one full-service engagement, not a menu to pick from.
  */
 export function Services() {
   return (
     <section id="services" className="scroll-mt-24 bg-chandni pb-section">
       <div className="shell">
-        <SectionHeading eyebrow="What we do" title="Six ways in.">
-          Every one of them starts with the same conversation about your family.
-          What changes is the scale.
+        <SectionHeading eyebrow="What we do" title="Eleven lines of work.">
+          One engagement covers the wedding whole — from the first roadmap to the
+          final payment sheet. Each line below is contracted, not implied.
         </SectionHeading>
 
-        <Stagger className="mt-16 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-          {services.map((service) => (
-            <Reveal asChild key={service.slug}>
-              <article>
-                <Link
-                  href={`/services/${service.slug}`}
-                  className="group/slot block transition-transform duration-[400ms] ease-riwaaya hover:-translate-y-1.5"
-                >
-                  <ImageSlot
-                    slot={`service-${service.slug}-card`}
-                    alt={`${service.title} — ${service.summary}`}
-                    aspect="4 / 5"
-                    taak
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  />
-
-                  <div className="mt-6 flex items-start justify-between gap-4">
-                    <div className="flex flex-col gap-2">
-                      <h3 className="font-display text-display-sm font-light text-ink transition-colors duration-[250ms] ease-riwaaya group-hover/slot:text-pista-ink">
-                        {service.title}
-                      </h3>
-                      <p className="max-w-measure font-sans text-body text-stone-deep">
-                        {service.summary}
-                      </p>
-                    </div>
-
-                    <span
-                      aria-hidden
-                      className="mt-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/15 text-ink transition-all duration-[400ms] ease-riwaaya group-hover/slot:border-pista-ink group-hover/slot:bg-pista-ink group-hover/slot:text-chandni"
-                    >
-                      <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
+        <div className="mt-16 grid gap-12 lg:grid-cols-12 lg:gap-16">
+          {/* The four pillars are the reading key for the list. Sticky on
+              desktop so they stay beside whichever line you are reading,
+              instead of leaving a column of dead space below them. */}
+          <Stagger className="flex flex-col gap-8 lg:col-span-4 lg:sticky lg:top-28 lg:self-start">
+            {pillars.map((pillar) => (
+              <Reveal asChild key={pillar.name}>
+                <div className="border-t border-ink/15 pt-5">
+                  <div className="flex items-baseline gap-3">
+                    <h3 className="font-display text-2xl font-light text-ink">
+                      {pillar.name}
+                    </h3>
+                    <span className="font-sans text-[0.6875rem] uppercase tracking-[0.2em] text-pista-ink">
+                      {pillar.label}
                     </span>
                   </div>
+                  <p className="mt-2 max-w-measure font-sans text-micro text-stone-deep">
+                    {pillar.body}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </Stagger>
+
+          <Stagger as="ol" className="lg:col-span-8" stagger={0.05}>
+            {services.map((service) => (
+              <Reveal asChild as="li" key={service.slug}>
+                <Link
+                  href={`/services/${service.slug}`}
+                  className="group flex items-baseline gap-5 border-t border-ink/12 py-5 transition-colors duration-[250ms] ease-riwaaya hover:bg-pista-mist md:gap-8 md:px-3"
+                >
+                  <span className="w-7 shrink-0 font-display text-lg font-light text-pista-ink">
+                    {service.index}
+                  </span>
+
+                  <span className="flex flex-1 flex-col gap-1">
+                    <span className="font-display text-2xl font-light text-ink md:text-[1.75rem]">
+                      {service.title}
+                    </span>
+                    <span className="font-sans text-micro text-stone-deep">
+                      {service.summary}
+                    </span>
+                  </span>
+
+                  <ArrowUpRight
+                    aria-hidden
+                    className="mt-1 h-4 w-4 shrink-0 text-stone-deep opacity-0 transition-all duration-[250ms] ease-riwaaya group-hover:opacity-100 group-focus-visible:opacity-100"
+                    strokeWidth={1.5}
+                  />
                 </Link>
-              </article>
-            </Reveal>
-          ))}
-        </Stagger>
+              </Reveal>
+            ))}
+          </Stagger>
+        </div>
+
+        {/* The functions families actually name, without pretending they are
+            separate products. */}
+        <Reveal className="mt-14 border-t border-ink/12 pt-8">
+          <p className="font-sans text-micro text-stone-deep">
+            <span className="font-semibold uppercase tracking-[0.2em] text-pista-ink">
+              Functions we plan
+            </span>
+            <span className="mt-3 block font-display text-2xl font-light text-ink">
+              {functions.join(" · ")}
+            </span>
+          </p>
+        </Reveal>
       </div>
     </section>
   );

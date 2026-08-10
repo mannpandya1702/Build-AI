@@ -7,7 +7,7 @@ import { Stats } from "@/components/sections/Stats";
 import { Button } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { WhatsAppCTA } from "@/components/ui/WhatsAppCTA";
-import { principles, story, team } from "@/content/about";
+import { departments, isIsNot, principles, story, team } from "@/content/about";
 import { breadcrumbSchema } from "@/lib/schema";
 import { site } from "@/lib/site";
 
@@ -74,7 +74,37 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="border-y border-ink/10 bg-pista-mist py-section">
+      {/* The deck's is / is not list. Two columns that read across, so each
+          promise sits directly opposite what it rules out. */}
+      <section className="border-y border-ink/10 bg-ink py-section">
+        <div className="shell">
+          <SectionHeading eyebrow="Plainly" title="What we are, and are not." tone="chandni" />
+
+          <Stagger className="mt-14 flex flex-col">
+            <div className="grid grid-cols-2 gap-8 border-b border-chandni/20 pb-4">
+              <p className="font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-pista">
+                Riwaaya is
+              </p>
+              <p className="font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-chandni/50">
+                Riwaaya is not
+              </p>
+            </div>
+
+            {isIsNot.map((row) => (
+              <Reveal asChild key={row.is}>
+                <div className="grid grid-cols-2 gap-8 border-b border-chandni/15 py-6">
+                  <p className="font-display text-xl font-light text-chandni md:text-2xl">
+                    {row.is}
+                  </p>
+                  <p className="font-sans text-body text-chandni/60">{row.isNot}</p>
+                </div>
+              </Reveal>
+            ))}
+          </Stagger>
+        </div>
+      </section>
+
+      <section className="border-b border-ink/10 bg-pista-mist py-section">
         <div className="shell">
           <SectionHeading eyebrow="Philosophy" title="Four things we hold to." />
 
@@ -119,6 +149,34 @@ export default function AboutPage() {
                     {member.role}
                   </p>
                 </div>
+              </Reveal>
+            ))}
+          </Stagger>
+        </div>
+      </section>
+
+      {/* The eight on-site departments, from the scope of work. */}
+      <section className="bg-chandni pb-section">
+        <div className="shell">
+          <SectionHeading eyebrow="On the day" title="Eight departments.">
+            The on-ground team is organised into these, so every part of the day
+            has someone whose job it is.
+          </SectionHeading>
+
+          <Stagger as="ul" className="mt-12 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-4">
+            {departments.map((department, index) => (
+              <Reveal
+                asChild
+                as="li"
+                key={department}
+                className="flex items-baseline gap-4 border-t border-ink/12 py-4"
+              >
+                <>
+                  <span className="font-display text-lg font-light text-pista-ink">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="font-sans text-body text-ink">{department}</span>
+                </>
               </Reveal>
             ))}
           </Stagger>

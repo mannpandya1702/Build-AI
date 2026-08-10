@@ -1,9 +1,14 @@
 # Riwaaya
 
-Marketing site for **Riwaaya**, a wedding and events studio in India.
+Marketing site for **Riwaaya by Bhumi Sandhu** — full-service wedding planning
+and hospitality. *Weddings held in the old way, made new.*
 
 Next.js (App Router) · TypeScript · Tailwind · Framer Motion. No CMS and no
 database — all copy lives in typed files under `/content`.
+
+Copy, positioning and the palette follow two client documents: the **Riwaaya
+Brand Identity Deck (2026)** and the signed **List of Services**. Where the
+build departs from either, the reason is written next to the code.
 
 ---
 
@@ -75,17 +80,31 @@ needs editing to change copy.
 
 | File | Contents |
 |---|---|
-| `content/services.ts` | The six services. `slug` drives the `/services/[slug]` URL. |
+| `content/services.ts` | The **eleven lines of work** from the signed scope, grouped by pillar. `slug` drives the `/services/[slug]` URL. |
 | `content/gallery.ts` | Every photograph on the site: slot name, category, caption, aspect ratio, alt text. |
 | `content/testimonials.ts` | Quotes for the home page slider. |
 | `content/faqs.ts` | The FAQ accordion. |
-| `content/process.ts` | The four "How we work" steps. |
+| `content/process.ts` | The four brand pillars — Roots, Order, Welcome, Presence. |
 | `content/stats.ts` | The numbers in the pistachio band. |
-| `content/about.ts` | About page story, philosophy and team. |
-| `lib/site.ts` | Contact details, address, socials, cities, WhatsApp number. |
+| `content/about.ts` | Story, the is / is not list, philosophy, team, the eight departments. |
+| `lib/site.ts` | Identity, contact details, address, socials, cities, WhatsApp number. |
 
-Add a service by appending to `services.ts` — the route, the home page card,
-the footer link and the sitemap all pick it up automatically.
+Add a line of work by appending to `services.ts` — the route, the home page
+index, the footer link and the sitemap all pick it up automatically.
+
+### Two departures from the brand deck, on purpose
+
+1. **Palette is two colours, not five.** The deck defines chandni, pista,
+   gulaab (rose), baingani (aubergine) and sona (gold). The client asked for a
+   pistachio-and-white site with no purple or gold, so only chandni and pista
+   are here — at the deck's exact values — and `ink` carries the dark rather
+   than baingani. Adding the other three back means editing one block in
+   `tailwind.config.ts`.
+2. **The wordmark is lowercase.** The deck specifies CAPS at +0.16em; the build
+   brief specified lowercase at 0.18em and rejected the arch monogram. The
+   brief wins as the later instruction, but `<Wordmark letterCase="upper" />`
+   switches it — change the default in `components/brand/Wordmark.tsx` to flip
+   the whole site at once.
 
 ---
 
@@ -135,15 +154,15 @@ Two colours and two typefaces, deliberately.
 
 | Token | Hex | Use |
 |---|---|---|
-| `chandni` | `#FBFAF6` | Page background — dominant |
-| `pista` | `#C9D8BE` | Fills, cards, the stats band |
+| `chandni` | `#F8F4ED` | Page background — dominant (deck value) |
+| `pista` | `#C7D4B2` | Fills, cards, the stats band (deck value) |
 | `pista-deep` | `#7E9470` | Focus rings, borders, timeline, dots |
 | `ink` | `#22271F` | All text, deep sections |
 | `stone` | `#6E7269` | Captions on off-white |
 
 Plus derived steps in `tailwind.config.ts` — same two hues, no new colours:
 
-- `pista-mist` `#E7EEE1` — tinted section backgrounds
+- `pista-mist` `#ECECDE` — tinted section backgrounds
 - `ink-soft` `#31382D` — hero backdrop
 - `pista-ink` `#5C6E50` — **small pistachio text and solid button fills**
 - `stone-deep` `#565A52` — **secondary body copy**
@@ -193,7 +212,7 @@ entirely.
 
 Lighthouse at the time of writing: **100 accessibility, 100 best-practices,
 100 SEO on every route**; performance **100 desktop** on every route and
-**94–98 mobile** (home 98). The mobile figure moves a point or two between
+**90–99 mobile** (home 98). The mobile figure moves a point or two between
 runs; `/contact` and `/about` sit at the bottom of that range because of the
 third-party Google Form and OpenStreetMap iframes.
 
@@ -203,8 +222,8 @@ third-party Google Form and OpenStreetMap iframes.
 
 | Route | Notes |
 |---|---|
-| `/` | Hero, intro, services, signature work, process, testimonials, stats, FAQ, enquiry |
-| `/services/[slug]` | One per entry in `content/services.ts`, statically generated |
+| `/` | Hero, positioning, the eleven lines, signature work, pillars, testimonials, stats, FAQ, enquiry |
+| `/services/[slug]` | One per line of work — eleven pages, statically generated |
 | `/gallery` | Filterable masonry + lightbox |
 | `/about` | Story, philosophy, team |
 | `/contact` | Details, enquiry form, map |

@@ -49,25 +49,61 @@ export function EnquiryForm() {
     setFailed(false);
   }
 
+  /**
+   * Do not mount the iframe until the card is close to the viewport.
+   *
+   * loading="lazy" alone is not enough: the browser's own threshold is
+   * generous, so on shorter pages Google's form was still being fetched during
+   * initial load and dragging the mobile score down. The observer keeps the
+   * third-party request out of the critical path entirely.
+   */
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [inRange, setInRange] = useState(false);
+
   useEffect(() => {
-    if (loaded) return;
+    const node = cardRef.current;
+    if (!node || inRange) return;
+
+    // No observer support: mount it anyway rather than hide the form. Deferred
+    // to a task so this is not a synchronous setState inside the effect body.
+    if (typeof IntersectionObserver === "undefined") {
+      const id = window.setTimeout(() => setInRange(true), 0);
+      return () => window.clearTimeout(id);
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setInRange(true);
+      },
+      { rootMargin: "600px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [inRange]);
+
+  // The failure timer only makes sense once the iframe is actually mounted.
+  useEffect(() => {
+    if (loaded || !inRange) return;
     timeoutRef.current = window.setTimeout(() => setFailed(true), LOAD_TIMEOUT_MS);
     return () => {
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     };
-  }, [loaded, embedSrc]);
+  }, [loaded, inRange, embedSrc]);
 
   return (
     <div className="mt-12 flex flex-col gap-6">
       {/* Pre-qualifier — two fields, deep-linked into the form. */}
       <Reveal>
-        <fieldset className="rounded-sm border border-ink/10 bg-chandni p-6 md:p-8">
+        {/* min-w-0 matters: a fieldset defaults to min-inline-size: min-content
+            and will not shrink below its widest option label, which pushes the
+            page into horizontal scroll on narrow screens. */}
+        <fieldset className="min-w-0 rounded-sm border border-ink/10 bg-chandni p-6 md:p-8">
           <legend className="px-2 font-sans text-eyebrow font-semibold uppercase text-pista-ink">
             Start here
           </legend>
 
           <div className="mt-2 grid gap-6 sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
+            <div className="flex min-w-0 flex-col gap-2">
               <label
                 htmlFor="event-type"
                 className="font-sans text-micro font-semibold text-ink"
@@ -79,7 +115,7 @@ export function EnquiryForm() {
                 name="event-type"
                 value={eventType}
                 onChange={(event) => setEventType(event.target.value)}
-                className="min-h-[48px] cursor-pointer rounded-sm border border-ink/20 bg-chandni px-4 font-sans text-body text-ink transition-colors duration-[250ms] ease-riwaaya hover:border-ink/40"
+                className="min-h-[48px] w-full min-w-0 cursor-pointer rounded-sm border border-ink/20 bg-chandni px-4 font-sans text-body text-ink transition-colors duration-[250ms] ease-riwaaya hover:border-ink/40"
               >
                 <option value="">Select an event</option>
                 {services.map((service) => (
@@ -94,7 +130,7 @@ export function EnquiryForm() {
               </p>
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex min-w-0 flex-col gap-2">
               <label
                 htmlFor="event-date"
                 className="font-sans text-micro font-semibold text-ink"
@@ -107,7 +143,7 @@ export function EnquiryForm() {
                 type="date"
                 value={eventDate}
                 onChange={(event) => setEventDate(event.target.value)}
-                className="min-h-[48px] rounded-sm border border-ink/20 bg-chandni px-4 font-sans text-body text-ink transition-colors duration-[250ms] ease-riwaaya hover:border-ink/40"
+                className="min-h-[48px] w-full min-w-0 rounded-sm border border-ink/20 bg-chandni px-4 font-sans text-body text-ink transition-colors duration-[250ms] ease-riwaaya hover:border-ink/40"
               />
               <p className="font-sans text-[0.75rem] text-stone-deep">
                 An approximate date is fine.
@@ -119,7 +155,10 @@ export function EnquiryForm() {
 
       {/* The embed itself, inside a chandni card. */}
       <Reveal>
-        <div className="relative overflow-hidden rounded-sm border border-ink/10 bg-chandni">
+        <div
+          ref={cardRef}
+          className="relative overflow-hidden rounded-sm border border-ink/10 bg-chandni"
+        >
           {failed && !loaded ? (
             <FormFallback href={newTabSrc} />
           ) : (
@@ -137,6 +176,11 @@ export function EnquiryForm() {
                 )}
               </AnimatePresence>
 
+              {/* Spacer reserves the frame's exact height before the iframe
+                  mounts, so deferring it costs no layout shift. */}
+              {!inRange && <div aria-hidden className="min-h-[900px] w-full md:min-h-[780px]" />}
+
+              {inRange && (
               <iframe
                 key={embedSrc}
                 src={embedSrc}
@@ -154,6 +198,7 @@ export function EnquiryForm() {
               >
                 Your browser does not support embedded forms.
               </iframe>
+              )}
             </>
           )}
         </div>

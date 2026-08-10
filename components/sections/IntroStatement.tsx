@@ -1,8 +1,10 @@
 import { Reveal, Stagger } from "@/components/motion/Reveal";
+import { site } from "@/lib/site";
 
 /**
- * One large Cormorant paragraph on off-white. This section is mostly
- * whitespace on purpose — it is the pause between the hero and the work.
+ * One large Cormorant paragraph on off-white — the positioning statement from
+ * the identity deck, kept in the brand's own words. Mostly whitespace on
+ * purpose: it is the pause between the hero and the work.
  */
 export function IntroStatement() {
   return (
@@ -17,17 +19,16 @@ export function IntroStatement() {
 
           <Reveal asChild>
             <p className="font-display text-display-md font-light leading-[1.18] text-ink">
-              Most weddings are planned outward from a venue. We plan them outward
-              from a ritual — the haldi your family does in the courtyard, the taak
-              your grandmother still lights, the order your mother insists on.
+              {site.positioning}
             </p>
           </Reveal>
 
           <Reveal asChild>
             <p className="max-w-prose font-sans text-body-lg text-stone-deep">
-              Then we build the day around it. Fewer things, chosen properly, with
-              one team from the first phone call to the last car. It is quieter
-              than most of what this industry makes, and that is the point.
+              Riwaayat is custom — the practice a family repeats until it belongs
+              to them. Riwaaya is that word in the singular: not tradition in
+              general, but this family&rsquo;s version of it. We find the thread
+              and build the celebration around it.
             </p>
           </Reveal>
         </Stagger>

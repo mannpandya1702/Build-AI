@@ -1,39 +1,49 @@
 /**
- * "How we work" — the four-step timeline on the home page.
- * Keep it at four. The connecting line is drawn on scroll between them.
+ * "How we work" — the four brand pillars from the identity deck, in the order
+ * a wedding actually moves through them. Each maps to a group of the eleven
+ * lines of work in content/services.ts.
+ *
+ * Body copy is the deck's own, lightly extended.
  */
 
 export type ProcessStep = {
   id: string;
   /** Displayed as 01, 02… in Cormorant. */
   index: string;
+  /** The pillar name. */
   title: string;
+  /** The service group it covers. */
+  label: string;
   body: string;
 };
 
 export const processSteps: ProcessStep[] = [
   {
-    id: "step-1",
+    id: "step-roots",
     index: "01",
-    title: "We listen",
-    body: "One long conversation about your families — what they keep, what they quietly stopped doing, and what you want back. No moodboards yet.",
+    title: "Roots",
+    label: "Consultation",
+    body: "We start with the family's own customs, not a moodboard. The ritual sets the palette — so the first conversation is about what your families already do.",
   },
   {
-    id: "step-2",
+    id: "step-order",
     index: "02",
-    title: "We shape it",
-    body: "A written plan: the rituals, the order, the budget and the honest version of what each one costs. You change it until it reads like your family.",
+    title: "Order",
+    label: "Planning & budget",
+    body: "Roadmaps, vendor sheets, payment schedules. Calm is a document, not a mood. You approve every contract and every payment sheet before it moves.",
   },
   {
-    id: "step-3",
+    id: "step-welcome",
     index: "03",
-    title: "We build it",
-    body: "Vendors contracted, run sheets written, rehearsals scheduled. You approve; we chase. Every quote reaches you unmarked.",
+    title: "Welcome",
+    label: "Hospitality",
+    body: "A desk that never closes, a call to every room. Guests should never have to ask twice — and the family should never be the one answering.",
   },
   {
-    id: "step-4",
+    id: "step-presence",
     index: "04",
-    title: "We run it",
-    body: "Our team is on the ground from the first function to the last car. You are a guest at your own wedding, which is the entire point.",
+    title: "Presence",
+    label: "On-site & after",
+    body: "Shadows for the couple, showrunners for the day, a debrief after. We stay to the end, then put what it cost in writing.",
   },
 ];

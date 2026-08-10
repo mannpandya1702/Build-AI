@@ -23,7 +23,8 @@ import { EASE } from "@/lib/motion";
  * looping video without the layout changing. See README §Photography.
  */
 
-const HEADLINE = ["We design the small", "rituals, not just", "the big day."];
+/** Headline and subcopy are the studio's own, from the deck's website draft. */
+const HEADLINE = ["A small number of weddings,", "planned all the way through."];
 
 export function Hero() {
   const shouldReduce = useReducedMotion();
@@ -84,7 +85,7 @@ export function Hero() {
           className="rise-in font-sans text-eyebrow font-semibold uppercase text-pista"
           style={{ animationDelay: "60ms" }}
         >
-          Weddings & events · India
+          Weddings held in the old way, made new
         </p>
 
         <h1 id="hero-heading" className="max-w-5xl font-display text-display-xl font-light text-chandni">
@@ -105,8 +106,9 @@ export function Hero() {
           className="rise-in max-w-measure font-sans text-body-lg text-chandni/85"
           style={{ animationDelay: "420ms" }}
         >
-          A planning studio for weddings, mehndi and haldi, sangeet and private
-          events — built around the riwaayat your family already keeps.
+          Riwaaya takes on a handful of celebrations each year — from the first
+          roadmap to the final payment sheet, with a named person beside you the
+          whole way.
         </p>
 
         <div
@@ -114,7 +116,7 @@ export function Hero() {
           style={{ animationDelay: "500ms" }}
         >
           <Button href="/#enquiry" size="lg" variant="solid">
-            Plan your riwaayat
+            Start a conversation
           </Button>
           <WhatsAppCTA variant="inline" tone="chandni" />
         </div>

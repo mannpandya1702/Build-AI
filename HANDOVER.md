@@ -43,12 +43,11 @@ a position without reading any code.
 | Slot | Where it appears | Ratio |
 |---|---|---|
 | `hero-backdrop` | Home hero, full bleed. Still or looping video. | 16:9 |
-| `service-<slug>-card` × 6 | Home services grid, taak-cropped | 4:5 |
-| `service-<slug>-hero` × 6 | Each service detail page | 16:10 |
+| `service-*-hero` × 11 | One per line of work, on its detail page | 16:10 |
 | `signature-01…08-*` | Home signature grid | mixed |
 | `gallery-09…18-*` | Gallery page | mixed |
 | `about-studio-portrait` | About page | 4:5 |
-| `team-01…04-headshot` | About page team | 1:1 |
+| `team-01-bhumi-sandhu`, `team-02…04-headshot` | About page team | 1:1 |
 
 Alt text is already written for every slot in the content files — please check
 it still describes the real photo once supplied.
@@ -60,9 +59,10 @@ it still describes the real photo once supplied.
 | Field | Currently |
 |---|---|
 | `address.street` | `"Studio address to be confirmed"` |
-| `address.locality` / `region` / `postalCode` | Bengaluru / Karnataka / 560001 — **assumed** |
-| `geo.lat` / `geo.lng` | Bengaluru city centre — **assumed**, drives the contact map pin |
+| `address.locality` / `region` / `postalCode` | Chandigarh / Chandigarh / 160001 — inferred from the deck's social lockup ("Chandigarh"), **not confirmed** |
+| `geo.lat` / `geo.lng` | Chandigarh city centre — **assumed**, drives the contact map pin |
 | `email` | `hello@riwaaya.in` — **assumed** |
+| `cities` | Chandigarh, Kasauli, Delhi NCR, Jaipur, Udaipur — Kasauli is from the deck's sample wedding, the rest are **guesses** |
 
 These feed the contact page, the footer, and the `LocalBusiness` JSON-LD, so
 wrong values affect local search results.
@@ -80,21 +80,24 @@ it is the right line to publish before launch.
 They appear in the footer and in the JSON-LD `sameAs` array. Remove any
 platform the studio does not actually use rather than leaving a dead link.
 
-## 6. Statistics — medium
+## 6. Statistics — low (resolved, but confirm)
 
 **Where:** `content/stats.ts`
-**Currently:** 180+ events, 14 cities, 9 years, 1 wedding per week.
+**Now:** 11 lines of work · 24/7 hospitality desk · 8 on-site departments ·
+1 wedding at a time.
 
-These are invented placeholders. They appear in a prominent band on the home
-and about pages and are the kind of claim that should be accurate.
-
-`content/site.ts` also lists operating cities (Bengaluru, Jaipur, Udaipur, Goa,
-Delhi NCR) — confirm.
+The earlier invented figures (events delivered, cities, years) are gone. These
+three are counts of what the scope of work actually contracts, taken from the
+deck's own website draft, so they can be published without verification. If the
+studio wants a "weddings delivered" number on the page, it has to come from
+them.
 
 ## 7. Team names and roles — medium
 
 **Where:** `content/about.ts` → `team`
-**Currently:** four entries all reading "Team member".
+**Currently:** Bhumi Sandhu is named as Founder. The other three entries still
+read "Team member" and need real names, roles and headshots — or the section
+should be cut to one.
 
 ## 8. Canonical domain — medium
 
@@ -104,22 +107,52 @@ Delhi NCR) — confirm.
 Drives canonical URLs, OG tags, `sitemap.xml` and JSON-LD. If the live domain
 differs, every one of those is wrong.
 
-## 9. Testimonials — low
+## 9. Testimonials — high
 
 **Where:** `content/testimonials.ts`
 
 Five quotes are written as placeholders with plausible names. **They are not
-real client quotes and must not be published as such.** Replace with real,
-permissioned testimonials or cut the section.
+real client quotes and must not be published as such** — this is the one item
+on this list that is a legal and reputational problem if it ships as-is.
+Replace with real, permissioned testimonials or cut the section.
 
-## 10. Logo file — low
+## 10. Wordmark case — decision needed, low
 
-The logo is currently the "riwaaya" wordmark in Cormorant Garamond, per the
-brief. If a designed logo lands later, replace the inner element of
-`components/brand/Wordmark.tsx` — every surface picks it up automatically.
+The identity deck specifies the primary wordmark in **CAPS** at +0.16em
+("R I W A A Y A"), and the deck's own website mockup shows it that way. The
+build brief specified **lowercase** at 0.18em. The site currently follows the
+brief.
+
+This is a one-word change: `letterCase="upper"` on `<Wordmark />`, or flip the
+default in `components/brand/Wordmark.tsx` to change every surface at once.
+Worth settling before launch. The footer already uses the deck's stacked
+"by Bhumi Sandhu" signature lockup.
+
+If a drawn logo lands later, replace the inner span of that component — every
+surface picks it up automatically.
 
 ## 11. Open Graph image — optional
 
 `public/og.png` is generated from the brand (wordmark, headline, taak shape) so
 link previews are not broken. Replace it with art on a real photograph when the
 photography arrives.
+
+
+---
+
+## 12. An error in your own services document — worth fixing at source
+
+`List of Services — Riwaaya By Bhumi Sandhu.pdf` still contains **three
+references to "Shaandaar Events"** where the name was not replaced:
+
+- *Venue & Vendor Payment Schedule*, clause (a): "…exclusively from the pool of
+  vendors with whom **Shaandaar Events** maintains a working relationship…"
+- *Post Event Follow-ups*, clause (c): "…**Shaandaar Events** will make
+  reasonable efforts to fulfill these requests…"
+- The PDF's own document title metadata begins "LIST OF SERVICES Planning &
+  Consultations: a. **Shaandaar Events** is committed to…"
+
+The website copy uses Riwaaya throughout, so nothing is wrong on the site. But
+this document goes to clients as a contract, and the third one is invisible in
+the page body — it lives in the file's title metadata and will show in a
+browser tab or a search result. Worth correcting at source.
