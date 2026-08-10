@@ -1,11 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { ArrowDown } from "lucide-react";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { WhatsAppCTA } from "@/components/ui/WhatsAppCTA";
+import { DEMO_HERO_POSTER, DEMO_HERO_VIDEO } from "@/lib/demoMedia";
 import { EASE } from "@/lib/motion";
 
 /**
@@ -29,6 +31,16 @@ const HEADLINE = ["A small number of weddings,", "planned all the way through."]
 export function Hero() {
   const shouldReduce = useReducedMotion();
   const ref = useRef<HTMLElement>(null);
+
+  // Motion background is a desktop-only enhancement — see the note below.
+  const [wideScreen, setWideScreen] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 768px)");
+    const apply = () => setWideScreen(query.matches);
+    apply();
+    query.addEventListener("change", apply);
+    return () => query.removeEventListener("change", apply);
+  }, []);
 
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -54,15 +66,47 @@ export function Hero() {
           aria-hidden
           className="hero-zoom h-full w-full bg-ink-soft"
         >
-          {/* Placeholder fill: one flat brand tint — no decorative gradient,
-              and no seam where two blocks would meet. */}
-          <div className="absolute inset-0 bg-pista/10" />
-          {/* Marker sits high, clear of the headline at every breakpoint. */}
-          <div className="absolute inset-x-0 top-24 flex justify-center px-4 md:top-28 md:justify-end md:px-gutter">
-            <span className="rounded-full border border-dashed border-pista/40 px-5 py-2 text-center font-sans text-eyebrow uppercase text-pista">
-              Hero photo or video — 16:9
-            </span>
-          </div>
+          {DEMO_HERO_VIDEO ? (
+            /* Temporary demo loop. The poster covers browsers that cannot
+               decode WebM. Reduced-motion users, and phones, get the still
+               instead: the loop is ~1.7MB, which is not a reasonable thing to
+               push down a mobile connection for a background. */
+            shouldReduce || !wideScreen ? (
+              /* next/image with priority, not a bare <img>: this fills the
+                 viewport, so it is the LCP element on phones. Un-prioritised
+                 it was discovered late and LCP sat at 5.4s. */
+              <Image
+                src={DEMO_HERO_POSTER!}
+                alt=""
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover"
+              />
+            ) : (
+              <video
+                className="absolute inset-0 h-full w-full object-cover"
+                src={DEMO_HERO_VIDEO}
+                poster={DEMO_HERO_POSTER}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+              />
+            )
+          ) : (
+            <>
+              {/* Placeholder fill: one flat brand tint — no decorative gradient,
+                  and no seam where two blocks would meet. */}
+              <div className="absolute inset-0 bg-pista/10" />
+              <div className="absolute inset-x-0 top-24 flex justify-center px-4 md:top-28 md:justify-end md:px-gutter">
+                <span className="rounded-full border border-dashed border-pista/40 px-5 py-2 text-center font-sans text-eyebrow uppercase text-pista">
+                  Hero photo or video — 16:9
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </motion.div>
 

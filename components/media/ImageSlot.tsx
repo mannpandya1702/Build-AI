@@ -4,6 +4,7 @@ import Image from "next/image";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 
+import { demoSrc } from "@/lib/demoMedia";
 import { DURATION, EASE } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +58,14 @@ export function ImageSlot({
   const shouldReduce = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
 
+  /**
+   * A real `src` always wins. Failing that, temporary demo photography fills
+   * the slot so the layout can be reviewed with something in it. Turning
+   * DEMO_MEDIA off drops every slot back to its labelled placeholder with no
+   * layout change — see lib/demoMedia.ts.
+   */
+  const resolvedSrc = src ?? demoSrc(slot);
+
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
@@ -81,9 +90,9 @@ export function ImageSlot({
           className="absolute inset-0"
           style={parallaxOn ? { y, scale: 1.12 } : undefined}
         >
-          {src ? (
+          {resolvedSrc ? (
             <Image
-              src={src}
+              src={resolvedSrc}
               alt={alt}
               fill
               sizes={sizes}

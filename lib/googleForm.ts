@@ -23,10 +23,28 @@ export function getFormEmbedUrl(): string {
   return process.env.NEXT_PUBLIC_GOOGLE_FORM_EMBED_URL?.trim() || FALLBACK_FORM_URL;
 }
 
-/** True while the placeholder is still in place — used to warn in dev only. */
+/**
+ * Whether a *real* Google Form has been configured.
+ *
+ * This drives which enquiry UI renders, so it has to be strict: a
+ * not-yet-filled-in template value must read as unconfigured. Checking for one
+ * magic word was not enough — .env.example ships "REPLACE_WITH_REAL_FORM_ID",
+ * which contains no such word, so the embed was attempted against a URL that
+ * could never load.
+ */
+const PLACEHOLDER_MARKERS = ["placeholder", "replace", "xxxx", "your-form", "example"];
+
 export function isFormConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_GOOGLE_FORM_EMBED_URL?.trim();
-  return Boolean(url) && !url!.includes("PLACEHOLDER");
+  if (!url) return false;
+
+  const lower = url.toLowerCase();
+  if (!lower.includes("docs.google.com/forms")) return false;
+  if (PLACEHOLDER_MARKERS.some((marker) => lower.includes(marker))) return false;
+
+  // Real published form IDs are long; a stub like /d/e/abc/viewform is not one.
+  const id = url.match(/\/d\/e\/([^/]+)/)?.[1] ?? "";
+  return id.length >= 25;
 }
 
 function toEmbed(url: string): string {

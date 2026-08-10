@@ -7,17 +7,21 @@ Ordered by how badly the site is hurt without it.
 
 ---
 
-## 1. Google Form URL — blocking
+## 1. Google Form URL — medium (no longer blocking)
 
 **Where:** `.env.local` → `NEXT_PUBLIC_GOOGLE_FORM_EMBED_URL`
-**Currently:** a placeholder ID that does not resolve.
+**Currently:** unset, so the site shows its own enquiry form.
 
-The enquiry section is the site's primary conversion route. Until the real URL
-is set, the embed fails and the page shows its fallback card ("The form did not
-load") with a direct link and WhatsApp. That fallback works, but the section
-looks broken.
+The enquiry section now has two modes. With no form configured — today — it
+renders a native, brand-styled form that collects name, function, date, city,
+guest count and a message, then opens WhatsApp with all of it filled in. That
+works right now with no backend, so the conversion route is live either way.
 
-Get it from: the form → **Send** → `<>` embed tab → copy the `src`.
+Set a real form URL and the Google Form embed takes over automatically. Get it
+from: the form → **Send** → `<>` embed tab → copy the `src`. Note the check is
+strict: template values containing "replace", "placeholder", "xxxx" or an
+implausibly short form ID are treated as unconfigured, so a half-filled-in
+variable will not produce a broken embed.
 
 ## 2. Google Form entry IDs — high
 
@@ -33,12 +37,22 @@ Find them by inspecting each field in the live form and reading
 
 ## 3. Photography — high
 
-**Where:** `public/photography/`, then set `src` in `content/gallery.ts`,
-`content/services.ts` (`imageSlot`) and `content/about.ts`.
+> ⚠️ **The site is currently dressed with temporary demo photography.**
+> `public/demo/` holds 15 freely-licensed photographs from Wikimedia Commons
+> plus a generated hero loop. **They are not Riwaaya's work and must not
+> survive to launch.** Because there are fewer photos than slots, several
+> repeat. To strip them: set `DEMO_MEDIA = false` in `lib/demoMedia.ts` and
+> delete `public/demo/` — every slot reverts to its labelled placeholder with
+> no layout change. Licences and authors are in `public/demo/README.md`.
 
-Every image is currently a labelled placeholder box at the correct aspect
-ratio. The slot name is printed inside each box, so a photo can be matched to
-a position without reading any code.
+**Where the real ones go:** `public/photography/`, then set `src` in
+`content/gallery.ts`, `content/services.ts` (`imageSlot`) and
+`content/about.ts`. A real `src` always beats the demo image, so photos can be
+swapped in one at a time without turning the demo off.
+
+With demo media off, every image is a labelled placeholder box at the correct
+aspect ratio. The slot name is printed inside each box, so a photo can be
+matched to a position without reading any code.
 
 | Slot | Where it appears | Ratio |
 |---|---|---|

@@ -1,34 +1,241 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, MessageCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Reveal } from "@/components/motion/Reveal";
 import { WhatsAppCTA } from "@/components/ui/WhatsAppCTA";
 import { services } from "@/content/services";
-import { buildFormUrl } from "@/lib/googleForm";
+import { buildFormUrl, isFormConfigured } from "@/lib/googleForm";
 import { EASE } from "@/lib/motion";
+import { WHATSAPP_NUMBER, site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 /**
- * The Google Form embed.
+ * The enquiry section has two modes:
  *
- * Three things make an embedded form survivable:
- *  1. a skeleton shimmer holds the space until onLoad fires, so nothing jumps;
- *  2. an "open in a new tab" link always sits under the frame;
- *  3. if the iframe has not loaded after 8s — blocked, offline, form deleted —
- *     we stop pretending and surface WhatsApp instead.
+ *  - Google Form configured → embed it, as the brief asks.
+ *  - Not configured (the default today) → a native, brand-styled form that
+ *    composes a WhatsApp message.
  *
- * The two-field pre-qualifier above deep-links its answers into the form via
- * entry.XXXX params. Those IDs live in lib/googleForm.ts as documented
- * constants; until the real ones are pasted in, the form still opens, it just
- * arrives blank.
+ * The second mode exists because the alternative was worse: with a placeholder
+ * form URL the embed always failed, and the page showed a large "The form did
+ * not load" card above a mostly-empty box. That is a dead end on the site's
+ * primary conversion route. The native form works right now with no backend,
+ * and quietly steps aside the moment a real form URL is set.
  */
+export function EnquiryForm() {
+  return isFormConfigured() ? <GoogleFormEmbed /> : <DirectEnquiryForm />;
+}
+
+/* ------------------------------------------------------------------ */
+/* Native form → WhatsApp                                              */
+/* ------------------------------------------------------------------ */
+
+const CITIES = [...site.cities, "Somewhere else"];
+
+const inputBase =
+  "min-h-[52px] w-full min-w-0 rounded-sm border border-ink/20 bg-chandni px-4 font-sans text-body text-ink transition-colors duration-[250ms] ease-riwaaya hover:border-ink/40 focus:border-pista-ink";
+
+function Field({
+  label,
+  hint,
+  htmlFor,
+  children,
+  className,
+}: {
+  label: string;
+  hint?: string;
+  htmlFor: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex min-w-0 flex-col gap-2", className)}>
+      <label htmlFor={htmlFor} className="font-sans text-micro font-semibold text-ink">
+        {label}
+      </label>
+      {children}
+      {hint && <p className="font-sans text-[0.75rem] text-stone-deep">{hint}</p>}
+    </div>
+  );
+}
+
+function DirectEnquiryForm() {
+  const [sent, setSent] = useState(false);
+  const shouldReduce = useReducedMotion();
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const get = (k: string) => String(data.get(k) ?? "").trim();
+
+    // One readable message rather than a wall of "Field: value".
+    const lines = [
+      `Hi Riwaaya, I'd like to enquire about planning a wedding.`,
+      ``,
+      `Name: ${get("name")}`,
+      get("event") && `Function: ${get("event")}`,
+      get("date") && `Approximate date: ${get("date")}`,
+      get("city") && `Where: ${get("city")}`,
+      get("guests") && `Guests: about ${get("guests")}`,
+      get("email") && `Email: ${get("email")}`,
+      get("message") && ``,
+      get("message") && get("message"),
+    ].filter(Boolean);
+
+    window.open(
+      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+    setSent(true);
+  }
+
+  return (
+    <div className="mt-12">
+      <Reveal>
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-sm border border-ink/10 bg-chandni p-6 md:p-10"
+        >
+          <div className="grid gap-6 md:grid-cols-2">
+            <Field label="Your name" htmlFor="enq-name">
+              <input
+                id="enq-name"
+                name="name"
+                type="text"
+                required
+                autoComplete="name"
+                placeholder="Who are we speaking to?"
+                className={inputBase}
+              />
+            </Field>
+
+            <Field label="Email" htmlFor="enq-email" hint="Optional — we reply on WhatsApp first.">
+              <input
+                id="enq-email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                className={inputBase}
+              />
+            </Field>
+
+            <Field label="Which function?" htmlFor="enq-event">
+              <select id="enq-event" name="event" required className={cn(inputBase, "cursor-pointer")}>
+                <option value="">Select one</option>
+                <option value="A full wedding">A full wedding</option>
+                <option value="Mehndi">Mehndi</option>
+                <option value="Haldi">Haldi</option>
+                <option value="Sangeet">Sangeet</option>
+                <option value="Engagement">Engagement</option>
+                <option value="Reception">Reception</option>
+                <option value="Something else">Something else</option>
+              </select>
+            </Field>
+
+            <Field label="Roughly when?" htmlFor="enq-date" hint="An approximate date is fine.">
+              <input id="enq-date" name="date" type="date" className={inputBase} />
+            </Field>
+
+            <Field label="Where?" htmlFor="enq-city">
+              <select id="enq-city" name="city" className={cn(inputBase, "cursor-pointer")}>
+                <option value="">Select a city</option>
+                {CITIES.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label="How many guests?" htmlFor="enq-guests" hint="A rough number helps.">
+              <input
+                id="enq-guests"
+                name="guests"
+                type="number"
+                min={1}
+                inputMode="numeric"
+                placeholder="e.g. 250"
+                className={inputBase}
+              />
+            </Field>
+
+            <Field
+              label="Anything you want us to know?"
+              htmlFor="enq-message"
+              className="md:col-span-2"
+              hint="The rituals that matter, a venue you have in mind, a question."
+            >
+              <textarea
+                id="enq-message"
+                name="message"
+                rows={4}
+                placeholder="Tell us about your riwaayat."
+                className={cn(inputBase, "min-h-[130px] resize-y py-3 leading-relaxed")}
+              />
+            </Field>
+          </div>
+
+          <div className="mt-8 flex flex-col gap-4 border-t border-ink/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <button
+              type="submit"
+              className="sweep-fill inline-flex min-h-[56px] items-center justify-center gap-2 rounded-full border border-pista-ink bg-pista-ink px-8 py-4 font-sans text-micro font-semibold uppercase tracking-[0.14em] text-chandni before:bg-ink"
+            >
+              <MessageCircle aria-hidden className="h-4 w-4" strokeWidth={1.5} />
+              Send on WhatsApp
+            </button>
+
+            <p className="max-w-sm font-sans text-micro text-stone-deep">
+              This opens WhatsApp with your answers filled in — check it over, then
+              press send.
+            </p>
+          </div>
+
+          {/* Confirmation, announced politely rather than shown as an alert. */}
+          <AnimatePresence>
+            {sent && (
+              <motion.p
+                role="status"
+                initial={shouldReduce ? { opacity: 0 } : { opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: shouldReduce ? 0.15 : 0.4, ease: EASE }}
+                className="mt-5 rounded-sm bg-pista-mist px-4 py-3 font-sans text-micro text-ink"
+              >
+                WhatsApp should have opened in a new tab. If it did not, message us
+                on {site.email} and we will pick it up from there.
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </form>
+      </Reveal>
+
+      <Reveal>
+        <p className="mt-5 font-sans text-micro text-stone-deep">
+          Prefer email? Write to{" "}
+          <a
+            href={`mailto:${site.email}`}
+            className="sweep-underline font-semibold text-pista-ink"
+          >
+            {site.email}
+          </a>
+          .
+        </p>
+      </Reveal>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Google Form embed — used once a real form URL is configured          */
+/* ------------------------------------------------------------------ */
 
 const LOAD_TIMEOUT_MS = 8000;
 
-export function EnquiryForm() {
+function GoogleFormEmbed() {
   const [eventType, setEventType] = useState("");
   const [eventDate, setEventDate] = useState("");
   const [loaded, setLoaded] = useState(false);
@@ -39,9 +246,6 @@ export function EnquiryForm() {
   const embedSrc = buildFormUrl({ eventType, eventDate });
   const newTabSrc = buildFormUrl({ eventType, eventDate }, { embedded: false });
 
-  // Changing a pre-qualifier answer swaps the iframe src, so the skeleton has
-  // to come back. Adjusted during render so the stale "loaded" frame is never
-  // shown against the new URL for a paint.
   const [lastSrc, setLastSrc] = useState(embedSrc);
   if (embedSrc !== lastSrc) {
     setLastSrc(embedSrc);
@@ -49,28 +253,17 @@ export function EnquiryForm() {
     setFailed(false);
   }
 
-  /**
-   * Do not mount the iframe until the card is close to the viewport.
-   *
-   * loading="lazy" alone is not enough: the browser's own threshold is
-   * generous, so on shorter pages Google's form was still being fetched during
-   * initial load and dragging the mobile score down. The observer keeps the
-   * third-party request out of the critical path entirely.
-   */
+  // Keep the third-party frame out of the critical path.
   const cardRef = useRef<HTMLDivElement>(null);
   const [inRange, setInRange] = useState(false);
 
   useEffect(() => {
     const node = cardRef.current;
     if (!node || inRange) return;
-
-    // No observer support: mount it anyway rather than hide the form. Deferred
-    // to a task so this is not a synchronous setState inside the effect body.
     if (typeof IntersectionObserver === "undefined") {
       const id = window.setTimeout(() => setInRange(true), 0);
       return () => window.clearTimeout(id);
     }
-
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) setInRange(true);
@@ -81,7 +274,6 @@ export function EnquiryForm() {
     return () => observer.disconnect();
   }, [inRange]);
 
-  // The failure timer only makes sense once the iframe is actually mounted.
   useEffect(() => {
     if (loaded || !inRange) return;
     timeoutRef.current = window.setTimeout(() => setFailed(true), LOAD_TIMEOUT_MS);
@@ -92,30 +284,20 @@ export function EnquiryForm() {
 
   return (
     <div className="mt-12 flex flex-col gap-6">
-      {/* Pre-qualifier — two fields, deep-linked into the form. */}
       <Reveal>
-        {/* min-w-0 matters: a fieldset defaults to min-inline-size: min-content
-            and will not shrink below its widest option label, which pushes the
-            page into horizontal scroll on narrow screens. */}
         <fieldset className="min-w-0 rounded-sm border border-ink/10 bg-chandni p-6 md:p-8">
           <legend className="px-2 font-sans text-eyebrow font-semibold uppercase text-pista-ink">
             Start here
           </legend>
 
           <div className="mt-2 grid gap-6 sm:grid-cols-2">
-            <div className="flex min-w-0 flex-col gap-2">
-              <label
-                htmlFor="event-type"
-                className="font-sans text-micro font-semibold text-ink"
-              >
-                What are you planning?
-              </label>
+            <Field label="What are you planning?" htmlFor="event-type" hint="Carried into the form below.">
               <select
                 id="event-type"
                 name="event-type"
                 value={eventType}
                 onChange={(event) => setEventType(event.target.value)}
-                className="min-h-[48px] w-full min-w-0 cursor-pointer rounded-sm border border-ink/20 bg-chandni px-4 font-sans text-body text-ink transition-colors duration-[250ms] ease-riwaaya hover:border-ink/40"
+                className={cn(inputBase, "cursor-pointer")}
               >
                 <option value="">Select an event</option>
                 {services.map((service) => (
@@ -125,35 +307,22 @@ export function EnquiryForm() {
                 ))}
                 <option value="Something else">Something else</option>
               </select>
-              <p className="font-sans text-[0.75rem] text-stone-deep">
-                Carried into the form below.
-              </p>
-            </div>
+            </Field>
 
-            <div className="flex min-w-0 flex-col gap-2">
-              <label
-                htmlFor="event-date"
-                className="font-sans text-micro font-semibold text-ink"
-              >
-                Roughly when?
-              </label>
+            <Field label="Roughly when?" htmlFor="event-date" hint="An approximate date is fine.">
               <input
                 id="event-date"
                 name="event-date"
                 type="date"
                 value={eventDate}
                 onChange={(event) => setEventDate(event.target.value)}
-                className="min-h-[48px] w-full min-w-0 rounded-sm border border-ink/20 bg-chandni px-4 font-sans text-body text-ink transition-colors duration-[250ms] ease-riwaaya hover:border-ink/40"
+                className={inputBase}
               />
-              <p className="font-sans text-[0.75rem] text-stone-deep">
-                An approximate date is fine.
-              </p>
-            </div>
+            </Field>
           </div>
         </fieldset>
       </Reveal>
 
-      {/* The embed itself, inside a chandni card. */}
       <Reveal>
         <div
           ref={cardRef}
@@ -176,28 +345,26 @@ export function EnquiryForm() {
                 )}
               </AnimatePresence>
 
-              {/* Spacer reserves the frame's exact height before the iframe
-                  mounts, so deferring it costs no layout shift. */}
               {!inRange && <div aria-hidden className="min-h-[900px] w-full md:min-h-[780px]" />}
 
               {inRange && (
-              <iframe
-                key={embedSrc}
-                src={embedSrc}
-                title="Riwaaya enquiry form"
-                loading="lazy"
-                onLoad={() => {
-                  setLoaded(true);
-                  setFailed(false);
-                }}
-                className={cn(
-                  "no-scrollbar w-full border-0 transition-opacity duration-500",
-                  "min-h-[900px] md:min-h-[780px]",
-                  loaded ? "opacity-100" : "opacity-0",
-                )}
-              >
-                Your browser does not support embedded forms.
-              </iframe>
+                <iframe
+                  key={embedSrc}
+                  src={embedSrc}
+                  title="Riwaaya enquiry form"
+                  loading="lazy"
+                  onLoad={() => {
+                    setLoaded(true);
+                    setFailed(false);
+                  }}
+                  className={cn(
+                    "no-scrollbar w-full border-0 transition-opacity duration-500",
+                    "min-h-[900px] md:min-h-[780px]",
+                    loaded ? "opacity-100" : "opacity-0",
+                  )}
+                >
+                  Your browser does not support embedded forms.
+                </iframe>
               )}
             </>
           )}
@@ -227,13 +394,13 @@ export function EnquiryForm() {
 /** Shown when the iframe never loads — never a dead frame. */
 function FormFallback({ href }: { href: string }) {
   return (
-    <div className="flex min-h-[420px] flex-col items-start justify-center gap-6 p-8 md:p-12">
+    <div className="flex flex-col items-start justify-center gap-5 p-8 md:p-10">
       <p className="max-w-prose font-display text-display-sm font-light text-ink">
         The form did not load.
       </p>
       <p className="max-w-prose font-sans text-body text-stone-deep">
-        It may be blocked by your browser or network. You can open it directly,
-        or simply message us — either reaches the same inbox.
+        It may be blocked by your browser or network. Open it directly, or simply
+        message us — either reaches the same inbox.
       </p>
       <div className="flex flex-col gap-3 sm:flex-row">
         <a

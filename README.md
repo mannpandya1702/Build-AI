@@ -36,7 +36,7 @@ Both are public (they end up in the client bundle) — do not put secrets here.
 
 | Variable | Required | What it does |
 |---|---|---|
-| `NEXT_PUBLIC_GOOGLE_FORM_EMBED_URL` | Yes | The published Google Form used for enquiries. Ships with a **placeholder that will not load** — see below. |
+| `NEXT_PUBLIC_GOOGLE_FORM_EMBED_URL` | Optional | The published Google Form. Unset (the default) shows the site’s own enquiry form instead — see below. |
 | `NEXT_PUBLIC_SITE_URL` | Yes, before launch | Canonical origin for metadata, OG tags, `sitemap.xml` and JSON-LD. No trailing slash. Defaults to `https://riwaaya.in`. |
 
 ### Getting the Google Form URL
@@ -48,10 +48,15 @@ Both are public (they end up in the client bundle) — do not put secrets here.
 Either the `/viewform` or the `?embedded=true` form works — `lib/googleForm.ts`
 normalises whichever you paste.
 
-Until a real URL is set, the embed will fail to load and the page falls back to
-a "The form did not load" card offering a direct link and WhatsApp. That is the
-designed failure state, not a bug — but it does mean **the enquiry section will
-look broken to the client until the real form URL is in place**.
+Until a real URL is set, the enquiry section renders **its own form** instead —
+name, function, date, city, guest count, message — which composes a WhatsApp
+message on submit. No backend, works today. Setting a real form URL swaps the
+Google Form embed back in automatically.
+
+The "is it configured?" check is deliberately strict: a URL containing
+`replace`, `placeholder`, `xxxx`, or an implausibly short form ID counts as
+unconfigured. A half-filled-in variable should show the working form, not a
+broken embed.
 
 ### Form pre-fill entry IDs
 
@@ -110,10 +115,18 @@ index, the footer link and the sitemap all pick it up automatically.
 
 ## Photography
 
-**There is no real photography in this build yet.** Every image position
-renders a labelled placeholder at the correct aspect ratio via
-`components/media/ImageSlot.tsx`, so the layout is already final and nothing
-shifts when the photos arrive (measured CLS is 0).
+**The site is currently dressed with temporary demo photography** so the
+layout can be reviewed with something in it. It lives in `public/demo/` and is
+wired up by `lib/demoMedia.ts`. It is **not Riwaaya's work** — see
+`public/demo/README.md` for licences, and HANDOVER.md §3.
+
+Turn it off with one line: `DEMO_MEDIA = false` in `lib/demoMedia.ts`. Every
+slot then renders a labelled placeholder at the correct aspect ratio via
+`components/media/ImageSlot.tsx`. Either way the layout is final and nothing
+shifts when real photos arrive (measured CLS is 0).
+
+A real `src` on a content item always beats the demo image, so photography can
+be swapped in one file at a time without turning the demo off first.
 
 To drop in a real photo:
 
