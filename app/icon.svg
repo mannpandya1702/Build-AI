@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <!-- Riwaaya monogram, tab-sized. Padded and thickened relative to
+       components/brand/Monogram.tsx so the arch survives at 16px. A favicon
+       renders outside the app, so the R falls back to a system serif. -->
+  <rect width="120" height="120" rx="24" fill="#22271F"/>
+  <g transform="translate(32 16) scale(0.56)">
+    <path d="M 50 2 A 48 56 0 0 1 98 58 L 98 82 M 89 114.5 A 48 56 0 0 1 50 138 A 48 56 0 0 1 2 82 L 2 58 A 48 56 0 0 1 50 2"
+          fill="none" stroke="#C2A05E" stroke-width="5" stroke-linecap="round"/>
+    <text x="50" y="104" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+          font-size="94" font-weight="400" fill="#C7D4B2">R</text>
+  </g>
+</svg>

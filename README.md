@@ -86,6 +86,7 @@ needs editing to change copy.
 | File | Contents |
 |---|---|
 | `content/services.ts` | The **eleven lines of work** from the signed scope, grouped by pillar. `slug` drives the `/services/[slug]` URL. |
+| `content/destinations.ts` | The destination weddings page — six destinations, venue criteria, what changes when a wedding travels, and its own FAQ. |
 | `content/gallery.ts` | Every photograph on the site: slot name, category, caption, aspect ratio, alt text. |
 | `content/testimonials.ts` | Quotes for the home page slider. |
 | `content/faqs.ts` | The FAQ accordion. |
@@ -97,19 +98,22 @@ needs editing to change copy.
 Add a line of work by appending to `services.ts` — the route, the home page
 index, the footer link and the sitemap all pick it up automatically.
 
-### Two departures from the brand deck, on purpose
+### Where the build departs from the brief, and why
 
-1. **Palette is two colours, not five.** The deck defines chandni, pista,
-   gulaab (rose), baingani (aubergine) and sona (gold). The client asked for a
-   pistachio-and-white site with no purple or gold, so only chandni and pista
-   are here — at the deck's exact values — and `ink` carries the dark rather
-   than baingani. Adding the other three back means editing one block in
-   `tailwind.config.ts`.
-2. **The wordmark is lowercase.** The deck specifies CAPS at +0.16em; the build
-   brief specified lowercase at 0.18em and rejected the arch monogram. The
-   brief wins as the later instruction, but `<Wordmark letterCase="upper" />`
-   switches it — change the default in `components/brand/Wordmark.tsx` to flip
-   the whole site at once.
+1. **Palette is two colours plus gold in the logo.** The deck defines chandni,
+   pista, gulaab (rose), baingani (aubergine) and sona (gold); the brief asked
+   for pistachio and white with no purple or gold. The site is pistachio and
+   off-white — except that the logo artwork the client later supplied is gold,
+   so `sona` exists in `tailwind.config.ts` and is used in the mark and in one
+   hairline rule above section eyebrows. Nothing else is gold, and gulaab and
+   baingani are still absent.
+2. **The logo is the client's artwork, not a wordmark.** The brief said the arch
+   monogram had been rejected and no pictorial mark should be drawn. The client
+   later sent finished logo artwork which *is* an arch monogram. The later
+   instruction wins — see §Logo below.
+3. **A third typeface, in the logo only.** Parisienne, the nearest freely
+   licensed match to the script in the artwork. It is referenced by exactly one
+   component and never used for copy. The site is still Cormorant and Mulish.
 
 ---
 
@@ -148,16 +152,38 @@ animation).
 
 ---
 
-## Swapping in the logo
+## Logo
 
-The logo is currently a **wordmark**, not a pictorial mark: lowercase
-"riwaaya" set in Cormorant Garamond, letter-spaced `0.18em`. The previous arch
-monogram was rejected and is not used anywhere.
+The logo is a reproduction of the artwork the client supplied: an open gold
+arch enclosing a serif R, the word "Riwaaya" in a script, and a letter-spaced
+"By Bhumi Sandhu" signature line. It is drawn and set in type rather than
+placed as a bitmap, so it stays sharp at any size, inherits colour from the
+surface it sits on, and costs no network request.
 
-Every surface renders it through `components/brand/Wordmark.tsx`, which takes
-`size` (`sm`/`md`/`lg`/`xl`) and `tone` (`ink`/`chandni`/`accent`). When a real
-logo file lands, replace only the inner element of that component — the nav,
-footer, and 404 page all pick it up with no other changes.
+Three components, one entry point:
+
+| File | Holds |
+|---|---|
+| `components/brand/Monogram.tsx` | The arch, as a real vector path, with the R set in Cormorant |
+| `components/brand/Wordmark.tsx` | The script "Riwaaya" and the signature line |
+| `components/brand/Logo.tsx` | The lockup — `layout="row"` for the nav, `layout="stack"` for the footer |
+
+Everything renders through `<Logo />`, so a change in one of the first two
+propagates everywhere. `app/icon.svg` is a separate, thicker copy of the mark
+for the browser tab, where it has to survive at 16px.
+
+**When the vector original arrives**, replace the `<path>` in `Monogram.tsx`
+and the `<span>` in `Wordmark.tsx`. Nothing else needs touching. The script on
+the site is Parisienne — close to the artwork's lettering but not identical.
+
+Two deliberate deviations from the artwork, both documented in the components:
+
+- The R is a darker sage on light surfaces. The artwork's pale value vanishes
+  against the off-white background at nav size. The dark footer keeps the
+  artwork's own value.
+- The script is `pista-ink` on light surfaces rather than the artwork's pale
+  sage, which measures under 2:1 on chandni. A logotype is exempt from the WCAG
+  contrast rules, but a brand name nobody can read is a poor logo regardless.
 
 ---
 
@@ -180,6 +206,11 @@ Plus derived steps in `tailwind.config.ts` — same two hues, no new colours:
 - `pista-ink` `#5C6E50` — **small pistachio text and solid button fills**
 - `stone-deep` `#565A52` — **secondary body copy**
 
+And one hue that is not pistachio, because the client's logo artwork is gold:
+
+- `sona` `#C2A05E` — the mark, and the hairline above section eyebrows
+- `sona-deep` `#8A6A2F` — the only gold allowed on small text
+
 The last two exist for contrast. The brand's `pista-deep` measures **3.16:1**
 on `chandni`, which satisfies WCAG's 3:1 bar for focus rings, borders and large
 type but not the 4.5:1 that small text needs. So `pista-deep` keeps every
@@ -188,9 +219,36 @@ uses `pista-ink` (5.29:1) or `stone-deep` (6.75:1). Solid buttons are
 `pista-ink` with `chandni` text at 5.29:1; on the original `pista-deep` that
 pairing was 3.16:1 and failed.
 
+`sona` measures 2.26:1 on chandni. That is fine for a logotype, which WCAG
+exempts, and fine for a rule that carries no information — and not fine for
+anything a reader has to make out. Keep it to those two jobs; `sona-deep` is
+there if gold ever has to carry small text on a light surface.
+
 Type: **Cormorant Garamond** (300/400) for display, **Mulish** (400/600) for
-text and UI. Both self-hosted through `next/font/google` — no external request,
-no swap shift.
+text and UI, and **Parisienne** in the logo only. All self-hosted through
+`next/font/google` — no external request, no swap shift. Parisienne is loaded
+with `preload: false`: a third font file competing with the hero image on a
+throttled mobile connection cost 0.6s of LCP, and it carries one word.
+
+### Paper grain
+
+`body::after` tiles an 8KB noise PNG over the page at 3.5% to stop the
+off-white reading as a flat screen colour. It is a pre-rasterised bitmap and
+not an inline `feTurbulence` filter on purpose — the filter version was
+measurably expensive (0.7s of LCP, four Lighthouse points on mobile), because
+generating fractal noise across a full-viewport layer is real work while tiling
+a bitmap is close to free. To regenerate the tile:
+
+```js
+const sharp = require("sharp");
+const N = 128, buf = Buffer.alloc(N * N);
+let s = 1337;
+const rnd = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+for (let i = 0; i < buf.length; i++) buf[i] = Math.round(rnd() * 255);
+sharp(buf, { raw: { width: N, height: N, channels: 1 } })
+  .png({ compressionLevel: 9, palette: true, colours: 32 })
+  .toFile("public/grain.png");
+```
 
 ### Motion
 
@@ -223,11 +281,19 @@ entirely.
   when the photography lands.
 - Touch targets are ≥44px throughout.
 
-Lighthouse at the time of writing: **100 accessibility, 100 best-practices,
-100 SEO on every route**; performance **100 desktop** on every route and
-**90–99 mobile** (home 98). The mobile figure moves a point or two between
-runs; `/contact` and `/about` sit at the bottom of that range because of the
-third-party Google Form and OpenStreetMap iframes.
+Lighthouse at the time of writing: **100 accessibility, 100 best-practices and
+100 SEO on every route**. Performance is **94–100 desktop** and **87–95
+mobile**, and moves a couple of points between runs.
+
+Two things hold the mobile figure down and both are deliberate:
+
+- The **paper grain** costs about two points. It is a full-viewport composited
+  layer, which is not free even as a cheap bitmap.
+- The **demo hero video** (1.7MB WebM, desktop only) is what keeps the home
+  page off 100 on desktop. It goes when the real photography lands.
+
+`/gallery` sits at the bottom of the mobile range because it is an
+image-heavy page, and `/contact` because of the third-party map iframe.
 
 ---
 
@@ -236,6 +302,7 @@ third-party Google Form and OpenStreetMap iframes.
 | Route | Notes |
 |---|---|
 | `/` | Hero, positioning, the eleven lines, signature work, pillars, testimonials, stats, FAQ, enquiry |
+| `/destination-weddings` | Six destinations, what changes when a wedding travels, how a venue is chosen, its own FAQ |
 | `/services/[slug]` | One per line of work — eleven pages, statically generated |
 | `/gallery` | Filterable masonry + lightbox |
 | `/about` | Story, philosophy, team |

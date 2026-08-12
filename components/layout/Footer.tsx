@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Wordmark } from "@/components/brand/Wordmark";
+import { Logo } from "@/components/brand/Logo";
 import { Reveal, Stagger } from "@/components/motion/Reveal";
 import { WhatsAppCTA } from "@/components/ui/WhatsAppCTA";
 import { services } from "@/content/services";
@@ -15,9 +15,9 @@ export function Footer() {
         <Stagger className="grid gap-12 border-b border-chandni/15 pb-14 md:grid-cols-12 md:gap-8">
           <Reveal asChild className="md:col-span-4">
             <div className="flex flex-col gap-6">
-              {/* The deck's stacked signature lockup — the one place the full
-                  "by Bhumi Sandhu" line belongs. */}
-              <Wordmark size="lg" tone="chandni" signature />
+              {/* The client's stacked lockup, reproduced in full — the one
+                  place the monogram and the signature line both belong. */}
+              <Logo size="lg" layout="stack" tone="chandni" />
               <p className="max-w-measure font-sans text-body text-chandni/70">
                 {site.tagline}
               </p>
@@ -25,7 +25,7 @@ export function Footer() {
             </div>
           </Reveal>
 
-          <Reveal asChild className="md:col-span-4">
+          <Reveal asChild className="md:col-span-6 lg:col-span-4">
             <nav aria-label="Services">
               <h2 className="mb-5 font-sans text-eyebrow font-semibold uppercase text-pista">
                 Eleven lines of work
@@ -46,7 +46,7 @@ export function Footer() {
             </nav>
           </Reveal>
 
-          <Reveal asChild className="md:col-span-2">
+          <Reveal asChild className="md:col-span-6 lg:col-span-2">
             <nav aria-label="Footer">
               <h2 className="mb-5 font-sans text-eyebrow font-semibold uppercase text-pista">
                 Studio
@@ -66,12 +66,18 @@ export function Footer() {
             </nav>
           </Reveal>
 
-          <Reveal asChild className="md:col-span-2">
+          <Reveal asChild className="md:col-span-6 lg:col-span-2">
             <div>
               <h2 className="mb-5 font-sans text-eyebrow font-semibold uppercase text-pista">
                 Contact
               </h2>
-              <ul className="flex flex-col gap-3 font-sans text-body text-chandni/75">
+              {/*
+                text-micro, not text-body: at lg this column is two of twelve,
+                which is about 130px, and a full phone number set at 16px is
+                wider than that. It overflowed the page rather than wrapping,
+                because a number has no break opportunity Chrome will take.
+              */}
+              <ul className="flex flex-col gap-3 font-sans text-micro text-chandni/75 [overflow-wrap:anywhere]">
                 <li>
                   <a
                     href={`mailto:${site.email}`}

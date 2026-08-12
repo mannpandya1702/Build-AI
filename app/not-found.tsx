@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { Wordmark } from "@/components/brand/Wordmark";
+import { Logo } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/Button";
 import { WhatsAppCTA } from "@/components/ui/WhatsAppCTA";
 
@@ -13,7 +13,7 @@ export default function NotFound() {
   return (
     <section className="flex min-h-[70svh] items-center bg-chandni pb-section pt-40">
       <div className="shell flex flex-col items-start gap-8">
-        <Wordmark size="sm" tone="accent" />
+        <Logo size="sm" tone="accent" />
         <h1 className="max-w-3xl font-display text-display-lg font-light text-ink">
           That page is not here.
         </h1>

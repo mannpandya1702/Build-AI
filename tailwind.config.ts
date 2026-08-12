@@ -46,10 +46,25 @@ const config: Config = {
          */
         "pista-ink": "#5C6E50",
         "stone-deep": "#565A52",
+        /**
+         * Gold, from the client's supplied logo artwork.
+         *
+         * The brief ruled gold out; the artwork the client sent afterwards is
+         * gold, so it is in — but on a short leash. `sona` is for the mark, the
+         * dark footer, and hairline rules that carry no meaning. It measures
+         * 2.26:1 on chandni, which is fine for a logotype (WCAG exempts those)
+         * and fine for decoration, and not fine for anything readable.
+         *   sona      on ink     6.16:1  (footer text is safe)
+         *   sona-deep on chandni 4.58:1  (the only gold allowed on light)
+         */
+        sona: "#C2A05E",
+        "sona-deep": "#8A6A2F",
       },
       fontFamily: {
         display: ["var(--font-cormorant)", "Georgia", "serif"],
         sans: ["var(--font-mulish)", "system-ui", "sans-serif"],
+        /** Logo only. Never used for copy — see components/brand/Wordmark.tsx. */
+        script: ["var(--font-parisienne)", "Snell Roundhand", "cursive"],
       },
       fontSize: {
         // Fluid display sizes. Tight tracking is applied at the large end only.

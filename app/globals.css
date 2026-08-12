@@ -28,6 +28,35 @@
     overflow-x: hidden;
   }
 
+  /**
+   * Paper grain.
+   *
+   * A flat off-white fill reads as a screen colour; a very slightly broken one
+   * reads as paper, which is the register this brand wants. It is one inline
+   * SVG turbulence tile at 3% — no network request, no layout cost, and it
+   * covers photographs too, which is what stops the images sitting on the page
+   * like pasted rectangles.
+   *
+   * Deliberately not a gradient: the brief rules those out as decoration, and
+   * this carries no colour of its own.
+   *
+   * It is a pre-rasterised 8KB PNG tile, NOT an inline SVG feTurbulence. The
+   * filter version cost 0.7s of LCP and four Lighthouse points on mobile —
+   * generating fractal noise across a full-viewport layer is genuinely
+   * expensive, while tiling a bitmap is close to free. Regenerate the tile
+   * with the snippet in README §Design system if it ever needs changing.
+   */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("/grain.png");
+    background-size: 128px 128px;
+  }
+
   ::selection {
     background-color: var(--pista);
     color: var(--ink);
@@ -122,6 +151,22 @@
   }
 
   /**
+   * Eyebrow rule. A short gold hairline before the tracked label, which is the
+   * one place the logo's gold appears outside the logo itself. It carries no
+   * information, so its contrast is not a WCAG concern — see the note on the
+   * sona token in tailwind.config.ts.
+   */
+  .eyebrow-rule::before {
+    content: "";
+    display: inline-block;
+    width: 1.75rem;
+    height: 1px;
+    margin-right: 0.875rem;
+    vertical-align: 0.25em;
+    background-color: #c2a05e;
+  }
+
+  /**
    * Hero entrance, in CSS rather than Framer Motion.
    *
    * The h1 is the page's LCP element. Driving its reveal from JS meant the
@@ -139,6 +184,20 @@
 
   .rise-in {
     animation: rise-in 0.7s var(--ease-riwaaya) both;
+  }
+
+  /**
+   * The same entrance, minus the fade.
+   *
+   * Reserved for the element that is the page's LCP — the h1 on every inner
+   * route. An element at opacity 0 is not an LCP candidate, so fading the
+   * heading in meant LCP could not be recorded until the animation finished,
+   * which put it a full second behind FCP. Rising without fading is visually
+   * near-identical against a flat background and lets the heading count from
+   * the first frame it paints.
+   */
+  .rise-in-solid {
+    animation: rise-in-solid 0.7s var(--ease-riwaaya) both;
   }
 
   .hero-zoom {
@@ -182,6 +241,15 @@
   }
   to {
     opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rise-in-solid {
+  from {
+    transform: translateY(16px);
+  }
+  to {
     transform: translateY(0);
   }
 }

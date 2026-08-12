@@ -10,6 +10,10 @@ with no layout change.
 `hero-loop.webm` was generated locally from `gallery-15-jaipur-courtyard.jpg`
 (a slow push-in), so it carries the same licence as that photograph.
 
+The six `destination-*.jpg` files are the ones to replace first: each sits
+directly under the name of a real place, so a reader will take it for work the
+studio has done there. See HANDOVER.md §3 and §14.
+
 | File | Licence | Author | Source |
 |---|---|---|---|
 | `about-studio-portrait.jpg` | CC BY-SA 4.0 | Kritzolina | [Commons](https://commons.wikimedia.org/wiki/File:Lotus_buds_as_decoration_at_an_Indian_wedding_02.jpg) |
@@ -27,3 +31,9 @@ with no layout change.
 | `service-vendors-hero.jpg` | CC BY 4.0 | Tessa Bury | [Commons](https://commons.wikimedia.org/wiki/File:Flower_Delivery_in_New_York_City.jpg) |
 | `signature-03-mehndi-hands.jpg` | CC BY-SA 4.0 | AmanAgrahari01 | [Commons](https://commons.wikimedia.org/wiki/File:Indian_Mehndi_Culture_(1)_03.jpg) |
 | `signature-05-taak-niche.jpg` | CC BY-SA 4.0 | Ara Basu | [Commons](https://commons.wikimedia.org/wiki/File:Diya_Lamp.jpg) |
+| `destination-udaipur.jpg` | CC BY-SA 4.0 | Deepank Ranka | [Commons](https://commons.wikimedia.org/wiki/File:Jag_Niwas_with_Royal_Gangaur_Boat.jpg) |
+| `destination-jaipur.jpg` | CC BY-SA 4.0 | Jakub Hałun | [Commons](https://commons.wikimedia.org/wiki/File:Man_Sagar_Lake_with_Jal_Mahal_Palace,_Jaipur,_20191218_1427_9225.jpg) |
+| `destination-jodhpur.jpg` | CC BY-SA 4.0 | Jakub Hałun | [Commons](https://commons.wikimedia.org/wiki/File:Mehrangarh_Fort,_Jodhpur,_20191210_0851_7751.jpg) |
+| `destination-kasauli.jpg` | CC BY 4.0 | Vyacheslav Argenberg | [Commons](https://commons.wikimedia.org/wiki/File:Kullu_Valley,_Pine_and_deodar_forest,_India.jpg) |
+| `destination-rishikesh.jpg` | CC BY-SA 4.0 | Snehrashmi | [Commons](https://commons.wikimedia.org/wiki/File:Lakshman_Jhula_Bridge_-_Hrishikesh_-_Uttarakhand_001.jpg) |
+| `destination-goa.jpg` | CC BY-SA 4.0 | Lobodrl | [Commons](https://commons.wikimedia.org/wiki/File:Vagator_Beach_1,_Goa.jpg) |

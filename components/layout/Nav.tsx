@@ -6,7 +6,7 @@ import { Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { Wordmark } from "@/components/brand/Wordmark";
+import { Logo } from "@/components/brand/Logo";
 import { WhatsAppCTA } from "@/components/ui/WhatsAppCTA";
 import { EASE } from "@/lib/motion";
 import { nav } from "@/lib/site";
@@ -63,7 +63,7 @@ export function Nav() {
           aria-label="Riwaaya — home"
           className="transition-opacity duration-[250ms] ease-riwaaya hover:opacity-70"
         >
-          <Wordmark size="md" tone={solid ? "ink" : "chandni"} />
+          <Logo size="sm" layout="row" tone={solid ? "ink" : "chandni"} />
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-9 lg:flex">

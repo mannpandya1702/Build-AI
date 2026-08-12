@@ -40,7 +40,8 @@ export function SectionHeading({
         <Reveal asChild>
           <p
             className={cn(
-              "font-sans text-eyebrow font-semibold uppercase",
+              // The gold hairline is the logo's one echo outside the logo.
+              "eyebrow-rule font-sans text-eyebrow font-semibold uppercase",
               tone === "ink" ? "text-pista-ink" : "text-pista",
             )}
           >

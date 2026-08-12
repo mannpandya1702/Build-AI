@@ -126,7 +126,7 @@ export function Hero() {
 
       <div className="shell relative z-10 flex flex-col gap-8 pb-16 pt-32 md:pb-24">
         <p
-          className="rise-in font-sans text-eyebrow font-semibold uppercase text-pista"
+          className="eyebrow-rule rise-in font-sans text-eyebrow font-semibold uppercase text-pista"
           style={{ animationDelay: "60ms" }}
         >
           Weddings held in the old way, made new

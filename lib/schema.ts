@@ -1,3 +1,4 @@
+import { destinations } from "@/content/destinations";
 import { services } from "@/content/services";
 import { WHATSAPP_NUMBER, site } from "@/lib/site";
 
@@ -81,6 +82,46 @@ export function eventSchema(slug: string) {
       },
     })),
     image: `${site.url}/og.png`,
+  };
+}
+
+/**
+ * The destination weddings page describes a service with a defined coverage
+ * area, so it is typed as a Service with an areaServed list rather than an
+ * Event — there is no date attached to it.
+ */
+export function destinationServiceSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": `${site.url}/destination-weddings#service`,
+    name: "Destination wedding planning",
+    serviceType: "Destination wedding planning",
+    description:
+      "End-to-end planning for weddings held away from home: venue recce and shortlist, rooming lists, guest movement, permissions and an on-site team that travels with the family.",
+    url: `${site.url}/destination-weddings`,
+    provider: { "@id": `${site.url}/#business` },
+    areaServed: destinations.map((destination) => ({
+      "@type": "Place",
+      name: destination.name,
+      address: {
+        "@type": "PostalAddress",
+        addressRegion: destination.region,
+        addressCountry: "IN",
+      },
+    })),
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Destinations",
+      itemListElement: destinations.map((destination) => ({
+        "@type": "Offer",
+        itemOffered: {
+          "@type": "Service",
+          name: `Wedding planning in ${destination.name}`,
+          description: destination.blurb,
+        },
+      })),
+    },
   };
 }
 

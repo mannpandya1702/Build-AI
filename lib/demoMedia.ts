@@ -44,6 +44,17 @@ const MAP: Record<string, string> = {
   "gallery-17-pheras": "gallery-17-pheras",
   "gallery-18-haldi-hands": "gallery-18-haldi-hands",
 
+  // Destination weddings. These six are the only demo images that were chosen
+  // to depict a specific named place, so they are the ones most likely to be
+  // mistaken for the studio's own work — swap them first.
+  "destination-hero": "destination-udaipur",
+  "destination-udaipur": "destination-udaipur",
+  "destination-jaipur": "destination-jaipur",
+  "destination-jodhpur": "destination-jodhpur",
+  "destination-kasauli": "destination-kasauli",
+  "destination-rishikesh": "destination-rishikesh",
+  "destination-goa": "destination-goa",
+
   // About
   "about-studio-portrait": "about-studio-portrait",
 

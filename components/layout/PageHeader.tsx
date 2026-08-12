@@ -49,14 +49,16 @@ export function PageHeader({
             the JS reveals, staggered by the same 80ms. */}
         <div className="flex flex-col gap-6">
           <p
-            className="rise-in font-sans text-eyebrow font-semibold uppercase text-pista-ink"
+            className="eyebrow-rule rise-in font-sans text-eyebrow font-semibold uppercase text-pista-ink"
             style={{ animationDelay: "60ms" }}
           >
             {eyebrow}
           </p>
 
+          {/* rise-in-solid, not rise-in: this is the LCP element on every
+              route that uses PageHeader. See the note in globals.css. */}
           <h1
-            className="rise-in max-w-4xl font-display text-display-lg font-light text-ink"
+            className="rise-in-solid max-w-4xl font-display text-display-lg font-light text-ink"
             style={{ animationDelay: "140ms" }}
           >
             {title}

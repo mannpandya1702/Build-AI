@@ -33,18 +33,26 @@ export const site = {
   email: "hello@riwaaya.in",
   /** PLACEHOLDER — confirm the list of cities worked in. */
   cities: ["Chandigarh", "Kasauli", "Delhi NCR", "Jaipur", "Udaipur"],
+  /** Confirmed handles, supplied by the studio 12 Aug 2026. */
   socials: [
-    // PLACEHOLDER — the deck names @riwaaya; confirm before launch.
-    { label: "Instagram", href: "https://instagram.com/riwaaya" },
-    { label: "Pinterest", href: "https://pinterest.com/riwaaya" },
+    { label: "Instagram", href: "https://www.instagram.com/bhumisandhupvt" },
+    { label: "Pinterest", href: "https://www.pinterest.com/bhumisandhu" },
   ],
 } as const;
 
-/** WhatsApp business line, digits only, country code included. */
-export const WHATSAPP_NUMBER = "918352813340";
+/**
+ * WhatsApp business line, digits only, country code included.
+ *
+ * Updated 12 Aug 2026 on the studio's instruction. The site previously used
+ * 918352813340, which came from the original brief; it is recorded here rather
+ * than deleted in case both lines are live and the older one should be kept as
+ * a second contact. Nothing renders it today.
+ */
+export const WHATSAPP_NUMBER = "919915909996";
+export const PREVIOUS_ENQUIRY_NUMBER = "918352813340";
 
 /** Human-readable form for display next to the link. */
-export const WHATSAPP_DISPLAY = "+91 83528 13340";
+export const WHATSAPP_DISPLAY = "+91 99159 09996";
 
 export const DEFAULT_WHATSAPP_MESSAGE = "Hi Riwaaya, I'd like to plan a wedding.";
 
@@ -60,6 +68,7 @@ export function whatsappHref(message: string = DEFAULT_WHATSAPP_MESSAGE): string
 export const nav = [
   { label: "Approach", href: "/about" },
   { label: "Services", href: "/#services" },
+  { label: "Destinations", href: "/destination-weddings" },
   { label: "Weddings", href: "/gallery" },
   { label: "Enquire", href: "/contact" },
 ] as const;

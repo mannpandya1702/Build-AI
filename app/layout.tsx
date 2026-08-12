@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Mulish } from "next/font/google";
+import { Cormorant_Garamond, Mulish, Parisienne } from "next/font/google";
 
 import { Footer } from "@/components/layout/Footer";
 import { Nav } from "@/components/layout/Nav";
@@ -12,8 +12,9 @@ import { site } from "@/lib/site";
 import "./globals.css";
 
 /**
- * Two families, nothing else. next/font self-hosts both, so there is no
- * render-blocking request to Google and no layout shift on swap.
+ * Two families for the site, plus one that exists only inside the logo.
+ * next/font self-hosts all three, so there is no render-blocking request to
+ * Google and no layout shift on swap.
  */
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -27,6 +28,26 @@ const mulish = Mulish({
   weight: ["400", "600"],
   variable: "--font-mulish",
   display: "swap",
+});
+
+/**
+ * Logo only. The client's artwork sets "Riwaaya" in a calligraphic script;
+ * Parisienne is the closest freely-licensed match. It is referenced by exactly
+ * one component (Wordmark) and must not be used for copy.
+ */
+const parisienne = Parisienne({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-parisienne",
+  display: "swap",
+  /**
+   * Not preloaded, deliberately. next/font preloads every font declared here,
+   * and a third 22KB file competing with the hero image on a throttled mobile
+   * connection pushed LCP from 2.4s to 3.6s — the nav wordmark became the LCP
+   * element and could not settle until this file landed. It carries one word,
+   * so it loads off the critical path and swaps in behind a cursive fallback.
+   */
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -89,7 +110,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-IN" className={`${cormorant.variable} ${mulish.variable}`}>
+    <html
+      lang="en-IN"
+      className={`${cormorant.variable} ${mulish.variable} ${parisienne.variable}`}
+    >
       <body className="bg-chandni font-sans text-ink antialiased">
         <script
           type="application/ld+json"

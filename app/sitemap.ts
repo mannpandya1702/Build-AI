@@ -8,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticRoutes = [
     { path: "", priority: 1, changeFrequency: "monthly" as const },
+    { path: "/destination-weddings", priority: 0.9, changeFrequency: "monthly" as const },
     { path: "/gallery", priority: 0.8, changeFrequency: "monthly" as const },
     { path: "/about", priority: 0.7, changeFrequency: "yearly" as const },
     { path: "/contact", priority: 0.9, changeFrequency: "yearly" as const },

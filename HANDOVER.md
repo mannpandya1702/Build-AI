@@ -38,12 +38,18 @@ Find them by inspecting each field in the live form and reading
 ## 3. Photography — high
 
 > ⚠️ **The site is currently dressed with temporary demo photography.**
-> `public/demo/` holds 15 freely-licensed photographs from Wikimedia Commons
+> `public/demo/` holds 21 freely-licensed photographs from Wikimedia Commons
 > plus a generated hero loop. **They are not Riwaaya's work and must not
 > survive to launch.** Because there are fewer photos than slots, several
 > repeat. To strip them: set `DEMO_MEDIA = false` in `lib/demoMedia.ts` and
 > delete `public/demo/` — every slot reverts to its labelled placeholder with
 > no layout change. Licences and authors are in `public/demo/README.md`.
+>
+> The six `destination-*` images are the most urgent to replace. Unlike the
+> rest, they were chosen to depict a **named place** — Udaipur, Jaipur,
+> Jodhpur, the Himachal foothills, Rishikesh, Goa — sitting directly under
+> that place's name on the page. A reader will take them for the studio's own
+> work there. See §14 on why the Pinterest board could not fill these.
 
 **Where the real ones go:** `public/photography/`, then set `src` in
 `content/gallery.ts`, `content/services.ts` (`imageSlot`) and
@@ -62,6 +68,8 @@ matched to a position without reading any code.
 | `gallery-09…18-*` | Gallery page | mixed |
 | `about-studio-portrait` | About page | 4:5 |
 | `team-01-bhumi-sandhu`, `team-02…04-headshot` | About page team | 1:1 |
+| `destination-hero` | Destination weddings, taak crop | 4:5 |
+| `destination-udaipur / -jaipur / -jodhpur / -kasauli / -rishikesh / -goa` | One per destination | 4:3 |
 
 Alt text is already written for every slot in the content files — please check
 it still describes the real photo once supplied.
@@ -81,18 +89,24 @@ it still describes the real photo once supplied.
 These feed the contact page, the footer, and the `LocalBusiness` JSON-LD, so
 wrong values affect local search results.
 
-**The WhatsApp number `+91 83528 13340` is live and wired throughout** — the
-floating button, header, hero, service pages, contact page and footer. Confirm
-it is the right line to publish before launch.
+**The WhatsApp number is now `+91 99159 09996`**, supplied by the studio on
+12 Aug 2026, and is wired throughout — the floating button, header, hero,
+service pages, destination page, contact page and footer.
 
-## 5. Social handles — medium
+One thing to confirm: the number this replaced, `+91 83528 13340`, came from
+the original brief. It was not stated whether the new number **replaces** it or
+is a **second** line. The build treats it as a replacement, and the old number
+is kept in `lib/site.ts` as `PREVIOUS_ENQUIRY_NUMBER` — nothing renders it. If
+both lines should be published, say so and it takes one edit to the footer.
+
+## 5. Social handles — resolved
 
 **Where:** `lib/site.ts` → `socials`
-**Currently:** `instagram.com/riwaaya`, `pinterest.com/riwaaya`,
-`youtube.com/@riwaaya` — all guessed, none verified to exist.
+**Now:** `instagram.com/bhumisandhupvt` and `pinterest.com/bhumisandhu`, both
+supplied by the studio and both verified to resolve. The guessed YouTube handle
+has been removed rather than left as a dead link.
 
-They appear in the footer and in the JSON-LD `sameAs` array. Remove any
-platform the studio does not actually use rather than leaving a dead link.
+They appear in the footer and in the JSON-LD `sameAs` array.
 
 ## 6. Statistics — low (resolved, but confirm)
 
@@ -130,20 +144,35 @@ real client quotes and must not be published as such** — this is the one item
 on this list that is a legal and reputational problem if it ships as-is.
 Replace with real, permissioned testimonials or cut the section.
 
-## 10. Wordmark case — decision needed, low
+## 10. Logo — send the vector original, low
 
-The identity deck specifies the primary wordmark in **CAPS** at +0.16em
-("R I W A A Y A"), and the deck's own website mockup shows it that way. The
-build brief specified **lowercase** at 0.18em. The site currently follows the
-brief.
+Resolved in substance: the site now uses the logo artwork the studio supplied
+on 12 Aug 2026 — the gold arch monogram with the sage R, the script "Riwaaya",
+and the "By Bhumi Sandhu" signature line. This supersedes the earlier
+instruction that the arch monogram had been rejected, and supersedes the
+lowercase Cormorant wordmark that stood in for it.
 
-This is a one-word change: `letterCase="upper"` on `<Wordmark />`, or flip the
-default in `components/brand/Wordmark.tsx` to change every surface at once.
-Worth settling before launch. The footer already uses the deck's stacked
-"by Bhumi Sandhu" signature lockup.
+What is still worth sending: **the vector original (.svg or .ai)**. The mark on
+the site is a reproduction built from the images shared over chat — the arch is
+drawn as a real vector path and matches closely, but the script is set in
+Parisienne, the nearest freely-licensed match to the lettering in the artwork,
+not the actual typeface. At nav size the difference is invisible; at the size it
+appears in the footer, someone who knows the logo may notice.
 
-If a drawn logo lands later, replace the inner span of that component — every
-surface picks it up automatically.
+Dropping in the real file is a contained change: `components/brand/Monogram.tsx`
+holds the arch, `components/brand/Wordmark.tsx` holds the script. Every surface
+renders through `components/brand/Logo.tsx`, so nothing else needs touching.
+
+Two colour notes, both deliberate:
+
+- The R inside the arch is drawn in a very pale sage in the artwork. On light
+  surfaces the site uses a darker step of the same green, because at nav size
+  the pale value is invisible against the off-white background. On the dark
+  footer the artwork's own value is used unchanged.
+- The gold is in the palette now (`sona`), which reverses the brief's "no gold"
+  rule — the artwork made that rule impossible to keep. It is confined to the
+  mark and to one hairline rule above section eyebrows. The body of the site is
+  still pistachio and off-white only.
 
 ## 11. Open Graph image — optional
 
@@ -170,3 +199,59 @@ The website copy uses Riwaaya throughout, so nothing is wrong on the site. But
 this document goes to clients as a contract, and the third one is invisible in
 the page body — it lives in the file's title metadata and will show in a
 browser tab or a search result. Worth correcting at source.
+
+---
+
+## 13. Destination weddings — confirm the six destinations — high
+
+**Where:** `content/destinations.ts`
+
+The new `/destination-weddings` page lists six places: Udaipur, Jaipur,
+Jodhpur, Kasauli and the Himachal foothills, Rishikesh, and Goa. The seasons,
+travel times and practical constraints in each entry are accurate. **What is
+not confirmed is whether Riwaaya has actually worked in any of them.**
+
+Every other claim on this site is grounded in the signed scope of work. This
+page should be too. Please either confirm the list or send the real one, and
+cut anything the studio has not done — a destination page that names a place
+the team has never worked is the kind of thing a client asks about on the first
+call.
+
+Two other things on that page to settle:
+
+- **Lead times.** The page says twelve to eighteen months for a peak-season
+  date at a well-known property, nine months otherwise. Change if the studio
+  works to different numbers.
+- **Working outside India.** The FAQ answers "ask us", and says the studio will
+  only take on a destination where it can put its own team on the ground. That
+  is a deliberately careful answer. If there is a firmer position, it belongs
+  here.
+
+## 14. The Pinterest board is not usable as site photography — please read
+
+The studio asked for the images on `pinterest.com/bhumisandhu` to replace the
+placeholder photography. That has **not** been done, for three reasons.
+
+1. **They are other people's photographs.** Pinterest is a bookmarking tool —
+   a pin is a copy of an image from somewhere else on the web. Putting them on
+   a commercial site republishes work belonging to photographers, brands and
+   other wedding studios, without licence. If one of those photographers is
+   another Indian wedding planner, the exposure is not only legal.
+2. **They would be presented as Riwaaya's portfolio.** The image slots on this
+   site sit under headings like "Signature work". Filling them with saved pins
+   states, in effect, that this is work the studio has done.
+3. **The board is not a wedding portfolio.** It holds 13 pins across 6 boards,
+   and the saves include birthday cakes, a pavlova recipe, engagement-ring
+   shopping, holiday outfits and nail designs alongside the mehndi and decor
+   pins. There is not a usable set of wedding images in it.
+
+**What was done instead.** The boards were read as art direction — desi wedding
+decor, mehndi and bridal hands, wedding decor style — and the demo photography
+was extended in that direction using freely-licensed images with the licence
+and photographer recorded for each (`public/demo/CREDITS.json`). It is still
+demo dressing and still comes out before launch; see §3.
+
+**What actually solves this** is a shoot, or permission from the couples and
+photographers of past weddings to publish specific images. If Riwaaya holds
+images from real weddings it has planned, those are the ones to send — with a
+note on who shot them, so the credit line is right.
