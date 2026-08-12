@@ -107,13 +107,11 @@ index, the footer link and the sitemap all pick it up automatically.
    so `sona` exists in `tailwind.config.ts` and is used in the mark and in one
    hairline rule above section eyebrows. Nothing else is gold, and gulaab and
    baingani are still absent.
-2. **The logo is the client's artwork, not a wordmark.** The brief said the arch
-   monogram had been rejected and no pictorial mark should be drawn. The client
-   later sent finished logo artwork which *is* an arch monogram. The later
-   instruction wins — see §Logo below.
-3. **A third typeface, in the logo only.** Parisienne, the nearest freely
-   licensed match to the script in the artwork. It is referenced by exactly one
-   component and never used for copy. The site is still Cormorant and Mulish.
+2. **The arch monogram is back.** The brief said it had been rejected and that
+   no pictorial mark should be drawn. The client later sent finished logo
+   artwork which *is* an arch monogram, so the later instruction wins — see
+   §Logo below. The name beside it stays in letter-spaced Cormorant rather than
+   the artwork's script, on the client's instruction.
 
 ---
 
@@ -154,36 +152,39 @@ animation).
 
 ## Logo
 
-The logo is a reproduction of the artwork the client supplied: an open gold
-arch enclosing a serif R, the word "Riwaaya" in a script, and a letter-spaced
-"By Bhumi Sandhu" signature line. It is drawn and set in type rather than
-placed as a bitmap, so it stays sharp at any size, inherits colour from the
-surface it sits on, and costs no network request.
+The logo pairs the arch monogram from the client's artwork — an open gold arch
+enclosing a serif R — with "riwaaya" in Cormorant Garamond Light, letter-spaced
+`0.18em`. It is drawn and set in type rather than placed as a bitmap, so it
+stays sharp at any size, inherits colour from the surface it sits on, and costs
+no network request.
 
 Three components, one entry point:
 
 | File | Holds |
 |---|---|
 | `components/brand/Monogram.tsx` | The arch, as a real vector path, with the R set in Cormorant |
-| `components/brand/Wordmark.tsx` | The script "Riwaaya" and the signature line |
+| `components/brand/Wordmark.tsx` | The name and the "by Bhumi Sandhu" signature line |
 | `components/brand/Logo.tsx` | The lockup — `layout="row"` for the nav, `layout="stack"` for the footer |
 
 Everything renders through `<Logo />`, so a change in one of the first two
 propagates everywhere. `app/icon.svg` is a separate, thicker copy of the mark
 for the browser tab, where it has to survive at 16px.
 
+**On the name's typeface.** The client's artwork sets "Riwaaya" in a
+calligraphic script. That was reproduced for a while using Parisienne — the
+nearest freely-licensed match — and then reverted to the letter-spaced
+Cormorant on the client's instruction. The monogram from the artwork stays.
+If the script is ever wanted back, it is one font import and one class in
+`Wordmark.tsx`; load it with `preload: false`, because a third preloaded font
+competing with the hero image costs about 0.6s of LCP on mobile.
+
 **When the vector original arrives**, replace the `<path>` in `Monogram.tsx`
-and the `<span>` in `Wordmark.tsx`. Nothing else needs touching. The script on
-the site is Parisienne — close to the artwork's lettering but not identical.
+and the `<span>` in `Wordmark.tsx`. Nothing else needs touching.
 
-Two deliberate deviations from the artwork, both documented in the components:
-
-- The R is a darker sage on light surfaces. The artwork's pale value vanishes
-  against the off-white background at nav size. The dark footer keeps the
-  artwork's own value.
-- The script is `pista-ink` on light surfaces rather than the artwork's pale
-  sage, which measures under 2:1 on chandni. A logotype is exempt from the WCAG
-  contrast rules, but a brand name nobody can read is a poor logo regardless.
+One deliberate deviation from the artwork, documented in the component: the R
+is a darker sage on light surfaces, because the artwork's pale value vanishes
+against the off-white background at nav size. The dark footer keeps the
+artwork's own value.
 
 ---
 
@@ -224,11 +225,9 @@ exempts, and fine for a rule that carries no information — and not fine for
 anything a reader has to make out. Keep it to those two jobs; `sona-deep` is
 there if gold ever has to carry small text on a light surface.
 
-Type: **Cormorant Garamond** (300/400) for display, **Mulish** (400/600) for
-text and UI, and **Parisienne** in the logo only. All self-hosted through
-`next/font/google` — no external request, no swap shift. Parisienne is loaded
-with `preload: false`: a third font file competing with the hero image on a
-throttled mobile connection cost 0.6s of LCP, and it carries one word.
+Type: **Cormorant Garamond** (300/400) for display and the wordmark, **Mulish**
+(400/600) for text and UI. Two families and nothing else, both self-hosted
+through `next/font/google` — no external request, no swap shift.
 
 ### Paper grain
 

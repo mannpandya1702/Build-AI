@@ -146,18 +146,19 @@ Replace with real, permissioned testimonials or cut the section.
 
 ## 10. Logo — send the vector original, low
 
-Resolved in substance: the site now uses the logo artwork the studio supplied
-on 12 Aug 2026 — the gold arch monogram with the sage R, the script "Riwaaya",
-and the "By Bhumi Sandhu" signature line. This supersedes the earlier
-instruction that the arch monogram had been rejected, and supersedes the
-lowercase Cormorant wordmark that stood in for it.
+Resolved in substance: the site uses the **gold arch monogram** from the logo
+artwork the studio supplied on 12 Aug 2026. This supersedes the earlier
+instruction that the arch monogram had been rejected.
 
-What is still worth sending: **the vector original (.svg or .ai)**. The mark on
-the site is a reproduction built from the images shared over chat — the arch is
-drawn as a real vector path and matches closely, but the script is set in
-Parisienne, the nearest freely-licensed match to the lettering in the artwork,
-not the actual typeface. At nav size the difference is invisible; at the size it
-appears in the footer, someone who knows the logo may notice.
+The **name beside it stays in letter-spaced Cormorant**, not the artwork's
+script. The script was built (using Parisienne, the nearest freely-licensed
+match) and then reverted on the studio's instruction, so the wordmark is what
+the site had before the artwork arrived. If the script is wanted back later it
+is a small, contained change — see README §Logo.
+
+What is still worth sending: **the vector original (.svg or .ai)**. The arch on
+the site is a reproduction built from the images shared over chat — drawn as a
+real vector path and matching closely, but a reproduction.
 
 Dropping in the real file is a contained change: `components/brand/Monogram.tsx`
 holds the arch, `components/brand/Wordmark.tsx` holds the script. Every surface

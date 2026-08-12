@@ -28,12 +28,17 @@ type LogoProps = {
   className?: string;
 };
 
-/** Monogram height in px, tuned to sit on the wordmark's optical centre. */
+/**
+ * Monogram height in px, tuned by eye to sit on the wordmark's optical centre.
+ * Letter-spaced Cormorant runs optically smaller than its type size, so the
+ * mark is roughly 1.3× the wordmark in a row and well over 2× in the stack,
+ * where the artwork gives it the most weight.
+ */
 const markSizes: Record<NonNullable<LogoProps["size"]>, { row: number; stack: number }> = {
-  sm: { row: 36, stack: 52 },
-  md: { row: 44, stack: 72 },
-  lg: { row: 56, stack: 104 },
-  xl: { row: 70, stack: 136 },
+  sm: { row: 28, stack: 44 },
+  md: { row: 36, stack: 60 },
+  lg: { row: 52, stack: 96 },
+  xl: { row: 66, stack: 126 },
 };
 
 const monogramTone: Record<NonNullable<LogoProps["tone"]>, MonogramTone> = {

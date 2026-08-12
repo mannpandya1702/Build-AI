@@ -63,7 +63,7 @@ export function Nav() {
           aria-label="Riwaaya — home"
           className="transition-opacity duration-[250ms] ease-riwaaya hover:opacity-70"
         >
-          <Logo size="sm" layout="row" tone={solid ? "ink" : "chandni"} />
+          <Logo size="md" layout="row" tone={solid ? "ink" : "chandni"} />
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-9 lg:flex">

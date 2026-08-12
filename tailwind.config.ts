@@ -63,8 +63,6 @@ const config: Config = {
       fontFamily: {
         display: ["var(--font-cormorant)", "Georgia", "serif"],
         sans: ["var(--font-mulish)", "system-ui", "sans-serif"],
-        /** Logo only. Never used for copy — see components/brand/Wordmark.tsx. */
-        script: ["var(--font-parisienne)", "Snell Roundhand", "cursive"],
       },
       fontSize: {
         // Fluid display sizes. Tight tracking is applied at the large end only.

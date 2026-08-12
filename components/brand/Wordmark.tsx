@@ -2,75 +2,74 @@ import { cn } from "@/lib/utils";
 import { site } from "@/lib/site";
 
 /**
- * The Riwaaya wordmark — "Riwaaya" in the flowing script of the client's
- * supplied artwork, with an optional "By Bhumi Sandhu" signature beneath.
+ * The Riwaaya wordmark: "riwaaya" set in Cormorant Garamond Light and
+ * letter-spaced, paired with the arch monogram in components/brand/Logo.tsx.
  *
- * This replaces the earlier letter-spaced Cormorant wordmark. That one existed
- * because the brief said the arch monogram had been rejected and no logo file
- * was available; the client has now sent finished artwork, so the site follows
- * it. See components/brand/Monogram.tsx for the same note.
+ * The client's logo artwork sets the name in a calligraphic script. That was
+ * reproduced here for a while using Parisienne — the nearest freely-licensed
+ * match — and then reverted on the client's instruction. The letter-spaced
+ * Cormorant is what the site used before, and what it uses now; the monogram
+ * from the artwork stays.
  *
- * Parisienne is the closest freely-licensed match to the script in the artwork
- * and is loaded for the logo only — the body of the site is still the two
- * specified families and nothing else. If the client sends the real vector,
- * swap the <span> here for it and the whole site follows.
+ * Two cases exist, and the source documents disagree:
+ *   - the identity deck specifies CAPS, Cormorant Garamond Light, +0.16em;
+ *   - the website brief specifies lowercase at 0.18em.
+ * The brief wins by default since it is the later instruction, but `letterCase`
+ * switches the whole site in one place — change the default below to "upper"
+ * to match the deck.
  *
- * COLOUR. The artwork sets the script in a pale sage that measures under 2:1
- * on the off-white background. A logotype is exempt from the WCAG contrast
- * rules, but a name nobody can read is a poor logo regardless, so on light
- * surfaces the script uses pista-ink — the same hue, one step down, at 5.29:1.
- * On the dark footer the artwork's own values are used unchanged.
+ * When the vector original of the full lockup lands, replace the inner span
+ * here and the path in Monogram.tsx. Every surface renders through Logo.tsx,
+ * so nothing else has to change.
  */
 
 type WordmarkProps = {
   size?: "sm" | "md" | "lg" | "xl";
   tone?: "ink" | "chandni" | "accent";
+  /** "lower" per the brief (default), "upper" per the identity deck. */
+  letterCase?: "lower" | "upper";
   /** Adds the "By Bhumi Sandhu" signature line beneath, per the artwork. */
   signature?: boolean;
   as?: "span" | "div" | "h1" | "h2";
   className?: string;
 };
 
-/**
- * Parisienne carries a lot of air above and below its x-height, so the optical
- * size runs noticeably smaller than the type size. These are tuned by eye
- * against the surrounding UI rather than set on a ratio.
- */
 const sizes: Record<NonNullable<WordmarkProps["size"]>, string> = {
-  sm: "text-[1.6rem]",
-  md: "text-[2rem] md:text-[2.35rem]",
-  lg: "text-[3.25rem] md:text-[4rem]",
-  xl: "text-[4rem] md:text-[5.5rem]",
+  sm: "text-lg md:text-xl",
+  md: "text-2xl md:text-[1.75rem]",
+  lg: "text-4xl md:text-5xl",
+  xl: "text-5xl md:text-7xl",
 };
 
 const signatureSizes: Record<NonNullable<WordmarkProps["size"]>, string> = {
   sm: "text-[0.5rem]",
   md: "text-[0.5625rem]",
-  lg: "text-[0.75rem]",
-  xl: "text-[0.8125rem]",
+  lg: "text-[0.6875rem]",
+  xl: "text-xs",
 };
 
 const tones: Record<NonNullable<WordmarkProps["tone"]>, { mark: string; sig: string }> = {
-  ink: { mark: "text-pista-ink", sig: "text-stone-deep" },
-  chandni: { mark: "text-pista", sig: "text-sona" },
+  ink: { mark: "text-ink", sig: "text-stone-deep" },
+  chandni: { mark: "text-chandni", sig: "text-sona" },
   accent: { mark: "text-pista-ink", sig: "text-sona-deep" },
 };
 
 export function Wordmark({
   size = "md",
   tone = "ink",
+  letterCase = "lower",
   signature = false,
   as: Tag = "span",
   className,
 }: WordmarkProps) {
+  const upper = letterCase === "upper";
   const palette = tones[tone];
 
   const mark = (
     <span
       className={cn(
-        // leading-[0.8] pulls the script's generous ascenders back in so the
-        // lockup sits on the same baseline grid as everything around it.
-        "font-script select-none leading-[0.8]",
+        "select-none font-display font-light leading-none",
+        upper ? "uppercase tracking-[0.16em]" : "lowercase track-wordmark",
         sizes[size],
         palette.mark,
       )}
@@ -86,15 +85,19 @@ export function Wordmark({
   return (
     <Tag className={cn("inline-flex flex-col items-start gap-2", className)}>
       {mark}
+      {/*
+        Mulish, not Cormorant. The wordmark above is already Cormorant, and
+        setting the signature in the same face at a smaller size reads as one
+        block of type rather than a lockup of two parts.
+      */}
       <span
         className={cn(
-          // Title case and letter-spaced serif, as drawn in the artwork.
-          "font-display font-normal tracking-[0.28em]",
+          "font-sans font-semibold uppercase tracking-[0.2em]",
           signatureSizes[size],
           palette.sig,
         )}
       >
-        By {site.founder}
+        by {site.founder}
       </span>
     </Tag>
   );
