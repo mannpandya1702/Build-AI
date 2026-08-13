@@ -31,19 +31,33 @@ const mulish = Mulish({
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
+  /**
+   * Titles carry the two search phrases; the tagline moved into the
+   * description, where there is room for it. Every composed title is kept
+   * under ~60 characters so Google shows it whole rather than truncating.
+   */
   title: {
-    default: `${site.name} — ${site.tagline}`,
+    default: `${site.name} — Luxury & Destination Wedding Planner, Chandigarh`,
     template: `%s — ${site.name}`,
   },
   description: site.description,
+  /**
+   * The first two are the phrases the studio asked to rank for (13 Aug 2026),
+   * with the Chandigarh variants that a local search actually resolves to.
+   * Note this tag carries little weight with Google on its own — the work is in
+   * the page titles, headings and JSON-LD, which is where these also appear.
+   */
   keywords: [
+    "destination wedding planner",
+    "luxury wedding planner",
+    "luxury wedding planner Chandigarh",
+    "destination wedding planner Chandigarh",
+    "wedding planner Mohali",
     "wedding planner India",
-    "wedding planning",
     "mehndi",
     "haldi",
     "sangeet",
-    "destination wedding",
-    "event planner",
+    "Bhumi Sandhu",
     "Riwaaya",
   ],
   authors: [{ name: site.name }],

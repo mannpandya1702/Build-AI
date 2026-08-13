@@ -2,11 +2,18 @@ import { Reveal } from "@/components/motion/Reveal";
 import { Accordion } from "@/components/ui/Accordion";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { faqs } from "@/content/faqs";
+import { faqSchema } from "@/lib/schema";
 import { whatsappHref } from "@/lib/site";
 
 export function Faq() {
   return (
     <section id="faq" className="scroll-mt-24 bg-chandni py-section">
+      {/* FAQPage markup, so these can surface as rich results on the home
+          query. The destination and venue pages emit their own. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema(faqs)) }}
+      />
       <div className="shell grid gap-12 lg:grid-cols-12 lg:gap-16">
         <div className="lg:col-span-4">
           <SectionHeading eyebrow="Questions" title="The things people ask first.">

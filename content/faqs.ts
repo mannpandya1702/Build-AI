@@ -29,7 +29,19 @@ export const faqs: Faq[] = [
     id: "faq-volume",
     question: "How many weddings do you take?",
     answer:
-      "A small number each year, and one at a time on the ground. The people you plan with are the people at your functions — that is the reason the calendar is capped.",
+      "A small number each year, and only one on the ground at a time — we are never running two weddings on the same dates. The people you plan with are the people at your functions, which is the reason the calendar is capped.",
+  },
+  {
+    id: "faq-where",
+    question: "Where do you work?",
+    answer:
+      "Across India, from Chandigarh. The studio is in Mohali, so Chandigarh, Punjab and the Himachal foothills are home ground; Rajasthan, Delhi NCR, Goa, Mumbai and Kerala are the destinations we are asked for most. Tell us where you are thinking of and we will say plainly whether we can staff it properly.",
+  },
+  {
+    id: "faq-first-call",
+    question: "What happens on the first call?",
+    answer:
+      "We listen. You tell us the date, the guest count and what your families already do, and we come back with the options that genuinely fit — venues, shapes, rough numbers. No moodboard, no package, and nothing to sign. That conversation is free.",
   },
   {
     id: "faq-vendors",

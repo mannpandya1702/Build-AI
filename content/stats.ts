@@ -25,5 +25,15 @@ export const stats: Stat[] = [
   { id: "stat-lines", value: 11, label: "Lines of work" },
   { id: "stat-desk", value: 24, literal: "24/7", label: "Hospitality desk" },
   { id: "stat-departments", value: 8, label: "On-site departments" },
-  { id: "stat-weddings", value: 1, label: "Wedding at a time" },
+  /**
+   * Reworded 13 Aug 2026. The studio read "Wedding at a time" as a
+   * weddings-per-year figure — it is not. It says the team is never split
+   * across two weddings on the same dates, which is what makes "the people you
+   * planned with are the people on site" true. "On the ground" makes that
+   * explicit so the number cannot be misread as an annual cap.
+   *
+   * If a real weddings-per-year figure is wanted here instead, it has to come
+   * from the studio — nothing on this site invents a number.
+   */
+  { id: "stat-weddings", value: 1, label: "Wedding on the ground at a time" },
 ];

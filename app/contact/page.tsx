@@ -96,11 +96,16 @@ export default function ContactPage() {
                 <h2 className="font-sans text-eyebrow font-semibold uppercase text-stone-deep">
                   Studio
                 </h2>
-                <address className="font-display text-2xl font-light not-italic text-ink">
+                {/* The real street address, confirmed 13 Aug 2026. Split
+                    across lines because one run of it wraps badly in Cormorant
+                    at this size. */}
+                <address className="font-display text-2xl font-light not-italic leading-snug text-ink">
+                  {site.address.street}
+                  <br />
                   {site.address.locality}, {site.address.region}
                 </address>
                 <p className="font-sans text-micro text-stone-deep">
-                  Working across {site.cities.join(", ")}.
+                  Based in {site.baseCity}, working across India.
                 </p>
               </div>
             </Reveal>

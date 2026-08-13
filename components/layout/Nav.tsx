@@ -66,7 +66,9 @@ export function Nav() {
           <Logo size="md" layout="row" tone={solid ? "ink" : "chandni"} />
         </Link>
 
-        <nav aria-label="Primary" className="hidden items-center gap-9 lg:flex">
+        {/* gap tightens at lg: six links plus the CTA is 1px-tight at exactly
+            1024px with gap-9, and the bar wraps. Full spacing returns at xl. */}
+        <nav aria-label="Primary" className="hidden items-center gap-6 lg:flex xl:gap-9">
           {nav.map((item) => (
             <Link
               key={item.href}

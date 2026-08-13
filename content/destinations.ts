@@ -5,12 +5,16 @@
  * and the client asked for a page dedicated to venues. This is that page's
  * content.
  *
- * PLACEHOLDER WARNING: the six regions below are the ones a Chandigarh studio
- * would plausibly work in, and the seasons and travel times are correct, but
- * nobody has confirmed which of these Riwaaya has actually run a wedding in.
- * Confirm the list before launch and cut anything they have not done — every
- * other claim on this site is grounded in the signed scope of work, and this
- * page should be too. Guest counts and lead times are the studio's to set.
+ * Coverage was corrected on 13 Aug 2026: the studio works pan-India from a
+ * Chandigarh base. The page previously said "Six we know properly. Not a list
+ * of everywhere in India." — the studio flagged that as wrong, so the six
+ * detailed entries below are now framed as the destinations asked for most,
+ * with the full India list beside them.
+ *
+ * Still worth confirming: the six long entries read as places the studio knows
+ * first-hand. The seasons, travel times and constraints in them are accurate,
+ * but nobody has confirmed which of these Riwaaya has actually run a wedding
+ * in. Say the word and any of them can be cut or swapped.
  */
 
 export const destinationIntro = {
@@ -20,7 +24,79 @@ export const destinationIntro = {
   paragraphs: [
     "Most of what makes a destination wedding go wrong has nothing to do with the wedding. It is a coach that leaves without four people. A room block that quietly shrank. A pandit who cannot get to the mandap because the service lift is holding flowers.",
     "We plan those parts as carefully as the pheras. The venue is chosen after the guest list, not before it, because the number of rooms a family actually needs decides more than any photograph of a lawn ever will.",
-    "Riwaaya takes one wedding at a time. For a destination that matters more than usual: the whole team travels, and nobody on your wedding is also running someone else's that week.",
+    "Riwaaya works across India from Chandigarh, and takes one wedding on the ground at a time. For a destination that matters more than usual: the whole team travels, and nobody on your wedding is also running someone else's that week.",
+  ],
+};
+
+/**
+ * Full India coverage, grouped so a long list stays readable. Chandigarh leads
+ * its group because it is the home city.
+ *
+ * Domestic only — the studio was explicit about that ("Not the international
+ * one but I need this"), so there is no Dubai / Bali / Tuscany column here.
+ * Each city links into the matching section of /wedding-venues.
+ */
+export type CoverageGroup = {
+  id: string;
+  title: string;
+  note: string;
+  cities: { name: string; venueAnchor: string }[];
+};
+
+export const coverage: { title: string; lede: string; groups: CoverageGroup[] } = {
+  title: "Pan-India, out of Chandigarh.",
+  lede: "Chandigarh is home and the shortest recce we do. Everywhere below is a place we will travel to, plan in full and staff with our own people — the same wedding, further from the office.",
+  groups: [
+    {
+      id: "north",
+      title: "Punjab, Haryana & the capital",
+      note: "Driveable from the studio, so recces are cheap and repeatable.",
+      cities: [
+        { name: "Chandigarh", venueAnchor: "chandigarh" },
+        { name: "Mohali", venueAnchor: "chandigarh" },
+        { name: "Panchkula", venueAnchor: "chandigarh" },
+        { name: "Ludhiana", venueAnchor: "chandigarh" },
+        { name: "Amritsar", venueAnchor: "chandigarh" },
+        { name: "Delhi NCR", venueAnchor: "delhi-ncr" },
+        { name: "Gurgaon", venueAnchor: "delhi-ncr" },
+      ],
+    },
+    {
+      id: "hills",
+      title: "The hills",
+      note: "Smaller properties, weather plans, and guest lists that stay intimate.",
+      cities: [
+        { name: "Kasauli", venueAnchor: "hills" },
+        { name: "Shimla", venueAnchor: "hills" },
+        { name: "Mussoorie", venueAnchor: "hills" },
+        { name: "Dehradun", venueAnchor: "hills" },
+        { name: "Rishikesh", venueAnchor: "hills" },
+        { name: "Haridwar", venueAnchor: "hills" },
+        { name: "Jim Corbett", venueAnchor: "hills" },
+      ],
+    },
+    {
+      id: "rajasthan",
+      title: "Rajasthan & the plains",
+      note: "Palace and fort properties, booked further ahead than anywhere else.",
+      cities: [
+        { name: "Udaipur", venueAnchor: "rajasthan" },
+        { name: "Jaipur", venueAnchor: "rajasthan" },
+        { name: "Jodhpur", venueAnchor: "rajasthan" },
+        { name: "Jaisalmer", venueAnchor: "rajasthan" },
+        { name: "Agra", venueAnchor: "rajasthan" },
+      ],
+    },
+    {
+      id: "coast",
+      title: "The coast & the south",
+      note: "Four-day events — guests plan to stay on afterwards.",
+      cities: [
+        { name: "Goa", venueAnchor: "coast" },
+        { name: "Mumbai", venueAnchor: "coast" },
+        { name: "Kerala", venueAnchor: "coast" },
+      ],
+    },
   ],
 };
 

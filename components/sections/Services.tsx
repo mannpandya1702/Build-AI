@@ -16,7 +16,10 @@ export function Services() {
   return (
     <section id="services" className="scroll-mt-24 bg-chandni pb-section">
       <div className="shell">
-        <SectionHeading eyebrow="What we do" title="Eleven lines of work.">
+        {/* Eyebrow reworded 13 Aug 2026 — the studio's own phrasing, chosen
+            over "What Riwaaya does" because it says what the family gets rather
+            than what the studio performs. */}
+        <SectionHeading eyebrow="What we hold for you" title="Eleven lines of work.">
           One engagement covers the wedding whole — from the first roadmap to the
           final payment sheet. Each line below is contracted, not implied.
         </SectionHeading>

@@ -21,6 +21,28 @@ export type TeamMember = {
   alt: string;
 };
 
+/**
+ * The founder's story, supplied by the studio 13 Aug 2026 and used as sent.
+ *
+ * ⚠️ The message arrived truncated: the fourth paragraph was cut mid-sentence
+ * at "Today, Bhumi channels that same passion and precision into ever…". Rather
+ * than invent an ending for a real person's biography, the three complete
+ * paragraphs are published and the fourth is omitted. Send the rest and it
+ * drops straight into the array below.
+ */
+export const founder = {
+  name: "Bhumi Sandhu",
+  role: "Founder & Director, Riwaaya",
+  imageSlot: "team-01-bhumi-sandhu",
+  alt: "Portrait of Bhumi Sandhu, founder and director of Riwaaya.",
+  /** Pulled out as the opening line so the section leads on the person. */
+  lede: "Riwaaya is one person's studio, and that is the point — you are working with the founder, not a coordinator assigned to your file.",
+  paragraphs: [
+    "Bhumi Sandhu is the founder and director of Riwaaya, a Chandigarh-based wedding and event planning company built on her vision of turning celebrations into unforgettable experiences. Hailing from Jammu, Bhumi has always carried big dreams and an unshakeable drive to create something meaningful of her own.",
+    "Her journey began in the world of modeling, where she first honed her eye for aesthetics, presentation, and detail. But destiny had other plans — a path that led her from the runway to the world of event planning, where her creative instincts found a bigger canvas to express themselves. What started as an unexpected shift soon became her true calling.",
+  ],
+};
+
 export const story = {
   lede: "Riwaaya is riwaayat in the singular — not tradition in general, but this family's version of it.",
   /** From the deck: what was taken from the word. */
@@ -75,37 +97,15 @@ export const principles: Principle[] = [
   },
 ];
 
-export const team: TeamMember[] = [
-  {
-    id: "team-1",
-    name: "Bhumi Sandhu",
-    role: "Founder",
-    imageSlot: "team-01-bhumi-sandhu",
-    alt: "Portrait of Bhumi Sandhu, founder of Riwaaya.",
-  },
-  // PLACEHOLDER — replace names, roles and headshots with the real team.
-  {
-    id: "team-2",
-    name: "Team member",
-    role: "Planning & budget",
-    imageSlot: "team-02-headshot",
-    alt: "Portrait of Riwaaya's planning and budget lead.",
-  },
-  {
-    id: "team-3",
-    name: "Team member",
-    role: "Hospitality",
-    imageSlot: "team-03-headshot",
-    alt: "Portrait of Riwaaya's hospitality lead.",
-  },
-  {
-    id: "team-4",
-    name: "Team member",
-    role: "On-site production",
-    imageSlot: "team-04-headshot",
-    alt: "Portrait of Riwaaya's on-site production lead.",
-  },
-];
+/**
+ * The three placeholder "Team member" entries that used to sit beside the
+ * founder were cut on the studio's instruction, 13 Aug 2026 ("Only the
+ * founder"). The About page now runs a founder profile instead of a team grid.
+ *
+ * TeamMember is kept because the grid can come back the moment there are real
+ * names and headshots to put in it — see the git history for the markup.
+ */
+export const team: TeamMember[] = [];
 
 /** The eight on-site departments, from the scope of work. */
 export const departments = [

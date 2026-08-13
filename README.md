@@ -86,13 +86,14 @@ needs editing to change copy.
 | File | Contents |
 |---|---|
 | `content/services.ts` | The **eleven lines of work** from the signed scope, grouped by pillar. `slug` drives the `/services/[slug]` URL. |
-| `content/destinations.ts` | The destination weddings page — six destinations, venue criteria, what changes when a wedding travels, and its own FAQ. |
+| `content/destinations.ts` | The destination weddings page — six destinations written out in full, the pan-India coverage list, venue criteria, what changes when a wedding travels, and its own FAQ. |
+| `content/venues.ts` | The wedding venues page — six venue types, five regions, how a shortlist is built, and its own FAQ. |
 | `content/gallery.ts` | Every photograph on the site: slot name, category, caption, aspect ratio, alt text. |
 | `content/testimonials.ts` | Quotes for the home page slider. |
 | `content/faqs.ts` | The FAQ accordion. |
-| `content/process.ts` | The four brand pillars — Roots, Order, Welcome, Presence. |
+| `content/process.ts` | The client journey — First Word, Threshold, Architecture, Unfolding (the studio's own names). |
 | `content/stats.ts` | The numbers in the pistachio band. |
-| `content/about.ts` | Story, the is / is not list, philosophy, team, the eight departments. |
+| `content/about.ts` | Story, the is / is not list, the four brand pillars (Roots, Order, Welcome, Presence), the founder profile, the eight departments. |
 | `lib/site.ts` | Identity, contact details, address, socials, cities, WhatsApp number. |
 
 Add a line of work by appending to `services.ts` — the route, the home page
@@ -301,20 +302,32 @@ image-heavy page, and `/contact` because of the third-party map iframe.
 | Route | Notes |
 |---|---|
 | `/` | Hero, positioning, the eleven lines, signature work, pillars, testimonials, stats, FAQ, enquiry |
-| `/destination-weddings` | Six destinations, what changes when a wedding travels, how a venue is chosen, its own FAQ |
+| `/destination-weddings` | Six destinations in full, pan-India coverage list, what changes when a wedding travels, how a venue is chosen, its own FAQ |
+| `/wedding-venues` | Six venue types, five regions, how a shortlist is built, its own FAQ. Linked both ways with the destinations page |
 | `/services/[slug]` | One per line of work — eleven pages, statically generated |
 | `/gallery` | Filterable masonry + lightbox |
-| `/about` | Story, philosophy, team |
+| `/about` | Story, philosophy, the founder |
 | `/contact` | Details, enquiry form, map |
 
 `sitemap.xml` and `robots.txt` are generated from `app/sitemap.ts` and
-`app/robots.ts`. JSON-LD (`LocalBusiness`, `Event`, `BreadcrumbList`) is built
-in `lib/schema.ts`.
+`app/robots.ts`. JSON-LD (`LocalBusiness`, `Event`, `Service`, `FAQPage`,
+`Person`, `BreadcrumbList`) is built in `lib/schema.ts`.
+
+### Search phrases
+
+The studio asked to rank for **destination wedding planner** and **luxury
+wedding planner**. Those sit in the page titles, meta descriptions, the
+`keywords` list and the JSON-LD — not repeated through the body copy, which
+stays in the deck's voice. Every composed `<title>` is kept under about 60
+characters so Google shows it whole. `/wedding-venues` is spelled that way
+rather than `/venues` for the same reason: the URL is one of the few places a
+keyword still earns its keep without the page reading like SEO filler.
 
 ---
 
 ## Still to supply
 
 See the handover list — in short: photography, the real Google Form URL and
-entry IDs, social handles, the studio address and map coordinates, confirmed
-stat figures, team names and headshots, and `public/og.png`.
+entry IDs, the office PIN code and exact map pin, the rest of the founder's
+biography (it arrived cut mid-sentence), a headshot, real testimonials, and
+`public/og.png`.

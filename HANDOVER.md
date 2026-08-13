@@ -74,20 +74,26 @@ matched to a position without reading any code.
 Alt text is already written for every slot in the content files — please check
 it still describes the real photo once supplied.
 
-## 4. Contact and address details — high
+## 4. Contact and address details — mostly resolved
 
 **Where:** `lib/site.ts`
 
+The office address arrived on 13 Aug 2026 and is now live on the contact page,
+in the footer and in the `LocalBusiness` JSON-LD:
+
+> **D-231, 3rd & 4th Floor, Phase 8B (Sector 91), Mohali, Punjab**
+
+Two things still outstanding on it:
+
 | Field | Currently |
 |---|---|
-| `address.street` | `"Studio address to be confirmed"` |
-| `address.locality` / `region` / `postalCode` | Chandigarh / Chandigarh / 160001 — inferred from the deck's social lockup ("Chandigarh"), **not confirmed** |
-| `geo.lat` / `geo.lng` | Chandigarh city centre — **assumed**, drives the contact map pin |
-| `email` | `hello@riwaaya.in` — **assumed** |
-| `cities` | Chandigarh, Kasauli, Delhi NCR, Jaipur, Udaipur — Kasauli is from the deck's sample wedding, the rest are **guesses** |
+| `address.postalCode` | **empty.** Phase 8B / Sector 91 spans more than one PIN and it was not sent, so it is left blank rather than guessed — the JSON-LD omits the field instead of publishing a wrong postcode. Send it and it takes one line. |
+| `geo.lat` / `geo.lng` | 30.7046, 76.6928 — **approximate to about 300m**, enough to land the contact map on the right block. Send a Google Maps link to the office and it becomes exact. |
+| `email` | `hello@riwaaya.in` — still **assumed** |
 
-These feed the contact page, the footer, and the `LocalBusiness` JSON-LD, so
-wrong values affect local search results.
+Coverage was also corrected: the studio works **pan-India with Chandigarh as
+the main city**, which is now what `site.cities`, the destinations page and the
+footer all say. The earlier five-city guess is gone.
 
 **The WhatsApp number is now `+91 99159 09996`**, supplied by the studio on
 12 Aug 2026, and is wired throughout — the floating button, header, hero,
@@ -120,12 +126,21 @@ deck's own website draft, so they can be published without verification. If the
 studio wants a "weddings delivered" number on the page, it has to come from
 them.
 
-## 7. Team names and roles — medium
+## 7. Team — resolved, one thing missing
 
-**Where:** `content/about.ts` → `team`
-**Currently:** Bhumi Sandhu is named as Founder. The other three entries still
-read "Team member" and need real names, roles and headshots — or the section
-should be cut to one.
+**Where:** `content/about.ts` → `founder`
+
+The three placeholder "Team member" cards are gone ("Only the founder",
+13 Aug 2026). The About page now runs a founder profile: portrait, name, title
+and the biography the studio sent.
+
+**One gap.** The biography arrived truncated — the last paragraph was cut
+mid-sentence at *"Today, Bhumi channels that same passion and precision into
+ever…"*. Rather than invent an ending for a real person's biography, the site
+publishes the two complete paragraphs and stops. **Please send the rest**; it
+drops straight into `founder.paragraphs`.
+
+Still needed either way: a real headshot for the `team-01-bhumi-sandhu` slot.
 
 ## 8. Canonical domain — medium
 
@@ -207,16 +222,22 @@ browser tab or a search result. Worth correcting at source.
 
 **Where:** `content/destinations.ts`
 
-The new `/destination-weddings` page lists six places: Udaipur, Jaipur,
-Jodhpur, Kasauli and the Himachal foothills, Rishikesh, and Goa. The seasons,
-travel times and practical constraints in each entry are accurate. **What is
-not confirmed is whether Riwaaya has actually worked in any of them.**
+The `/destination-weddings` page writes out six places in detail: Udaipur,
+Jaipur, Jodhpur, Kasauli and the Himachal foothills, Rishikesh, and Goa. The
+seasons, travel times and practical constraints in each entry are accurate.
+**What is not confirmed is whether Riwaaya has actually worked in any of them.**
 
 Every other claim on this site is grounded in the signed scope of work. This
 page should be too. Please either confirm the list or send the real one, and
 cut anything the studio has not done — a destination page that names a place
 the team has never worked is the kind of thing a client asks about on the first
 call.
+
+The framing around them was corrected on 13 Aug 2026. The section used to read
+*"Six we know properly. Not a list of everywhere in India."* — which was wrong,
+because the studio works pan-India. It now reads "Asked for most often", and a
+**Full coverage** block below it lists every city, grouped into four regions,
+each linking through to the matching section of the venues page.
 
 Two other things on that page to settle:
 
@@ -256,3 +277,39 @@ demo dressing and still comes out before launch; see §3.
 photographers of past weddings to publish specific images. If Riwaaya holds
 images from real weddings it has planned, those are the ones to send — with a
 note on who shot them, so the credit line is right.
+
+### One of the demo images had a competitor's watermark on it — removed
+
+Worth knowing, because it was live. `service-onsite-hero.jpg` — a decorated
+wedding stage, used on the home signature grid and the on-site coordination
+service page — carried **another wedding company's branding burnt into the
+photograph**: a logo, the name "Ayga Events" and a phone number, low in the
+frame and dark enough to miss when the set was assembled.
+
+It has been deleted from `public/demo/` and from `CREDITS.json`, and the three
+slots that used it now point elsewhere. Every remaining file in the set was
+then checked for burnt-in text across the top and bottom of the frame; they are
+clean. This is a good argument for §3 generally: the sooner real photography
+replaces this set, the sooner the whole class of problem goes away.
+
+## 15. Wedding venues page — what it does not yet contain
+
+**Where:** `content/venues.ts`, `/wedding-venues`
+
+Built 13 Aug 2026 from the competitor screenshots — a domestic city list
+leading to venue content, no international column.
+
+It is **one page with a section per region**, not eighteen per-city pages.
+Per-city pages rank better only when each one carries real, distinct content:
+named properties, room counts, photographs. Riwaaya has not sent those, and
+eighteen near-identical pages of generic copy is precisely the pattern Google
+demotes as doorway content. As soon as there are real venues to name for a
+city, that city can graduate to its own page and the hub links to it.
+
+**Nothing on the page names a specific property**, deliberately. Every claim is
+about venue *types* and the questions to ask of them, which stays true whatever
+hotel a family ends up in. Naming properties the studio has no relationship
+with would be the same mistake as the invented testimonials.
+
+To make it stronger, send: **the venues Riwaaya has actually worked at**, with
+room counts and a note on whether the studio has a relationship with each.

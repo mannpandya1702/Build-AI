@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ImageSlot } from "@/components/media/ImageSlot";
@@ -8,24 +9,25 @@ import { Button } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { WhatsAppCTA } from "@/components/ui/WhatsAppCTA";
 import {
+  coverage,
   destinationDifferences,
   destinationFaqs,
   destinationIntro,
   destinations,
   venueCriteria,
 } from "@/content/destinations";
-import { breadcrumbSchema, destinationServiceSchema } from "@/lib/schema";
+import { breadcrumbSchema, destinationServiceSchema, faqSchema } from "@/lib/schema";
 import { site, whatsappHref } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Destination weddings",
+  title: "Destination Wedding Planner in India",
   description:
-    "Riwaaya plans destination weddings across Rajasthan, the Himachal foothills, Rishikesh and Goa — venue recce, rooming lists, guest movement and a team that travels with you.",
+    "Riwaaya is a destination wedding planner based in Chandigarh, working across India — venue recce, rooming lists, guest movement, permissions and a team that travels with you.",
   alternates: { canonical: "/destination-weddings" },
   openGraph: {
-    title: `Destination weddings — ${site.name}`,
+    title: `Destination wedding planner — ${site.name}`,
     description:
-      "Venue recce, rooming lists, guest movement and a team that travels with you. Destination weddings planned end to end.",
+      "Venue recce, rooming lists, guest movement and a team that travels with you. Destination weddings planned end to end, across India.",
     url: `${site.url}/destination-weddings`,
   },
 };
@@ -42,6 +44,7 @@ export default function DestinationWeddingsPage() {
               { name: "Destination weddings", path: "/destination-weddings" },
             ]),
             destinationServiceSchema(),
+            faqSchema(destinationFaqs),
           ]),
         }}
       />
@@ -70,11 +73,18 @@ export default function DestinationWeddingsPage() {
       <section className="bg-chandni pb-section">
         <div className="shell grid gap-14 lg:grid-cols-12 lg:gap-16">
           <Stagger className="lg:col-span-7">
+            {/* as="p" rather than a <p> nested inside Reveal: Reveal renders
+                its own element, so nesting made every paragraph the only child
+                of its own wrapper — which meant `last:mb-0` matched all of them
+                and the intro ran together as one unbroken block. */}
             {destinationIntro.paragraphs.map((paragraph) => (
-              <Reveal asChild key={paragraph.slice(0, 24)}>
-                <p className="mb-7 max-w-prose font-sans text-body-lg text-stone-deep last:mb-0">
-                  {paragraph}
-                </p>
+              <Reveal
+                asChild
+                as="p"
+                key={paragraph.slice(0, 24)}
+                className="mb-7 max-w-prose font-sans text-body-lg text-stone-deep last:mb-0"
+              >
+                {paragraph}
               </Reveal>
             ))}
           </Stagger>
@@ -99,10 +109,14 @@ export default function DestinationWeddingsPage() {
       */}
       <section id="where" className="scroll-mt-24 border-t border-ink/10 bg-pista-mist py-section">
         <div className="shell">
-          <SectionHeading eyebrow="Where we work" title="Six we know properly.">
-            Not a list of everywhere in India. These are the places we have
-            walked, where we know which service lift works and who to call when
-            the flowers are late.
+          {/* Reworded 13 Aug 2026. This previously read "Six we know properly.
+              Not a list of everywhere in India." — the studio corrected that:
+              they work pan-India. The six long entries are now framed as the
+              destinations asked for most, with the full list below them. */}
+          <SectionHeading eyebrow="Where we work" title="Asked for most often.">
+            We plan weddings across India. These six come up in nearly every
+            conversation, so they are written out properly — season, travel, and
+            the trade-off nobody mentions in the brochure.
           </SectionHeading>
 
           <Stagger as="ol" className="mt-16 flex flex-col gap-16 md:gap-24">
@@ -173,7 +187,50 @@ export default function DestinationWeddingsPage() {
             })}
           </Stagger>
 
-          <Reveal className="mt-16">
+        </div>
+      </section>
+
+      {/*
+        Full India coverage. Added 13 Aug 2026 — the studio works pan-India and
+        asked for the city list a competitor runs as a mega-menu, domestic only.
+        Rendered as four grouped columns rather than one long alphabetical list
+        so it stays readable, and every city links into the matching region on
+        /wedding-venues rather than to a page of its own: eighteen near-identical
+        city pages with no real venue content is the pattern search engines
+        demote. When there are real venues to name for a city, it graduates to
+        its own page.
+      */}
+      <section className="border-t border-ink/10 bg-chandni py-section">
+        <div className="shell">
+          <SectionHeading eyebrow="Full coverage" title={coverage.title}>
+            {coverage.lede}
+          </SectionHeading>
+
+          <Stagger className="mt-14 grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+            {coverage.groups.map((group) => (
+              <Reveal asChild key={group.id}>
+                <div className="border-t border-ink/15 pt-6">
+                  <h3 className="font-display text-2xl font-light text-ink">{group.title}</h3>
+                  <p className="mt-2 font-sans text-micro text-stone-deep">{group.note}</p>
+
+                  <ul className="mt-5 flex flex-col gap-2.5">
+                    {group.cities.map((city) => (
+                      <li key={city.name}>
+                        <Link
+                          href={`/wedding-venues#${city.venueAnchor}`}
+                          className="sweep-underline font-sans text-body text-ink transition-colors duration-[250ms] ease-riwaaya hover:text-pista-ink"
+                        >
+                          {city.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </Reveal>
+            ))}
+          </Stagger>
+
+          <Reveal className="mt-14">
             <p className="max-w-prose font-sans text-body text-stone-deep">
               Somewhere else in mind? Tell us where and we will say plainly
               whether we can staff it properly.{" "}
@@ -249,6 +306,19 @@ export default function DestinationWeddingsPage() {
               </Reveal>
             ))}
           </Stagger>
+
+          {/* The bridge the studio asked for: destinations → venues. */}
+          <Reveal className="lg:col-span-12">
+            <p className="max-w-prose font-sans text-body text-stone-deep">
+              What the venues are actually like in each region — types, guest
+              ranges and the constraint that decides most of them — is set out
+              on the{" "}
+              <Link href="/wedding-venues" className="sweep-underline font-semibold text-pista-ink">
+                wedding venues page
+              </Link>
+              .
+            </p>
+          </Reveal>
         </div>
       </section>
 

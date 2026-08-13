@@ -106,6 +106,17 @@ export function Footer() {
                     </a>
                   </li>
                 ))}
+                {/* The studio address, confirmed 13 Aug 2026. NAP consistency
+                    — name, address, phone identical here, on the contact page
+                    and in the LocalBusiness JSON-LD — is what local search
+                    actually rewards. */}
+                <li className="pt-2 text-chandni/55">
+                  <address className="not-italic">
+                    {site.address.street}
+                    <br />
+                    {site.address.locality}, {site.address.region}
+                  </address>
+                </li>
               </ul>
             </div>
           </Reveal>
@@ -113,7 +124,7 @@ export function Footer() {
 
         <div className="flex flex-col gap-4 pt-8 font-sans text-micro text-chandni/50 md:flex-row md:items-center md:justify-between">
           <p>
-            © {year} {site.name}. Weddings and events across {site.cities.slice(0, 3).join(", ")} and beyond.
+            © {year} {site.name}. Weddings and events across India, from {site.baseCity}.
           </p>
           <p>
             riwaaya, from riwaayat — custom, tradition.

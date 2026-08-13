@@ -7,19 +7,19 @@ import { Stats } from "@/components/sections/Stats";
 import { Button } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { WhatsAppCTA } from "@/components/ui/WhatsAppCTA";
-import { departments, isIsNot, principles, story, team } from "@/content/about";
-import { breadcrumbSchema } from "@/lib/schema";
+import { departments, founder, isIsNot, principles, story } from "@/content/about";
+import { breadcrumbSchema, founderSchema } from "@/lib/schema";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "About",
+  title: "About — Luxury Wedding Planner in Chandigarh",
   description:
-    "Riwaaya is a ritual-first wedding and events studio. One wedding a week, no vendor commission, and a team that stays with you from the first call to the last car.",
+    "Riwaaya is a ritual-first luxury and destination wedding planner based in Chandigarh, founded by Bhumi Sandhu. One wedding on the ground at a time, and the founder beside you from the first call to the last car.",
   alternates: { canonical: "/about" },
   openGraph: {
     title: `About — ${site.name}`,
     description:
-      "Riwaaya is a ritual-first wedding and events studio in India. One wedding a week, no vendor commission.",
+      "Bhumi Sandhu founded Riwaaya, a ritual-first luxury wedding planner in Chandigarh working across India.",
     url: `${site.url}/about`,
   },
 };
@@ -30,12 +30,13 @@ export default function AboutPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: JSON.stringify([
             breadcrumbSchema([
               { name: "Home", path: "/" },
               { name: "About", path: "/about" },
             ]),
-          ),
+            founderSchema(),
+          ]),
         }}
       />
 
@@ -52,11 +53,18 @@ export default function AboutPage() {
       <section className="bg-chandni pb-section">
         <div className="shell grid gap-14 lg:grid-cols-12 lg:gap-16">
           <Stagger className="lg:col-span-7">
+            {/* as="p" rather than a <p> nested inside Reveal: Reveal renders
+                its own element, so nesting made every paragraph the only child
+                of its own wrapper — which meant `last:mb-0` matched all of them
+                and the intro ran together as one unbroken block. */}
             {story.paragraphs.map((paragraph) => (
-              <Reveal asChild key={paragraph.slice(0, 24)}>
-                <p className="mb-7 max-w-prose font-sans text-body-lg text-stone-deep last:mb-0">
-                  {paragraph}
-                </p>
+              <Reveal
+                asChild
+                as="p"
+                key={paragraph.slice(0, 24)}
+                className="mb-7 max-w-prose font-sans text-body-lg text-stone-deep last:mb-0"
+              >
+                {paragraph}
               </Reveal>
             ))}
           </Stagger>
@@ -125,33 +133,53 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="bg-chandni py-section">
+      {/*
+        The founder, alone. This replaced a four-up team grid on 13 Aug 2026 —
+        three of those four were placeholders and the studio asked for the
+        founder only. A single square headshot in a 4-column grid looked like a
+        mistake, so the section is rebuilt as a portrait-and-prose spread: a
+        taller 4:5 crop beside the story, which is what one person's page wants.
+      */}
+      <section id="founder" className="scroll-mt-24 bg-chandni py-section">
         <div className="shell">
-          <SectionHeading eyebrow="The team" title="Who you will actually meet.">
-            The people in this list are the people on the ground at your
-            functions. That is the whole reason we cap the calendar.
+          <SectionHeading eyebrow="The founder" title="Who you will actually meet.">
+            {founder.lede}
           </SectionHeading>
 
-          <Stagger className="mt-14 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
-            {team.map((member) => (
-              <Reveal asChild key={member.id}>
-                <div>
-                  <ImageSlot
-                    slot={member.imageSlot}
-                    alt={member.alt}
-                    aspect="1 / 1"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  />
-                  <h3 className="mt-5 font-display text-2xl font-light text-ink">
-                    {member.name}
-                  </h3>
-                  <p className="mt-1 font-sans text-micro uppercase tracking-[0.14em] text-stone-deep">
-                    {member.role}
-                  </p>
-                </div>
+          <div className="mt-14 grid items-start gap-12 lg:grid-cols-12 lg:gap-16">
+            {/* 4 columns, not 5: at 5 the 4:5 crop runs about 200px past the
+                bottom of the prose beside it and the row reads unbalanced. */}
+            <Reveal className="lg:col-span-4">
+              <ImageSlot
+                slot={founder.imageSlot}
+                alt={founder.alt}
+                aspect="4 / 5"
+                taak
+                sizes="(max-width: 1024px) 100vw, 32vw"
+              />
+            </Reveal>
+
+            <Stagger className="lg:col-span-8">
+              <Reveal asChild>
+                <h3 className="font-display text-display-sm font-light text-ink">
+                  {founder.name}
+                </h3>
               </Reveal>
-            ))}
-          </Stagger>
+              <Reveal asChild>
+                <p className="mt-2 font-sans text-micro uppercase tracking-[0.14em] text-sona-deep">
+                  {founder.role}
+                </p>
+              </Reveal>
+
+              {founder.paragraphs.map((paragraph) => (
+                <Reveal asChild key={paragraph.slice(0, 24)}>
+                  <p className="mt-7 max-w-prose font-sans text-body-lg text-stone-deep">
+                    {paragraph}
+                  </p>
+                </Reveal>
+              ))}
+            </Stagger>
+          </div>
         </div>
       </section>
 

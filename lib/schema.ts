@@ -1,5 +1,7 @@
+import { founder } from "@/content/about";
 import { destinations } from "@/content/destinations";
 import { services } from "@/content/services";
+import { venueRegions } from "@/content/venues";
 import { WHATSAPP_NUMBER, site } from "@/lib/site";
 
 /**
@@ -28,7 +30,9 @@ export function localBusinessSchema() {
       streetAddress: site.address.street,
       addressLocality: site.address.locality,
       addressRegion: site.address.region,
-      postalCode: site.address.postalCode,
+      // Omitted rather than guessed while the PIN is unconfirmed — a wrong
+      // postcode in LocalBusiness is worse for local search than none.
+      ...(site.address.postalCode ? { postalCode: site.address.postalCode } : {}),
       addressCountry: site.address.country,
     },
     geo: {
@@ -122,6 +126,74 @@ export function destinationServiceSchema() {
         },
       })),
     },
+  };
+}
+
+/**
+ * The venue hub. Typed the same way as the destination service — a Service
+ * with an areaServed, because there is no date attached to it — with the
+ * regions as the offer catalogue.
+ */
+export function venueServiceSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": `${site.url}/wedding-venues#service`,
+    name: "Wedding venue selection",
+    serviceType: "Wedding venue selection and booking",
+    description:
+      "Venue shortlisting, site visits and contract negotiation for weddings across India. Rooms counted before capacity, kitchen and access checked before the shortlist, and no commission taken from any property.",
+    url: `${site.url}/wedding-venues`,
+    provider: { "@id": `${site.url}/#business` },
+    areaServed: site.cities.map((city) => ({ "@type": "City", name: city })),
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Venues by region",
+      itemListElement: venueRegions.map((region) => ({
+        "@type": "Offer",
+        itemOffered: {
+          "@type": "Service",
+          name: `Wedding venues in ${region.title}`,
+          description: region.cities,
+          url: `${site.url}/wedding-venues#${region.id}`,
+        },
+      })),
+    },
+  };
+}
+
+/**
+ * FAQPage. Google will only surface one FAQ block per page, so this is emitted
+ * on the pages whose questions are genuinely distinct — home, destinations and
+ * venues — rather than on every route.
+ */
+export function faqSchema(items: { question: string; answer: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
+    })),
+  };
+}
+
+/**
+ * The founder, as a Person. Worth its own node: the studio is one person, and
+ * "Bhumi Sandhu" is a query the site should answer.
+ */
+export function founderSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": `${site.url}/about#founder`,
+    name: founder.name,
+    jobTitle: "Founder & Director",
+    description: founder.paragraphs[0],
+    worksFor: { "@id": `${site.url}/#business` },
+    url: `${site.url}/about`,
+    sameAs: site.socials.map((social) => social.href),
   };
 }
 

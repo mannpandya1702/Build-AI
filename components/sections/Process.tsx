@@ -72,7 +72,14 @@ export function Process() {
                   <h3 className="mt-3 font-display text-display-sm font-light text-ink">
                     {step.title}
                   </h3>
-                  <p className="mt-3 max-w-measure font-sans text-body text-stone-deep">
+                  {/* The label was in the data but never rendered. The studio's
+                      four names each come paired with what they cover — "First
+                      Word — the introductory call" — and without that pairing
+                      the names are evocative but not self-explanatory. */}
+                  <p className="mt-2 font-sans text-micro uppercase tracking-[0.14em] text-sona-deep">
+                    {step.label}
+                  </p>
+                  <p className="mt-4 max-w-measure font-sans text-body text-stone-deep">
                     {step.body}
                   </p>
                 </div>

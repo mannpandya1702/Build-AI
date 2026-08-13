@@ -19,20 +19,59 @@ export const site = {
     "Riwaaya plans a small number of weddings each year for families who want the rituals taken seriously — and who would rather their celebration feel quietly theirs than loudly grand.",
   category: "Full-service wedding planning & hospitality",
   description:
-    "Riwaaya by Bhumi Sandhu plans a small number of weddings each year — eleven lines of work, from the first roadmap to the final payment sheet, with a named person beside you the whole way.",
-  /** PLACEHOLDER — the deck's social lockup reads Chandigarh; confirm the studio address. */
+    "Riwaaya by Bhumi Sandhu is a luxury and destination wedding planner based in Chandigarh, working across India — eleven lines of work, from the first roadmap to the final payment sheet, with a named person beside you the whole way.",
+  /**
+   * The two search phrases the studio asked to rank for (13 Aug 2026). They are
+   * composed into page titles and descriptions rather than repeated verbatim in
+   * body copy — the deck's voice stays as written.
+   */
+  keyphrases: {
+    destination: "destination wedding planner",
+    luxury: "luxury wedding planner",
+  },
+  /** Confirmed by the studio, 13 Aug 2026. */
   address: {
-    street: "Studio address to be confirmed",
-    locality: "Chandigarh",
-    region: "Chandigarh",
-    postalCode: "160001",
+    street: "D-231, 3rd & 4th Floor, Phase 8B (Sector 91)",
+    locality: "Mohali",
+    region: "Punjab",
+    /**
+     * UNCONFIRMED. Phase 8B / Sector 91 Mohali spans more than one PIN and the
+     * studio did not send it, so it is left empty rather than guessed — the
+     * JSON-LD omits the field when empty instead of publishing a wrong one.
+     */
+    postalCode: "",
     country: "IN",
   },
-  /** PLACEHOLDER — Chandigarh city centre; confirm coordinates for the map. */
-  geo: { lat: 30.7333, lng: 76.7794 },
+  /**
+   * APPROXIMATE — Phase 8B, Mohali, to about 300m. Good enough for the contact
+   * map to land on the right block; replace with the exact pin when the studio
+   * sends a Google Maps link.
+   */
+  geo: { lat: 30.7046, lng: 76.6928 },
   email: "hello@riwaaya.in",
-  /** PLACEHOLDER — confirm the list of cities worked in. */
-  cities: ["Chandigarh", "Kasauli", "Delhi NCR", "Jaipur", "Udaipur"],
+  /**
+   * The studio works pan-India from a Chandigarh base (confirmed 13 Aug 2026).
+   * Chandigarh leads because it is the home city and the one to rank locally
+   * for; the rest are the destinations asked for most. Feeds JSON-LD areaServed.
+   */
+  baseCity: "Chandigarh",
+  cities: [
+    "Chandigarh",
+    "Mohali",
+    "Delhi NCR",
+    "Udaipur",
+    "Jaipur",
+    "Jodhpur",
+    "Jaisalmer",
+    "Kasauli",
+    "Shimla",
+    "Mussoorie",
+    "Dehradun",
+    "Rishikesh",
+    "Goa",
+    "Mumbai",
+    "Kerala",
+  ],
   /** Confirmed handles, supplied by the studio 12 Aug 2026. */
   socials: [
     { label: "Instagram", href: "https://www.instagram.com/bhumisandhupvt" },
@@ -64,11 +103,15 @@ export function whatsappHref(message: string = DEFAULT_WHATSAPP_MESSAGE): string
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
-/** Labels follow the deck's own website draft. */
+/**
+ * Labels follow the deck's own website draft, plus Venues — added 13 Aug 2026
+ * when the studio asked for a venue page linked from the destinations page.
+ */
 export const nav = [
   { label: "Approach", href: "/about" },
   { label: "Services", href: "/#services" },
   { label: "Destinations", href: "/destination-weddings" },
+  { label: "Venues", href: "/wedding-venues" },
   { label: "Weddings", href: "/gallery" },
   { label: "Enquire", href: "/contact" },
 ] as const;

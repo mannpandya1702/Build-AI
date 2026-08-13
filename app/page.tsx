@@ -12,7 +12,10 @@ import { Testimonials } from "@/components/sections/Testimonials";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: `${site.name} — ${site.tagline}`,
+  // Absolute so the "%s — Riwaaya" template does not append the name twice.
+  title: {
+    absolute: `${site.name} — Luxury & Destination Wedding Planner, Chandigarh`,
+  },
   description: site.description,
   alternates: { canonical: "/" },
 };

@@ -18,12 +18,25 @@ export const DEMO_MEDIA = true;
  * There are fewer usable photographs than there are slots, so some repeat.
  * That is fine for a demo and deliberately obvious on close reading.
  */
+/*
+ * REMOVED 13 Aug 2026 — service-onsite-hero.jpg.
+ *
+ * The file carried another wedding company's watermark burnt into the image
+ * (a logo, the name "Ayga Events" and a phone number) in the lower third. It
+ * was small and dark and went unnoticed when the set was assembled, and it had
+ * been live on the home signature grid and the on-site coordination service
+ * page. Deleted from /public/demo and from CREDITS.json; the three slots that
+ * pointed at it are remapped below.
+ *
+ * Every other file in the set was checked for burnt-in text, top and bottom
+ * bands, at the same time. They are clean.
+ */
 const MAP: Record<string, string> = {
   // Hero — daylight, architecture, mid-distance, per the deck's photo direction.
   "hero-backdrop": "gallery-15-jaipur-courtyard",
 
   // Home signature grid
-  "signature-01-mandap-morning": "service-onsite-hero",
+  "signature-01-mandap-morning": "gallery-17-pheras",
   "signature-02-haldi-courtyard": "gallery-18-haldi-hands",
   "signature-03-mehndi-hands": "signature-03-mehndi-hands",
   "signature-04-sangeet-stage": "gallery-11-sangeet-rehearsal",
@@ -55,6 +68,24 @@ const MAP: Record<string, string> = {
   "destination-rishikesh": "destination-rishikesh",
   "destination-goa": "destination-goa",
 
+  // Wedding venues. Reused from the destination set — same caveat as above,
+  // and these sit under a region heading rather than a single place name.
+  // Picked for *spaces*, not people or food — on a venue page a close-up of
+  // mehndi hands or a thali reads as the wrong business entirely — and all
+  // five distinct, because they sit in one list on one page.
+  //
+  // The set has no Punjab or Chandigarh venue photograph. Commons was searched
+  // for one; the candidates were a check-in queue of identifiable faces and a
+  // named hotel's illuminated signage, neither of which belongs on a
+  // commercial site. Chandigarh therefore gets the place-neutral hotel
+  // interior rather than a wrong or unusable picture of the right city.
+  "venue-hero": "destination-jaipur",
+  "venue-chandigarh": "gallery-12-hospitality-desk",
+  "venue-delhi-ncr": "about-studio-portrait",
+  "venue-rajasthan": "gallery-15-jaipur-courtyard",
+  "venue-hills": "destination-kasauli",
+  "venue-coast": "destination-goa",
+
   // About
   "about-studio-portrait": "about-studio-portrait",
 
@@ -68,7 +99,7 @@ const MAP: Record<string, string> = {
   "service-guests-hero": "gallery-12-hospitality-desk",
   "service-food-hero": "service-food-hero",
   "service-personnel-hero": "gallery-09-baraat-street",
-  "service-onsite-hero": "service-onsite-hero",
+  "service-onsite-hero": "gallery-11-sangeet-rehearsal",
   "service-post-event-hero": "about-studio-portrait",
 };
 
