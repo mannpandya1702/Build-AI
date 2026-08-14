@@ -56,8 +56,25 @@ export function proxy(request: NextRequest) {
     return deny("Those credentials were not accepted.");
   }
 
-  return NextResponse.next();
+  /*
+   * Flag the request so the root layout can leave the marketing chrome off.
+   *
+   * This replaced a client component that read the pathname and returned null.
+   * That hid the nav and footer visually, but the server had already rendered
+   * them to pass as children, so their markup still shipped inside the admin
+   * page's payload — invisible, and pure waste. Setting a request header here
+   * lets the layout decide before anything is rendered.
+   *
+   * It has to go on `request.headers`, not the response: headers() in a server
+   * component reads the incoming request.
+   */
+  const forwarded = new Headers(request.headers);
+  forwarded.set(CHROME_HEADER, "off");
+  return NextResponse.next({ request: { headers: forwarded } });
 }
+
+/** Read by app/layout.tsx. Only ever set by this file. */
+export const CHROME_HEADER = "x-riwaaya-chrome";
 
 /**
  * Length-independent comparison. A plain `===` on secrets leaks a little

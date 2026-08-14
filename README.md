@@ -343,8 +343,12 @@ Protected by HTTP Basic Auth in `proxy.ts` (Next 16's rename of
 `ADMIN_PASSWORD` set the panel returns 503 rather than opening** — a
 misconfigured deploy fails shut.
 
-The marketing nav, footer, floating button and custom cursor are suppressed on
-`/admin` by `components/layout/PublicChrome.tsx`.
+The marketing nav, footer, floating button and custom cursor are left off
+`/admin` entirely: `proxy.ts` sets an `x-riwaaya-chrome: off` request header
+and the root layout branches on it. Doing it server-side rather than with a
+client component that returns null matters — the client version hid the chrome
+visually but the server had already rendered it to pass as children, so its
+markup still shipped inside the admin page's payload.
 
 ### Search phrases
 

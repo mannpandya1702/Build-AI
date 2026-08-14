@@ -5,12 +5,12 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { Footer } from "@/components/layout/Footer";
 import { Nav } from "@/components/layout/Nav";
-import { PublicChrome } from "@/components/layout/PublicChrome";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { Cursor } from "@/components/ui/Cursor";
 import { WhatsAppCTA } from "@/components/ui/WhatsAppCTA";
 import { localBusinessSchema } from "@/lib/schema";
 import { site } from "@/lib/site";
+import { headers } from "next/headers";
 
 import "./globals.css";
 
@@ -104,7 +104,16 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  /*
+   * The studio panel at /admin brings its own header and needs the page to
+   * itself — the site nav is fixed, so it would sit on top of the panel's own
+   * bar, and a marketing footer under a set of internal metrics reads as a
+   * mistake. proxy.ts sets this header on admin requests; deciding here means
+   * the chrome is never rendered at all rather than rendered and hidden.
+   */
+  const chrome = (await headers()).get("x-riwaaya-chrome") !== "off";
+
   return (
     <html lang="en-IN" className={`${cormorant.variable} ${mulish.variable}`}>
       <body className="bg-chandni font-sans text-ink antialiased">
@@ -122,23 +131,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
 
-        {/* Everything inside PublicChrome is the marketing site's furniture.
-            The studio panel at /admin brings its own. */}
-        <PublicChrome>
-          <Cursor />
-          <Nav />
-        </PublicChrome>
+        {chrome && (
+          <>
+            <Cursor />
+            <Nav />
+          </>
+        )}
 
         <PageTransition>
           <main id="main">{children}</main>
-          <PublicChrome>
-            <Footer />
-          </PublicChrome>
+          {chrome && <Footer />}
         </PageTransition>
 
-        <PublicChrome>
-          <WhatsAppCTA variant="float" />
-        </PublicChrome>
+        {chrome && <WhatsAppCTA variant="float" />}
 
         {/* Visitor counting. Cookieless and privacy-preserving, so it needs no
             consent banner, and it starts recording from the first deploy — the
