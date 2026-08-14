@@ -30,7 +30,10 @@ export async function generateMetadata({
 
   return {
     title: service.title,
-    description: service.summary,
+    // service.summary alone runs ~65 characters, which leaves most of the
+    // Google snippet empty. Composing it with the positioning line fills the
+    // space and puts the search phrase on all eleven service pages at once.
+    description: `${service.summary} From Riwaaya, a luxury and destination wedding planner in Chandigarh working across India.`,
     alternates: { canonical: `/services/${service.slug}` },
     openGraph: {
       title: `${service.title} — ${site.name}`,

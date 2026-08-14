@@ -17,6 +17,23 @@
     scroll-behavior: smooth;
   }
 
+  /**
+   * Lining figures on the display face.
+   *
+   * Cormorant ships old-style (text) figures by default. They are lovely in
+   * running prose and wrong everywhere this site actually uses a number: "11"
+   * sets as two short strokes that read as a Roman II, "1" as a lone serif i,
+   * "01" as "oI". The stats band said "II lines of work" and the numbered
+   * indexes read as letters — and the studio misread its own stats band
+   * because of it.
+   *
+   * Cormorant is only used for headings and numerals here, never for running
+   * text, so there is nowhere on this site that wants the old-style set.
+   */
+  .font-display {
+    font-variant-numeric: lining-nums;
+  }
+
   body {
     background-color: var(--chandni);
     color: var(--ink);

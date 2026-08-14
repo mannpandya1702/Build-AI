@@ -10,7 +10,7 @@ import { breadcrumbSchema } from "@/lib/schema";
 import { WHATSAPP_DISPLAY, site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Contact",
+  title: "Contact — Wedding Planner in Chandigarh",
   description:
     "Message Riwaaya on WhatsApp or send an enquiry. We read every enquiry ourselves and reply within a day.",
   alternates: { canonical: "/contact" },

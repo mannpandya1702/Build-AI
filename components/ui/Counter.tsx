@@ -45,7 +45,12 @@ export function Counter({
   }, [inView, shouldReduce, value, duration]);
 
   return (
-    <span ref={ref} className="tabular-nums">
+    // lining-nums as well as tabular-nums, and both are needed: Tailwind's
+    // numeric utilities compose one font-variant-numeric value out of CSS
+    // variables, so `tabular-nums` alone rebuilds that value and silently drops
+    // the lining figures inherited from .font-display — which is what left the
+    // stats band reading "II lines of work".
+    <span ref={ref} className="lining-nums tabular-nums">
       {display}
       {suffix}
     </span>

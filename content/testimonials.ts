@@ -3,6 +3,18 @@
  * time, so anything past ~200 characters starts to wrap badly on mobile.
  */
 
+/**
+ * ⚠️ Every quote below is INVENTED. They were written so the section had the
+ * right shape and length while the page was built. The names are not real
+ * clients and these must not be published as real client words.
+ *
+ * Flip this to false the moment the quotes below are replaced with real,
+ * permissioned ones. The launch-readiness panel on /admin reads this flag, so
+ * it is the single switch that tells the studio whether the site is safe to
+ * publish on this point.
+ */
+export const TESTIMONIALS_ARE_PLACEHOLDERS = true;
+
 export type Testimonial = {
   id: string;
   quote: string;

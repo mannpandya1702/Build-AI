@@ -19,7 +19,7 @@ export const site = {
     "Riwaaya plans a small number of weddings each year for families who want the rituals taken seriously — and who would rather their celebration feel quietly theirs than loudly grand.",
   category: "Full-service wedding planning & hospitality",
   description:
-    "Riwaaya by Bhumi Sandhu is a luxury and destination wedding planner based in Chandigarh, working across India — eleven lines of work, from the first roadmap to the final payment sheet, with a named person beside you the whole way.",
+    "Luxury and destination wedding planner in Chandigarh, working across India. Eleven contracted lines of work, and the founder beside you throughout.",
   /**
    * The two search phrases the studio asked to rank for (13 Aug 2026). They are
    * composed into page titles and descriptions rather than repeated verbatim in

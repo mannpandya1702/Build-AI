@@ -24,11 +24,10 @@ export type TeamMember = {
 /**
  * The founder's story, supplied by the studio 13 Aug 2026 and used as sent.
  *
- * ⚠️ The message arrived truncated: the fourth paragraph was cut mid-sentence
- * at "Today, Bhumi channels that same passion and precision into ever…". Rather
- * than invent an ending for a real person's biography, the three complete
- * paragraphs are published and the fourth is omitted. Send the rest and it
- * drops straight into the array below.
+ * The message first arrived truncated at "…into ever"; the closing paragraph
+ * was sent separately on 14 Aug and is now complete. Nothing here is
+ * paraphrased — it is a real person's account of herself and stays in her
+ * words.
  */
 export const founder = {
   name: "Bhumi Sandhu",
@@ -40,6 +39,7 @@ export const founder = {
   paragraphs: [
     "Bhumi Sandhu is the founder and director of Riwaaya, a Chandigarh-based wedding and event planning company built on her vision of turning celebrations into unforgettable experiences. Hailing from Jammu, Bhumi has always carried big dreams and an unshakeable drive to create something meaningful of her own.",
     "Her journey began in the world of modeling, where she first honed her eye for aesthetics, presentation, and detail. But destiny had other plans — a path that led her from the runway to the world of event planning, where her creative instincts found a bigger canvas to express themselves. What started as an unexpected shift soon became her true calling.",
+    "Today, Bhumi channels that same passion and precision into every wedding, celebration, and event Riwaaya curates — blending creative storytelling with meticulous execution to craft experiences that feel personal, purposeful, and unforgettable.",
   ],
 };
 

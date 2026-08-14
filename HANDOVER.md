@@ -126,7 +126,7 @@ deck's own website draft, so they can be published without verification. If the
 studio wants a "weddings delivered" number on the page, it has to come from
 them.
 
-## 7. Team — resolved, one thing missing
+## 7. Team — resolved
 
 **Where:** `content/about.ts` → `founder`
 
@@ -134,13 +134,10 @@ The three placeholder "Team member" cards are gone ("Only the founder",
 13 Aug 2026). The About page now runs a founder profile: portrait, name, title
 and the biography the studio sent.
 
-**One gap.** The biography arrived truncated — the last paragraph was cut
-mid-sentence at *"Today, Bhumi channels that same passion and precision into
-ever…"*. Rather than invent an ending for a real person's biography, the site
-publishes the two complete paragraphs and stops. **Please send the rest**; it
-drops straight into `founder.paragraphs`.
+The biography first arrived truncated at *"…into ever"*; the closing paragraph
+arrived on 14 Aug and the story is now complete on the page, in her own words.
 
-Still needed either way: a real headshot for the `team-01-bhumi-sandhu` slot.
+Still needed: a real headshot for the `team-01-bhumi-sandhu` slot.
 
 ## 8. Canonical domain — medium
 
@@ -196,6 +193,27 @@ Two colour notes, both deliberate:
 link previews are not broken. Replace it with art on a real photograph when the
 photography arrives.
 
+
+## 16. There is now a private panel at /admin
+
+A dashboard for the studio, at `/admin`, behind a password.
+
+It shows, live: **what is still holding up launch** (computed from the site
+itself, so it updates as things are supplied); **visitor numbers**; and a
+**search audit** of every page — what each will look like in a Google result,
+whether anything is too long or too short, whether images have descriptions.
+
+Two things to set before it is useful:
+
+- `ADMIN_USER` and `ADMIN_PASSWORD` in the site's environment variables. Until
+  `ADMIN_PASSWORD` is set the panel refuses to open at all, which is the safe
+  way round.
+- Visitor numbers need an analytics service connected. Counting is already
+  running and recording, so nothing is being lost in the meantime — the figures
+  are in Vercel today. To pull them into the panel, set `PLAUSIBLE_SITE_ID` and
+  `PLAUSIBLE_API_KEY`.
+
+The panel never shows sample figures. If it cannot get real numbers it says so.
 
 ---
 

@@ -18,7 +18,7 @@ export function Stats() {
                   {/* "24/7" is a fixed string, not a quantity — counting it up
                       would be meaningless, so it renders as written. */}
                   {stat.literal ? (
-                    <span className="tabular-nums">{stat.literal}</span>
+                    <span className="lining-nums tabular-nums">{stat.literal}</span>
                   ) : (
                     <Counter value={stat.value} suffix={stat.suffix} />
                   )}
@@ -26,6 +26,13 @@ export function Stats() {
                 <p className="font-sans text-micro uppercase tracking-[0.14em] text-ink/70">
                   {stat.label}
                 </p>
+                {/* Second line only where a figure needs disambiguating, so
+                    the labels themselves stay the same length across the row. */}
+                {stat.note && (
+                  <p className="max-w-[16rem] font-sans text-[0.6875rem] leading-snug text-ink/55">
+                    {stat.note}
+                  </p>
+                )}
               </div>
             </Reveal>
           ))}

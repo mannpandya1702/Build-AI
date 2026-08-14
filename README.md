@@ -93,6 +93,8 @@ needs editing to change copy.
 | `content/faqs.ts` | The FAQ accordion. |
 | `content/process.ts` | The client journey — First Word, Threshold, Architecture, Unfolding (the studio's own names). |
 | `content/stats.ts` | The numbers in the pistachio band. |
+| `lib/readiness.ts` | Launch-readiness rules behind the studio panel. |
+| `lib/seoAudit.ts` | The live SEO audit behind the studio panel. |
 | `content/about.ts` | Story, the is / is not list, the four brand pillars (Roots, Order, Welcome, Presence), the founder profile, the eight departments. |
 | `lib/site.ts` | Identity, contact details, address, socials, cities, WhatsApp number. |
 
@@ -307,11 +309,42 @@ image-heavy page, and `/contact` because of the third-party map iframe.
 | `/services/[slug]` | One per line of work — eleven pages, statically generated |
 | `/gallery` | Filterable masonry + lightbox |
 | `/about` | Story, philosophy, the founder |
+| `/admin` | Studio panel — launch readiness, visitors, live SEO audit. Password-protected, `noindex`, excluded in robots.txt |
 | `/contact` | Details, enquiry form, map |
 
 `sitemap.xml` and `robots.txt` are generated from `app/sitemap.ts` and
 `app/robots.ts`. JSON-LD (`LocalBusiness`, `Event`, `Service`, `FAQPage`,
 `Person`, `BreadcrumbList`) is built in `lib/schema.ts`.
+
+### The studio panel
+
+`/admin` is a private dashboard for the client. Three panels:
+
+**Launch readiness** — computed from the content files, not a written list, so
+it moves on its own. Photograph slots filled, whether the testimonials are
+still placeholders, whether the site is on its own domain, the office postcode,
+and so on. Blockers are weighted triple in the percentage.
+
+**Visitors** — needs an analytics provider. `@vercel/analytics` collects from
+the first deploy regardless; set `PLAUSIBLE_SITE_ID` and `PLAUSIBLE_API_KEY`
+and the panel renders the numbers itself. With nothing connected it says so.
+**It never shows sample or illustrative figures** — a dashboard of plausible
+fake traffic is worse than an empty one, because decisions get made on it.
+
+**Search** — fetches the site's own live pages on every load and measures the
+served HTML: title and description lengths, headings, word counts, image alt
+coverage, internal links, JSON-LD types, canonical tags, indexability, and
+whether the target phrases appear. Reading the rendered markup rather than the
+source is deliberate; an audit built from the content files reports what the
+code intends and goes stale the moment a page sets its own metadata.
+
+Protected by HTTP Basic Auth in `proxy.ts` (Next 16's rename of
+`middleware.ts`). Set `ADMIN_USER` and `ADMIN_PASSWORD`. **With no
+`ADMIN_PASSWORD` set the panel returns 503 rather than opening** — a
+misconfigured deploy fails shut.
+
+The marketing nav, footer, floating button and custom cursor are suppressed on
+`/admin` by `components/layout/PublicChrome.tsx`.
 
 ### Search phrases
 

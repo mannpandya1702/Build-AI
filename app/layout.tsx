@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Mulish } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { Footer } from "@/components/layout/Footer";
 import { Nav } from "@/components/layout/Nav";
+import { PublicChrome } from "@/components/layout/PublicChrome";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { Cursor } from "@/components/ui/Cursor";
 import { WhatsAppCTA } from "@/components/ui/WhatsAppCTA";
@@ -119,15 +122,30 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
 
-        <Cursor />
-        <Nav />
+        {/* Everything inside PublicChrome is the marketing site's furniture.
+            The studio panel at /admin brings its own. */}
+        <PublicChrome>
+          <Cursor />
+          <Nav />
+        </PublicChrome>
 
         <PageTransition>
           <main id="main">{children}</main>
-          <Footer />
+          <PublicChrome>
+            <Footer />
+          </PublicChrome>
         </PageTransition>
 
-        <WhatsAppCTA variant="float" />
+        <PublicChrome>
+          <WhatsAppCTA variant="float" />
+        </PublicChrome>
+
+        {/* Visitor counting. Cookieless and privacy-preserving, so it needs no
+            consent banner, and it starts recording from the first deploy — the
+            studio panel can read the numbers back once a provider with an API
+            is connected, but nothing is lost in the meantime. */}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

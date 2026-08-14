@@ -28,7 +28,7 @@ import { site, whatsappHref } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Wedding Venues Across India",
   description:
-    "How a luxury and destination wedding planner reads a venue: rooms before capacity, kitchen covers, service access and a wet-weather plan. Venue types and regions across India, with no commission taken from any property.",
+    "How a destination wedding planner reads a venue: rooms before capacity, kitchen covers, service access, wet-weather plan. Venue types across India.",
   alternates: { canonical: "/wedding-venues" },
   openGraph: {
     title: `Wedding venues — ${site.name}`,

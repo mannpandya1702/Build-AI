@@ -22,7 +22,7 @@ import { site, whatsappHref } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Destination Wedding Planner in India",
   description:
-    "Riwaaya is a destination wedding planner based in Chandigarh, working across India — venue recce, rooming lists, guest movement, permissions and a team that travels with you.",
+    "Destination wedding planner in Chandigarh, working across India. Venue recce, rooming lists, guest movement, permissions, and a team that travels with you.",
   alternates: { canonical: "/destination-weddings" },
   openGraph: {
     title: `Destination wedding planner — ${site.name}`,

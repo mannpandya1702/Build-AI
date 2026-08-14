@@ -14,7 +14,7 @@ import { site } from "@/lib/site";
 export const metadata: Metadata = {
   title: "About — Luxury Wedding Planner in Chandigarh",
   description:
-    "Riwaaya is a ritual-first luxury and destination wedding planner based in Chandigarh, founded by Bhumi Sandhu. One wedding on the ground at a time, and the founder beside you from the first call to the last car.",
+    "Bhumi Sandhu founded Riwaaya, a ritual-first luxury wedding planner in Chandigarh. One wedding on the ground at a time, and the founder beside you throughout.",
   alternates: { canonical: "/about" },
   openGraph: {
     title: `About — ${site.name}`,

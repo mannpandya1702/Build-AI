@@ -110,15 +110,32 @@ export function Hero() {
         </div>
       </motion.div>
 
-      {/* Functional scrims, not decoration: these keep the headline and the
-          overlaid nav legible at 4.5:1 over whatever photograph the client
-          drops in behind them. The body scrim fades on scroll; the nav scrim
-          does not, because the nav stays put until it solidifies. */}
+      {/*
+        Functional scrims, not decoration: these keep the headline and the
+        overlaid nav legible over whatever photograph the client drops in
+        behind them.
+
+        There are two body scrims rather than one, and the horizontal one is
+        the important one. The vertical scrim alone is dark at the bottom and
+        only ink/25 by the time it reaches the headline — which was fine over
+        the dark placeholder and failed badly over a real photograph: the
+        courtyard demo image is pale stone in bright sun exactly where the
+        display type sits, and the white headline measured under 2:1 against
+        it. The headline is left-aligned in a max-w-5xl column, so a
+        left-weighted horizontal gradient puts the density precisely where the
+        type is and leaves the right of the photograph almost untouched.
+
+        Both fade together on scroll. The nav scrim does not, because the nav
+        stays put until it solidifies.
+      */}
       <motion.div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-t from-ink via-ink/75 to-ink/25"
+        className="absolute inset-0"
         style={shouldReduce ? undefined : { opacity: veilOpacity }}
-      />
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-ink/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-ink/85 via-ink/45 to-transparent" />
+      </motion.div>
       <div
         aria-hidden
         className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-ink/80 to-transparent"
