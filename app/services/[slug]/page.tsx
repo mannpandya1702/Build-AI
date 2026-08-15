@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { WhatsAppCTA } from "@/components/ui/WhatsAppCTA";
 import { getService, services } from "@/content/services";
-import { breadcrumbSchema, eventSchema } from "@/lib/schema";
+import { breadcrumbSchema, eventSchema, serviceSchema } from "@/lib/schema";
 import { site } from "@/lib/site";
 
 /** Every service is known at build time — prerender all of them. */
@@ -55,11 +55,11 @@ export default async function ServicePage({
   if (!service) notFound();
 
   const others = services.filter((item) => item.slug !== service.slug);
-  const schema = eventSchema(service.slug);
+  const schema = [eventSchema(service.slug), serviceSchema(service.slug)].filter(Boolean);
 
   return (
     <>
-      {schema && (
+      {schema.length > 0 && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}

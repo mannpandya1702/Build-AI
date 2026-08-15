@@ -12,11 +12,11 @@ import { WHATSAPP_NUMBER, site } from "@/lib/site";
 export function localBusinessSchema() {
   return {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
+    "@type": ["Organization", "LocalBusiness"],
     "@id": `${site.url}/#business`,
     name: site.name,
     legalName: site.legalName,
-    alternateName: site.legalName,
+    alternateName: site.alternateNames,
     slogan: site.tagline,
     founder: { "@type": "Person", name: site.founder },
     description: site.description,
@@ -86,6 +86,28 @@ export function eventSchema(slug: string) {
       },
     })),
     image: `${site.url}/og.png`,
+  };
+}
+
+/**
+ * Service schema for each of the eleven lines of work, with `provider`
+ * pointing back at the business node. Emitted alongside the Event schema on
+ * each service page — the Event says what kind of occasion it organises, this
+ * says it is a service line of this business.
+ */
+export function serviceSchema(slug: string) {
+  const service = services.find((item) => item.slug === slug);
+  if (!service) return null;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": `${site.url}/services/${slug}#service`,
+    name: service.title,
+    serviceType: service.title,
+    description: service.summary,
+    url: `${site.url}/services/${slug}`,
+    provider: { "@id": `${site.url}/#business` },
   };
 }
 
@@ -164,8 +186,8 @@ export function venueServiceSchema() {
 
 /**
  * FAQPage. Google will only surface one FAQ block per page, so this is emitted
- * on the pages whose questions are genuinely distinct — home, destinations and
- * venues — rather than on every route.
+ * only where a page renders genuinely distinct questions — the destinations
+ * and venues pages — rather than on every route.
  */
 export function faqSchema(items: { question: string; answer: string }[]) {
   return {

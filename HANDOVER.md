@@ -234,6 +234,24 @@ this document goes to clients as a contract, and the third one is invisible in
 the page body — it lives in the file's title metadata and will show in a
 browser tab or a search result. Worth correcting at source.
 
+The SEO + dashboard plan you sent on 15 Aug flags more in the same document,
+all worth fixing in the same sitting:
+
+- **Venue & Vendor Payment Schedule skips clause (d)** — it runs a, b, c, e,
+  f, g.
+- **Clause (c) in that section is an incomplete sentence** — "shall coordinate
+  with vendors to ensure timely and accurate." Accurate *what*.
+- **Food & Beverage clause (c) takes on liquor procurement and legal
+  compliance in writing.** In Punjab, Haryana, Himachal and Chandigarh the
+  event licence usually sits with the venue or a licensed contractor, so this
+  is real exposure. The plan says have a lawyer look before the next
+  signature; we agree.
+- **The canonical list of eleven services** the plan says is missing does now
+  exist — it is the eleven this site is built around, one URL each under
+  `/services`. If that list is right, use it verbatim for the contract
+  headings too, so the website, the dashboard and the contract name the same
+  eleven things. If any of it is wrong, say so and the site changes.
+
 ---
 
 ## 13. Destination weddings — confirm the six destinations — high
@@ -331,3 +349,59 @@ with would be the same mistake as the invented testimonials.
 
 To make it stronger, send: **the venues Riwaaya has actually worked at**, with
 room counts and a note on whether the studio has a relationship with each.
+
+---
+
+## 17. The SEO + dashboard plan (15 Aug) — where the site already stands
+
+The plan has been read against the build, item by item, so nothing gets done
+twice and nothing looks ignored.
+
+**Already in place.** Hand-written titles and descriptions on every page;
+self-referencing canonicals; sitemap and robots; Organization/LocalBusiness
+schema carrying the slogan, founder, price range and alternate names
+("Riwaaya by Bhumi Sandhu", "Riwaaya Weddings"); a Person node for Bhumi —
+the "bhumi sandhu wedding planner" query; Service, FAQPage and BreadcrumbList
+schema; the name-origin copy on /about that answers "riwaaya meaning";
+self-hosted subset fonts; static generation throughout; Core Web Vitals
+measured live in /admin. Added on reading the plan: `/llms.txt`, and Service
+schema with a provider reference on each of the eleven service pages.
+
+**Done differently, deliberately.** The plan sketches per-city landing pages
+and venue guide pages. The build has one venue hub with region anchors
+instead — the plan itself warns that thin city pages read as doorway pages
+and that venue guides must only exist for venues actually worked, which is
+the same reasoning §15 above records. The plan's `/weddings` and `/enquire`
+URLs exist here as nav labels over `/gallery` and `/contact`; renaming live
+slugs means redirects, cheap now and annoying later, so if the plan's URL
+scheme is wanted, say so and it happens in one commit.
+
+**Cannot exist honestly yet — needs material.** The wedding story pages the
+plan builds everything around (couple names as the H1, 900–1,400 words, a
+named venue, vendor credits, 12–20 photographs) need a real wedding's
+material. Anmol & Ishaan's Kasauli wedding is named in the plan as real —
+send its photographs, dates, venue and vendor list and the first story page
+gets built to the plan's template exactly. Journal pieces and venue guides
+queue behind the same principle: real ones only.
+
+**Only you can do.** Google Business Profile — claimed, category "Wedding
+Planner", service area set, brand-grade photos, a post a month, every review
+answered; Search Console verified the day the real domain goes live; the
+directory NAP pass in the plan's own priority order (GBP → WedMeGood →
+WeddingWire India / ShaadiSaga → WeddingSutra → Justdial / Sulekha → Bing
+Places / Apple Business Connect); the review ask written into the post-event
+debrief; the Instagram bio pointing at the weddings page.
+
+**Part 2 — the operations dashboard — is a different project.** Enquiry
+pipeline, budgets, payments with client approvals, guest logistics, run
+sheets, the WhatsApp and voice automations: that is a product build with its
+own database and auth, paid accounts to open (Supabase, WhatsApp Business
+API, n8n, VAPI), and Data Protection Act obligations the moment guest ID
+documents are stored. The plan's own phasing puts it at about twenty weeks.
+The `/admin` panel on this site is the marketing slice of it — §2.7's SEO
+console — and no more. It needs an explicit go, and its own conversation
+about stack and accounts, before anything is built.
+
+One small note: Mukta (the plan's Gurmukhi and Devanagari face) loads only on
+pages that actually set text in those scripts. No page does yet, so it is not
+loaded — adding it costs a line the day such text exists.

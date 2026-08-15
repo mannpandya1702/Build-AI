@@ -11,6 +11,13 @@ export const site = {
   /** Full signature lockup, per the deck. Used in the footer and JSON-LD. */
   legalName: "Riwaaya by Bhumi Sandhu",
   founder: "Bhumi Sandhu",
+  /**
+   * Other names the studio is searched by. Fed to JSON-LD alternateName —
+   * "riwaaya" sits close to "riwaayat" and "riwaaz", so handing Google the
+   * entity's alternate names consistently is what stops it autocorrecting the
+   * brand (SEO plan, 15 Aug 2026).
+   */
+  alternateNames: ["Riwaaya by Bhumi Sandhu", "Riwaaya Weddings"],
   /** Used for canonical URLs, OG tags, sitemap and JSON-LD. */
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://riwaaya.in",
   /** The deck's line. Kept verbatim. */
