@@ -7,14 +7,16 @@ import { breadcrumbSchema } from "@/lib/schema";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Weddings We Have Planned",
+  title: "Weddings & Destination Events We Have Planned",
+  // Both of these were leaving roughly a third of the space Google gives a
+  // result unused, and neither said what kind of planner the work belongs to.
   description:
-    "Weddings, mehndi and haldi, sangeet, engagements and destination events planned by Riwaaya across India.",
+    "Weddings, mehndi and haldi, sangeet and engagements planned by Riwaaya, a destination wedding planner in Chandigarh working across India.",
   alternates: { canonical: "/gallery" },
   openGraph: {
     title: `Weddings we have planned — ${site.name}`,
     description:
-      "Weddings, mehndi and haldi, sangeet, engagements and destination events planned by Riwaaya across India.",
+      "Weddings, mehndi and haldi, sangeet and engagements planned by Riwaaya, a destination wedding planner in Chandigarh working across India.",
     url: `${site.url}/gallery`,
   },
 };

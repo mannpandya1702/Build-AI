@@ -32,6 +32,8 @@ export type Check = {
 export type PageAudit = {
   path: string;
   name: string;
+  /** What this page is meant to be found by. See AuditRoute. */
+  targets: string[];
   ok: boolean;
   /** Set when the page could not be fetched at all. */
   error?: string;
@@ -239,14 +241,20 @@ function buildChecks(a: Omit<PageAudit, "checks" | "ok">, keyphraseHit: boolean)
       : "Nothing is stopping this page being listed.",
   });
 
+  const targeted = a.targets.length > 0;
   checks.push({
     id: "keyphrase",
-    label: "Target phrases",
-    status: keyphraseHit ? "pass" : "warn",
-    value: keyphraseHit ? "present" : "not found",
-    detail: keyphraseHit
-      ? `"${site.keyphrases.destination}" or "${site.keyphrases.luxury}" appears in the title or description.`
-      : "Neither target phrase appears in this page's title or description. Fine for pages that are not meant to rank for them.",
+    label: "Target phrase",
+    // A page that declares no target is not a ranking page and passes as such.
+    // A page that declares one and has lost it is a real regression, so this
+    // fails rather than warns — the phrase was put there on purpose.
+    status: !targeted || keyphraseHit ? "pass" : "fail",
+    value: !targeted ? "not a ranking page" : keyphraseHit ? "present" : "missing",
+    detail: !targeted
+      ? "This page is not built to rank for a search phrase, so nothing is expected here."
+      : keyphraseHit
+        ? `Found "${a.targets.find((t) => `${a.title} ${a.description}`.toLowerCase().includes(t)) ?? a.targets[0]}" in the title or description.`
+        : `This page is meant to be found by ${a.targets.map((t) => `"${t}"`).join(" or ")}, and ${a.targets.length === 1 ? "it is not" : "none of them are"} in its title or description.`,
   });
 
   checks.push({
@@ -267,22 +275,52 @@ function buildChecks(a: Omit<PageAudit, "checks" | "ok">, keyphraseHit: boolean)
 /* Runner                                                              */
 /* ------------------------------------------------------------------ */
 
+export type AuditRoute = {
+  path: string;
+  name: string;
+  /**
+   * The phrases this particular page is meant to be found by. Matched against
+   * the title and description together; any one of them counts.
+   *
+   * This replaced a single site-wide pair of head terms checked against every
+   * page. That version flagged the gallery and the contact page for not
+   * carrying "luxury wedding planner" — and then said in its own explanation
+   * that this was fine for pages not meant to rank for them. A check that
+   * raises a flag and simultaneously calls it fine teaches the reader to skim
+   * past warnings, which is worse than not checking at all.
+   *
+   * Stating the intent per page makes the check mean something: a contact page
+   * is measured on local intent, a venue page on venue intent, and a page that
+   * loses the phrase it was built to rank for now fails rather than shrugs.
+   */
+  targets: string[];
+};
+
 /** Every route worth auditing, plus a friendly name for the panel. */
-export function auditRoutes(): { path: string; name: string }[] {
+export function auditRoutes(): AuditRoute[] {
   return [
-    { path: "/", name: "Home" },
-    { path: "/about", name: "About" },
-    { path: "/destination-weddings", name: "Destination weddings" },
-    { path: "/wedding-venues", name: "Wedding venues" },
-    { path: "/gallery", name: "Gallery" },
-    { path: "/contact", name: "Contact" },
+    { path: "/", name: "Home", targets: ["luxury wedding planner", "destination wedding planner"] },
+    { path: "/about", name: "About", targets: ["wedding planner"] },
+    {
+      path: "/destination-weddings",
+      name: "Destination weddings",
+      targets: ["destination wedding planner"],
+    },
+    { path: "/wedding-venues", name: "Wedding venues", targets: ["wedding venue"] },
+    { path: "/gallery", name: "Gallery", targets: ["destination wedding", "wedding planner"] },
+    // A contact page ranks for brand and local intent, never for a head term.
+    { path: "/contact", name: "Contact", targets: ["wedding planner"] },
     // One service page stands in for the other ten; they share a template, so
     // auditing all eleven would repeat the same result eleven times.
-    { path: `/services/${services[0].slug}`, name: `Service — ${services[0].title}` },
+    {
+      path: `/services/${services[0].slug}`,
+      name: `Service — ${services[0].title}`,
+      targets: ["wedding planner"],
+    },
   ];
 }
 
-async function auditOne(origin: string, route: { path: string; name: string }): Promise<PageAudit> {
+async function auditOne(origin: string, route: AuditRoute): Promise<PageAudit> {
   const empty: PageAudit = {
     ...route,
     ok: false,
@@ -343,13 +381,7 @@ async function auditOne(origin: string, route: { path: string; name: string }): 
   const words = visibleText(html).split(/\s+/).filter(Boolean).length;
 
   const haystack = `${title} ${description}`.toLowerCase();
-  const keyphraseHit =
-    haystack.includes(site.keyphrases.destination) ||
-    haystack.includes(site.keyphrases.luxury) ||
-    // Titles compose the phrase as "Luxury & Destination Wedding Planner",
-    // which is the phrase in substance without being the literal string.
-    (haystack.includes("wedding planner") &&
-      (haystack.includes("luxury") || haystack.includes("destination")));
+  const keyphraseHit = route.targets.some((phrase) => haystack.includes(phrase));
 
   const core: Omit<PageAudit, "checks" | "ok"> = {
     ...route,

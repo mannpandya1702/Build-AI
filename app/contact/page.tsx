@@ -11,8 +11,10 @@ import { WHATSAPP_DISPLAY, site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact — Wedding Planner in Chandigarh",
+  // The title already carries local intent; the description was 103 characters
+  // and said nothing about what the studio is or where it works from.
   description:
-    "Message Riwaaya on WhatsApp or send an enquiry. We read every enquiry ourselves and reply within a day.",
+    "Message Riwaaya on WhatsApp or send an enquiry. A luxury and destination wedding planner based in Mohali, near Chandigarh, working across India.",
   alternates: { canonical: "/contact" },
   openGraph: {
     title: `Contact — ${site.name}`,
