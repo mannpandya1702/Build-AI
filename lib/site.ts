@@ -55,7 +55,8 @@ export const site = {
    * sends a Google Maps link.
    */
   geo: { lat: 30.7046, lng: 76.6928 },
-  email: "hello@riwaaya.in",
+  /** Confirmed by the studio, 21 Aug 2026 — the mailbox being set up on the domain. */
+  email: "info@riwaaya.in",
   /**
    * The studio works pan-India from a Chandigarh base (confirmed 13 Aug 2026).
    * Chandigarh leads because it is the home city and the one to rank locally

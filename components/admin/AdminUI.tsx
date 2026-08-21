@@ -162,3 +162,63 @@ export function Sparkline({ points, label }: { points: number[]; label: string }
     </svg>
   );
 }
+
+/**
+ * A labelled group of items inside a tab.
+ *
+ * The readiness list used to be one flat run of ten cards with a small pill on
+ * each; the state of the list could only be worked out by reading every pill.
+ * Grouping under a heading that carries its own colour and count means the
+ * shape of the list — how much is urgent, how much is done — reads before any
+ * of the words do.
+ */
+export function Group({
+  title,
+  count,
+  note,
+  tone = "neutral",
+  children,
+}: {
+  title: string;
+  count?: number;
+  note?: string;
+  tone?: "neutral" | "good" | "warn" | "bad";
+  children: ReactNode;
+}) {
+  const rule = {
+    neutral: "bg-ink/25",
+    good: "bg-[#3f6b3f]",
+    warn: "bg-[#b6892f]",
+    bad: "bg-[#a8443a]",
+  }[tone];
+
+  const countTone = {
+    neutral: "bg-ink/8 text-stone-deep",
+    good: "bg-[#3f6b3f]/14 text-[#33562f]",
+    warn: "bg-[#9a7433]/16 text-[#7d5d24]",
+    bad: "bg-[#a8443a]/14 text-[#8f3a32]",
+  }[tone];
+
+  return (
+    <section className="mt-10 first:mt-0">
+      <div className="flex items-center gap-3">
+        <span aria-hidden className={cn("h-4 w-1 shrink-0 rounded-full", rule)} />
+        <h3 className="font-display text-xl font-light text-ink md:text-2xl">{title}</h3>
+        {typeof count === "number" && (
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 font-sans text-[0.625rem] font-semibold lining-nums tabular-nums",
+              countTone,
+            )}
+          >
+            {count}
+          </span>
+        )}
+      </div>
+      {note && (
+        <p className="ml-4 mt-1.5 max-w-2xl font-sans text-micro text-stone-deep">{note}</p>
+      )}
+      <div className="mt-4 flex flex-col gap-3">{children}</div>
+    </section>
+  );
+}

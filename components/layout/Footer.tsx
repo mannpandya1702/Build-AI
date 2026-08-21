@@ -126,9 +126,34 @@ export function Footer() {
           <p>
             © {year} {site.name}. Weddings and events across India, from {site.baseCity}.
           </p>
-          <p>
-            riwaaya, from riwaayat — custom, tradition.
-          </p>
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <p>riwaaya, from riwaayat — custom, tradition.</p>
+
+            {/*
+              The studio's own way in. A footer link is where a visitor never
+              looks and the owner always knows to look — putting it in the nav
+              would advertise an admin door to every guest on the site.
+              The page behind it asks for a password regardless.
+            */}
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-2 self-start rounded-full border border-chandni/20 px-4 py-2 text-chandni/70 transition-colors duration-[250ms] ease-riwaaya hover:border-chandni/45 hover:text-chandni"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 12 14"
+                className="h-3 w-3 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.3"
+              >
+                <rect x="1.4" y="6" width="9.2" height="7.1" rx="1.4" />
+                <path d="M3.6 6V3.9a2.4 2.4 0 0 1 4.8 0V6" strokeLinecap="round" />
+              </svg>
+              Studio login
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

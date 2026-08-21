@@ -89,7 +89,7 @@ Two things still outstanding on it:
 |---|---|
 | `address.postalCode` | **empty.** Phase 8B / Sector 91 spans more than one PIN and it was not sent, so it is left blank rather than guessed — the JSON-LD omits the field instead of publishing a wrong postcode. Send it and it takes one line. |
 | `geo.lat` / `geo.lng` | 30.7046, 76.6928 — **approximate to about 300m**, enough to land the contact map on the right block. Send a Google Maps link to the office and it becomes exact. |
-| `email` | `hello@riwaaya.in` — still **assumed** |
+| `email` | `info@riwaaya.in` — **confirmed 21 Aug 2026**, mailbox being set up |
 
 Coverage was also corrected: the studio works **pan-India with Chandigarh as
 the main city**, which is now what `site.cities`, the destinations page and the
