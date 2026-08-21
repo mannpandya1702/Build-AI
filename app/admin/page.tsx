@@ -7,7 +7,7 @@ import { Tabs } from "@/components/admin/Tabs";
 import { Logo } from "@/components/brand/Logo";
 import { getTraffic } from "@/lib/analytics";
 import { photoProgress, readinessItems, readinessSummary } from "@/lib/readiness";
-import { runAudit, siteCoverage } from "@/lib/seoAudit";
+import { resolveAuditOrigin, runAudit, siteCoverage } from "@/lib/seoAudit";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -41,10 +41,15 @@ export default async function AdminPage() {
   // configuration.
   const head = await headers();
   const host = head.get("host") ?? new URL(site.url).host;
-  const protocol = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
-  const origin = `${protocol}://${host}`;
+  /*
+   * The readiness panel below still asks about `host` — the address that
+   * actually served this request — because that is the honest answer to "is
+   * the real domain live yet". The search audit deliberately asks something
+   * different: what the public site looks like, wherever this panel is open.
+   */
+  const audited = await resolveAuditOrigin(host);
 
-  const [pages, traffic] = await Promise.all([runAudit(origin), getTraffic()]);
+  const [pages, traffic] = await Promise.all([runAudit(audited.origin), getTraffic()]);
 
   const items = readinessItems(host);
   const summary = readinessSummary(items);
@@ -57,9 +62,13 @@ export default async function AdminPage() {
   const passes = allChecks.filter((c) => c.status === "pass").length;
   const seoScore = allChecks.length
     ? Math.round(((passes + warns * 0.5) / allChecks.length) * 100)
-    : 0;
+    : null;
+  /* A score of 0% and a score of "we could not read anything" look identical
+     as a number and mean opposite things, so the second one is not a number. */
+  const seoLabel = seoScore === null ? "—" : `${seoScore}%`;
 
   const reachable = pages.filter((p) => !p.error);
+  const unreachable = pages.filter((p) => p.error);
   const totalWords = reachable.reduce((n, p) => n + p.words, 0);
 
   const blocking = items.filter((i) => !i.done && i.severity === "blocker");
@@ -131,10 +140,14 @@ export default async function AdminPage() {
               tone={photos.real === photos.total ? "good" : "bad"}
             />
             <Metric
-              value={`${seoScore}%`}
+              value={seoLabel}
               label="Search health"
-              note={`${passes} good, ${warns} worth a look, ${fails} needing a fix.`}
-              tone={fails > 0 ? "bad" : warns > 3 ? "warn" : "good"}
+              note={
+                seoScore === null
+                  ? "The pages could not be read, so there is nothing to score."
+                  : `${passes} good, ${warns} worth a look, ${fails} needing a fix.`
+              }
+              tone={seoScore === null || fails > 0 ? "bad" : warns > 3 ? "warn" : "good"}
             />
           </div>
 
@@ -320,15 +333,37 @@ export default async function AdminPage() {
             {
               id: "search",
               label: "Search health",
-              badge: `${seoScore}%`,
-              tone: fails > 0 ? "bad" : warns > 3 ? "warn" : "good",
+              badge: seoLabel,
+              tone: seoScore === null || fails > 0 ? "bad" : warns > 3 ? "warn" : "good",
               panel: (
                 <Panel
                   title="How the site looks to Google"
-                  subtitle="Checked against the live pages every time this panel is opened, not against a saved report — so it is always current."
+                  subtitle={`Checked against the live pages at ${audited.host} every time this panel is opened, not against a saved report — so it is always current.`}
                 >
+                  {unreachable.length > 0 && (
+                    <Card className="mb-6 border-l-2 border-l-[#a8443a]">
+                      <p className="font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-[#8f3a32]">
+                        {unreachable.length === pages.length
+                          ? "The site could not be read"
+                          : `${unreachable.length} of ${pages.length} pages could not be read`}
+                      </p>
+                      <p className="mt-2 max-w-2xl font-sans text-body text-ink">
+                        {unreachable.length === pages.length
+                          ? `Nothing below is a verdict on your pages — the checks could not reach ${audited.host} at all.`
+                          : "The pages listed below with an error were not measured. The score covers only the ones that were."}
+                      </p>
+                      <p className="mt-3 max-w-2xl font-sans text-micro text-stone-deep">
+                        {unreachable[0].error}
+                      </p>
+                    </Card>
+                  )}
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <Metric value={String(reachable.length)} label="Pages checked" />
+                    <Metric
+                      value={`${reachable.length}/${pages.length}`}
+                      label="Pages checked"
+                      tone={unreachable.length ? "bad" : "ink"}
+                      note={unreachable.length ? "Some pages could not be reached." : undefined}
+                    />
                     <Metric
                       value={`${Math.round(totalWords / 100) / 10}k`}
                       label="Words of text"

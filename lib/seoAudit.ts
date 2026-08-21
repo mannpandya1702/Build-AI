@@ -221,14 +221,34 @@ function buildChecks(a: Omit<PageAudit, "checks" | "ok">, keyphraseHit: boolean)
         : "No structured data on this page. It still ranks, it just cannot earn the richer result formats.",
   });
 
+  /*
+   * A canonical is only right if it points at *this* page. Merely having one
+   * used to count as a pass, which is how a canonical reading
+   * "https://vercel.com/login" was once reported as good — the tag existed, so
+   * the check was satisfied. A canonical aimed somewhere else is worse than a
+   * missing one: it actively tells Google not to index this page.
+   */
+  const canonicalPath = (() => {
+    if (!a.canonical) return null;
+    try {
+      return new URL(a.canonical).pathname.replace(/\/$/, "") || "/";
+    } catch {
+      return null;
+    }
+  })();
+  const expectedPath = a.path.replace(/\/$/, "") || "/";
+  const canonicalMatches = canonicalPath === expectedPath;
+
   checks.push({
     id: "canonical",
     label: "Canonical address",
-    status: a.canonical ? "pass" : "warn",
+    status: !a.canonical ? "warn" : canonicalMatches ? "pass" : "fail",
     value: a.canonical ?? "missing",
-    detail: a.canonical
-      ? "Tells search engines the single correct address for this page, so duplicates do not compete with each other."
-      : "Without this, the same page reachable at two addresses can split its own ranking.",
+    detail: !a.canonical
+      ? "Without this, the same page reachable at two addresses can split its own ranking."
+      : canonicalMatches
+        ? "Tells search engines the single correct address for this page, so duplicates do not compete with each other."
+        : `This points at ${a.canonical}, which is not this page. A canonical aimed elsewhere tells Google to index that address instead of this one.`,
   });
 
   checks.push({
@@ -320,6 +340,70 @@ export function auditRoutes(): AuditRoute[] {
   ];
 }
 
+/**
+ * Which address to measure.
+ *
+ * Not the one the panel is being served from, which is what this used to do.
+ * A Vercel deployment has two kinds of address: the production alias, which
+ * is public, and a per-deployment URL, which sits behind Vercel's login. Open
+ * the panel on a per-deployment URL and every audit fetch was answered by
+ * Vercel's sign-in page — so the panel measured *that*, and reported seven
+ * identical pages of 47 words with a canonical pointing at vercel.com. Every
+ * number was real; all of them were about the wrong document.
+ *
+ * Google only ever crawls the public address, so that is the one worth
+ * measuring, wherever the panel happens to be open. Vercel exposes it as a
+ * system environment variable.
+ */
+export async function resolveAuditOrigin(
+  requestHost: string,
+): Promise<{ origin: string; host: string }> {
+  const local = requestHost.startsWith("localhost") || requestHost.startsWith("127.");
+  if (local) return { origin: `http://${requestHost}`, host: requestHost };
+
+  /*
+   * In priority order: the domain Vercel considers this project's production
+   * address, then whatever the site has been told to call itself, then the
+   * address this panel is being viewed at. Each is tried in turn and the first
+   * one that actually answers is used.
+   *
+   * Probing rather than picking blind matters because the top two can both be
+   * wrong in ordinary ways — the system variable is absent if a project has
+   * system variables switched off, and NEXT_PUBLIC_SITE_URL is deliberately
+   * set to the real domain before that domain resolves. Trying them in turn
+   * means the panel moves to riwaaya.in by itself on the day DNS is pointed,
+   * with nothing to change here.
+   */
+  const candidates = [
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL).host : null,
+    requestHost,
+  ].filter((value): value is string => Boolean(value));
+
+  const tried = [...new Set(candidates)];
+  for (const host of tried) {
+    if (await answers(`https://${host}`)) return { origin: `https://${host}`, host };
+  }
+
+  // Nothing answered. Return the best candidate anyway so the panel reports a
+  // real failure against a real address rather than silently checking nothing.
+  return { origin: `https://${tried[0]}`, host: tried[0] };
+}
+
+/** Does this origin serve its own home page, without handing us off elsewhere? */
+async function answers(origin: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${origin}/`, {
+      headers: { "user-agent": "Riwaaya-SEO-Panel" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(6_000),
+    });
+    return res.ok && new URL(res.url).host === new URL(origin).host;
+  } catch {
+    return false;
+  }
+}
+
 async function auditOne(origin: string, route: AuditRoute): Promise<PageAudit> {
   const empty: PageAudit = {
     ...route,
@@ -342,14 +426,38 @@ async function auditOne(origin: string, route: AuditRoute): Promise<PageAudit> {
     checks: [],
   };
 
+  const target = `${origin}${route.path}`;
   let html: string;
   try {
-    const res = await fetch(`${origin}${route.path}`, {
-      headers: { "user-agent": "Riwaaya-SEO-Panel" },
+    const res = await fetch(target, {
+      headers: {
+        "user-agent": "Riwaaya-SEO-Panel",
+        // Vercel's own way past deployment protection, if a bypass secret has
+        // been issued. Absent, this header is simply ignored.
+        ...(process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+          ? { "x-vercel-protection-bypass": process.env.VERCEL_AUTOMATION_BYPASS_SECRET }
+          : {}),
+      },
       cache: "no-store",
       signal: AbortSignal.timeout(12_000),
     });
     if (!res.ok) return { ...empty, error: `The page returned ${res.status}.` };
+
+    /*
+     * Never measure a page we were not given. A protected deployment answers
+     * with a redirect to a sign-in screen, which is a perfectly valid 200 and
+     * parses perfectly happily — that is exactly how this panel came to report
+     * seven pages of "47 words, needs fixing" about Vercel's login form.
+     */
+    const landedOn = new URL(res.url).host;
+    const askedFor = new URL(target).host;
+    if (landedOn !== askedFor) {
+      return {
+        ...empty,
+        error: `The request was redirected to ${landedOn}, so this page could not be read. That normally means the address being checked is behind a login.`,
+      };
+    }
+
     html = await res.text();
   } catch (error) {
     return {
