@@ -189,9 +189,15 @@ Two colour notes, both deliberate:
 
 ## 11. Open Graph image — optional
 
-`public/og.png` is generated from the brand (wordmark, headline, taak shape) so
-link previews are not broken. Replace it with art on a real photograph when the
-photography arrives.
+**Resolved — nothing needed.** Every page now generates its own link-preview
+card at build time: chandni ground, the gold arch, that page's title in
+Cormorant. Share any page into WhatsApp and it arrives as a branded card
+naming the page, rather than a bare link.
+
+They are drawn from the brand, not from a photograph, which is deliberate — a
+card built from stand-in photography would be the same problem as §3. When the
+real photography lands, a photograph can be composited behind the type; the
+builder is one file, `lib/ogImage.tsx`.
 
 
 ## 16. There is now a private panel at /admin

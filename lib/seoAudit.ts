@@ -51,6 +51,9 @@ export type PageAudit = {
   externalLinks: number;
   schemaTypes: string[];
   ogTags: number;
+  ogImage: string;
+  ogTitle: string;
+  ogDescription: string;
   noindex: boolean;
   checks: Check[];
 };
@@ -127,7 +130,11 @@ function schemaTypesIn(html: string): string[] {
         if (Array.isArray(node)) return node.forEach(walk);
         if (node && typeof node === "object") {
           const type = (node as Record<string, unknown>)["@type"];
+          // @type is allowed to be an array — the business node is
+          // ["Organization", "LocalBusiness"] — and dropping those silently
+          // made the panel report less structured data than the page carries.
           if (typeof type === "string") found.add(type);
+          if (Array.isArray(type)) for (const t of type) if (typeof t === "string") found.add(t);
         }
       };
       walk(parsed);
@@ -142,7 +149,11 @@ function schemaTypesIn(html: string): string[] {
 /* Rules                                                               */
 /* ------------------------------------------------------------------ */
 
-function buildChecks(a: Omit<PageAudit, "checks" | "ok">, keyphraseHit: boolean): Check[] {
+function buildChecks(
+  a: Omit<PageAudit, "checks" | "ok">,
+  keyphraseHit: boolean,
+  hasLang: boolean,
+): Check[] {
   const checks: Check[] = [];
 
   checks.push({
@@ -275,6 +286,40 @@ function buildChecks(a: Omit<PageAudit, "checks" | "ok">, keyphraseHit: boolean)
       : keyphraseHit
         ? `Found "${a.targets.find((t) => `${a.title} ${a.description}`.toLowerCase().includes(t)) ?? a.targets[0]}" in the title or description.`
         : `This page is meant to be found by ${a.targets.map((t) => `"${t}"`).join(" or ")}, and ${a.targets.length === 1 ? "it is not" : "none of them are"} in its title or description.`,
+  });
+
+  /*
+   * WhatsApp is where links to this site actually travel — a family forwards
+   * the venue page into the planning group, not into a search bar. What that
+   * forward looks like is og:title + og:image, so a page that has lost them
+   * has lost its shop window on the one channel that matters most here.
+   */
+  checks.push({
+    id: "og-preview",
+    label: "Link preview",
+    status: a.ogImage && a.ogTitle ? "pass" : a.ogTags > 0 ? "warn" : "fail",
+    value:
+      a.ogImage && a.ogTitle
+        ? "card with image"
+        : a.ogTags > 0
+          ? "incomplete"
+          : "none",
+    detail:
+      a.ogImage && a.ogTitle
+        ? "Shared on WhatsApp or social media, this page shows a branded card with its title."
+        : a.ogTags > 0
+          ? "Some preview tags exist but the image or title is missing, so shares fall back to a bare link."
+          : "No preview tags. A link to this page shares as plain text with no card at all.",
+  });
+
+  checks.push({
+    id: "lang",
+    label: "Language declared",
+    status: hasLang ? "pass" : "warn",
+    value: hasLang ? "declared" : "missing",
+    detail: hasLang
+      ? "The page declares its language, which helps search engines serve it to the right audience and screen readers pronounce it."
+      : "No language on the <html> tag. Search engines guess, and screen readers may mispronounce the page.",
   });
 
   checks.push({
@@ -422,6 +467,9 @@ async function auditOne(origin: string, route: AuditRoute): Promise<PageAudit> {
     externalLinks: 0,
     schemaTypes: [],
     ogTags: 0,
+    ogImage: "",
+    ogTitle: "",
+    ogDescription: "",
     noindex: false,
     checks: [],
   };
@@ -486,6 +534,7 @@ async function auditOne(origin: string, route: AuditRoute): Promise<PageAudit> {
   const externalLinks = new Set(hrefs.filter((h) => /^https?:\/\//i.test(h))).size;
 
   const robots = meta(html, "robots");
+  const hasLang = /<html[^>]*\slang="[^"]+"/i.test(html);
   const words = visibleText(html).split(/\s+/).filter(Boolean).length;
 
   const haystack = `${title} ${description}`.toLowerCase();
@@ -507,10 +556,15 @@ async function auditOne(origin: string, route: AuditRoute): Promise<PageAudit> {
     externalLinks,
     schemaTypes: schemaTypesIn(html),
     ogTags: [...html.matchAll(/<meta[^>]*property="og:/gi)].length,
+    ogImage: meta(html, "og:image", "property"),
+    ogTitle: meta(html, "og:title", "property"),
+    // Distinct from the meta description on most pages, and it is this one a
+    // share actually shows — so the preview must read it, not the other.
+    ogDescription: meta(html, "og:description", "property"),
     noindex: /noindex/i.test(robots),
   };
 
-  const checks = buildChecks(core, keyphraseHit);
+  const checks = buildChecks(core, keyphraseHit, hasLang);
   return { ...core, checks, ok: !checks.some((c) => c.status === "fail") };
 }
 

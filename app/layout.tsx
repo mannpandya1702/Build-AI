@@ -8,7 +8,7 @@ import { Nav } from "@/components/layout/Nav";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { Cursor } from "@/components/ui/Cursor";
 import { WhatsAppCTA } from "@/components/ui/WhatsAppCTA";
-import { localBusinessSchema } from "@/lib/schema";
+import { localBusinessSchema, webSiteSchema } from "@/lib/schema";
 import { site } from "@/lib/site";
 import { headers } from "next/headers";
 
@@ -73,21 +73,19 @@ export const metadata: Metadata = {
     siteName: site.name,
     title: `${site.name} — ${site.tagline}`,
     description: site.description,
-    images: [
-      {
-        // PLACEHOLDER — replace /public/og.png with real artwork at 1200×630.
-        url: "/og.png",
-        width: 1200,
-        height: 630,
-        alt: "Riwaaya — a wedding and events studio in India.",
-      },
-    ],
+    // No images here on purpose: every route now generates its own branded
+    // card via opengraph-image.tsx, and file-based metadata outranks anything
+    // written in this object. Listing /og.png would be dead configuration.
   },
   twitter: {
+    /*
+     * Card type only. A title or description here would be inherited by every
+     * route — Next only auto-fills twitter fields that are unset — so an X
+     * share of the venues page would pair the venue's own image with the
+     * homepage headline. Left unset, each page's og:title and og:description
+     * flow through, matching the card image that already does.
+     */
     card: "summary_large_image",
-    title: `${site.name} — ${site.tagline}`,
-    description: site.description,
-    images: ["/og.png"],
   },
   robots: {
     index: true,
@@ -121,7 +119,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           type="application/ld+json"
           // Structured data for the business itself; per-page Event schema is
           // injected by the service routes.
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema()) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([localBusinessSchema(), webSiteSchema()]),
+          }}
         />
 
         <a

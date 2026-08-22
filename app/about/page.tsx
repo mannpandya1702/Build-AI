@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { WhatsAppCTA } from "@/components/ui/WhatsAppCTA";
 import { departments, founder, isIsNot, principles, story } from "@/content/about";
-import { breadcrumbSchema, founderSchema } from "@/lib/schema";
+import { breadcrumbSchema, founderSchema, webPageSchema } from "@/lib/schema";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -36,6 +36,12 @@ export default function AboutPage() {
               { name: "About", path: "/about" },
             ]),
             founderSchema(),
+            webPageSchema(
+              "AboutPage",
+              "About Riwaaya",
+              "/about",
+              "The riwaayat thesis, the four pillars, and founder Bhumi Sandhu.",
+            ),
           ]),
         }}
       />

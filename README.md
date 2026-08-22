@@ -366,5 +366,26 @@ keyword still earns its keep without the page reading like SEO filler.
 
 See the handover list — in short: photography, the real Google Form URL and
 entry IDs, the office PIN code and exact map pin, the rest of the founder's
-biography (it arrived cut mid-sentence), a headshot, real testimonials, and
-`public/og.png`.
+biography (it arrived cut mid-sentence), a headshot and real testimonials.
+
+Link-preview cards are no longer on that list: every route generates its own
+from the brand at build time (`lib/ogImage.tsx`).
+
+## Link previews
+
+Every route has an `opengraph-image.tsx` that calls `brandOgImage()` in
+`lib/ogImage.tsx`, so a link shared into WhatsApp — which is how this business
+actually circulates links — arrives as a branded card naming that page rather
+than as a bare URL.
+
+Two things about this are easy to break:
+
+- **The fonts are TTF, not woff2.** Satori (what `next/og` renders with) cannot
+  read woff2, and it renders a variable font at its *default* instance — Mulish
+  defaults to weight 200, which looks broken. `assets/fonts/` therefore holds
+  static instances cut from the same Google Fonts files the site serves.
+- **`next.config.ts` traces those fonts into the bundle.** The routes read them
+  with `fs.readFile`, which Vercel's bundler cannot see, so without
+  `outputFileTracingIncludes` the build passes and the live image route 500s.
+
+To change the card, edit `brandOgImage()` — one function feeds every route.

@@ -6,7 +6,7 @@ import { Reveal, Stagger } from "@/components/motion/Reveal";
 import { EnquiryForm } from "@/components/sections/EnquiryForm";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { WhatsAppCTA } from "@/components/ui/WhatsAppCTA";
-import { breadcrumbSchema } from "@/lib/schema";
+import { breadcrumbSchema, webPageSchema } from "@/lib/schema";
 import { WHATSAPP_DISPLAY, site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -36,12 +36,18 @@ export default function ContactPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: JSON.stringify([
+            webPageSchema(
+              "ContactPage",
+              "Contact Riwaaya",
+              "/contact",
+              "WhatsApp, email, the enquiry form and the studio address in Mohali.",
+            ),
             breadcrumbSchema([
               { name: "Home", path: "/" },
               { name: "Contact", path: "/contact" },
             ]),
-          ),
+          ]),
         }}
       />
 
@@ -138,7 +144,6 @@ export default function ContactPage() {
                 src={mapSrc}
                 title={`Map showing Riwaaya's studio in ${site.address.locality}`}
                 loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
                 className="h-[380px] w-full border-0 md:h-[460px]"
               />
             </div>

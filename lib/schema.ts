@@ -23,7 +23,9 @@ export function localBusinessSchema() {
     url: site.url,
     telephone: `+${WHATSAPP_NUMBER}`,
     email: site.email,
-    image: `${site.url}/og.png`,
+    // The generated home card, not the old static file — one image, always in
+    // step with the brand, and the only one guaranteed to exist.
+    image: `${site.url}/opengraph-image`,
     priceRange: "$$$",
     address: {
       "@type": "PostalAddress",
@@ -85,7 +87,7 @@ export function eventSchema(slug: string) {
         addressCountry: "IN",
       },
     })),
-    image: `${site.url}/og.png`,
+    image: `${site.url}/services/${service.slug}/opengraph-image`,
   };
 }
 
@@ -216,6 +218,50 @@ export function founderSchema() {
     worksFor: { "@id": `${site.url}/#business` },
     url: `${site.url}/about`,
     sameAs: site.socials.map((social) => social.href),
+  };
+}
+
+/**
+ * The site itself, as an entity. What this buys: Google associating the name
+ * "Riwaaya" (and the alternate names) with this URL as a *site*, which is a
+ * step toward the brand query showing a proper site card rather than a bare
+ * link. Cheap, standard, and referenced by the page-level nodes below.
+ */
+export function webSiteSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${site.url}/#website`,
+    url: site.url,
+    name: site.name,
+    alternateName: site.alternateNames,
+    inLanguage: "en-IN",
+    publisher: { "@id": `${site.url}/#business` },
+  };
+}
+
+/**
+ * Typed page nodes for the two pages Google has a specific vocabulary for.
+ * An AboutPage and a ContactPage are explicit signals about which page holds
+ * the founder story and which holds the phone number — exactly the two things
+ * a brand-query result panel wants to link.
+ */
+export function webPageSchema(
+  type: "AboutPage" | "ContactPage",
+  name: string,
+  pagePath: string,
+  description: string,
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": type,
+    "@id": `${site.url}${pagePath}#webpage`,
+    url: `${site.url}${pagePath}`,
+    name,
+    description,
+    inLanguage: "en-IN",
+    isPartOf: { "@id": `${site.url}/#website` },
+    about: { "@id": `${site.url}/#business` },
   };
 }
 

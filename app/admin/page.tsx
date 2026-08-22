@@ -3,6 +3,8 @@ import Link from "next/link";
 import { headers } from "next/headers";
 
 import { Bar, Card, Group, Metric, Panel, Sparkline, StatusPill } from "@/components/admin/AdminUI";
+import { SerpPreview, WhatsAppPreview } from "@/components/admin/Previews";
+import { SetupGrow } from "@/components/admin/SetupGrow";
 import { Tabs } from "@/components/admin/Tabs";
 import { Logo } from "@/components/brand/Logo";
 import { getTraffic } from "@/lib/analytics";
@@ -51,6 +53,10 @@ export default async function AdminPage() {
 
   const [pages, traffic] = await Promise.all([runAudit(audited.origin), getTraffic()]);
 
+  const plausibleEnvSet = Boolean(
+    process.env.PLAUSIBLE_SITE_ID && process.env.PLAUSIBLE_API_KEY,
+  );
+
   const items = readinessItems(host);
   const summary = readinessSummary(items);
   const photos = photoProgress();
@@ -81,6 +87,9 @@ export default async function AdminPage() {
     .filter((p) => !p.error)
     .flatMap((p) => p.checks.filter((c) => c.status !== "pass").map((c) => ({ ...c, page: p.name })))
     .sort((a, b) => (a.status === "fail" ? -1 : 0) - (b.status === "fail" ? -1 : 0));
+
+  const domainLive = !audited.host.includes("vercel.app") && !audited.host.startsWith("localhost");
+  const setupPending = (domainLive ? 0 : 1) + (traffic.connected ? 0 : 1);
 
   const standing = blocking.length
     ? `${blocking.length === 1 ? "One thing is" : `${blocking.length} things are`} holding up launch. Everything else on the site is built and working.`
@@ -473,34 +482,24 @@ export default async function AdminPage() {
                               </p>
                             ) : (
                               <>
-                                <dl className="grid gap-x-8 gap-y-3 border-b border-ink/10 py-4 sm:grid-cols-2">
-                                  <div>
-                                    <dt className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-stone-deep">
-                                      Shows in Google as
-                                    </dt>
-                                    <dd className="mt-1 font-sans text-micro text-ink">
-                                      {page.title || "— no title —"}
-                                    </dd>
-                                    <dd className="mt-1 font-sans text-micro leading-snug text-stone-deep">
-                                      {page.description || "— no description —"}
-                                    </dd>
-                                  </div>
-                                  <div>
-                                    <dt className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-stone-deep">
-                                      On the page
-                                    </dt>
-                                    <dd className="mt-1 font-sans text-micro text-stone-deep">
-                                      {page.h2Count} sections · {page.images} images ·{" "}
-                                      {page.internalLinks} links to other pages
-                                      {page.schemaTypes.length > 0 && (
-                                        <>
-                                          <br />
-                                          {page.schemaTypes.join(", ")}
-                                        </>
-                                      )}
-                                    </dd>
-                                  </div>
-                                </dl>
+                                {/* Not the metadata as data but the metadata as
+                                    it is actually seen — a Google result and a
+                                    WhatsApp forward, drawn from the served tags. */}
+                                <div className="grid items-start gap-4 border-b border-ink/10 py-4 lg:grid-cols-2">
+                                  <SerpPreview page={page} host={audited.host} />
+                                  <WhatsAppPreview
+                                    page={page}
+                                    host={audited.host}
+                                    origin={audited.origin}
+                                  />
+                                </div>
+                                <p className="border-b border-ink/10 py-3 font-sans text-micro text-stone-deep">
+                                  On the page: {page.h2Count} sections · {page.images} images ·{" "}
+                                  {page.internalLinks} links to other pages
+                                  {page.schemaTypes.length > 0 && (
+                                    <> · structured data: {page.schemaTypes.join(", ")}</>
+                                  )}
+                                </p>
 
                                 <ul className="flex flex-col">
                                   {page.checks.map((check) => (
@@ -527,6 +526,26 @@ export default async function AdminPage() {
                       );
                     })}
                   </Group>
+                </Panel>
+              ),
+            },
+
+            {
+              id: "setup",
+              label: "Set up & grow",
+              badge: setupPending ? `${setupPending} to do` : "Ready",
+              tone: setupPending ? "warn" : "good",
+              panel: (
+                <Panel
+                  title="Set up & grow"
+                  subtitle="Connections, the exact text to paste into listings, and an on-demand speed test. API keys go into Vercel's environment variables — this panel notices them by itself."
+                >
+                  <SetupGrow
+                    auditedOrigin={audited.origin}
+                    domainLive={domainLive}
+                    traffic={traffic}
+                    plausibleEnvSet={plausibleEnvSet}
+                  />
                 </Panel>
               ),
             },
