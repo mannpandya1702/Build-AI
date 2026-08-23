@@ -98,10 +98,89 @@ async function fromPlausible(): Promise<Traffic | null> {
   };
 }
 
+
+/* ------------------------------------------------------------------ */
+/* Umami                                                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Umami, the open-source alternative. Same idea as Plausible and the same
+ * two-variable setup, but it has a free hosted tier — which matters when the
+ * only thing standing between the studio and real numbers is a subscription.
+ *
+ * UMAMI_SITE_ID and UMAMI_API_KEY, plus UMAMI_HOST if self-hosted. Cloud keys
+ * authenticate with an x-umami-api-key header; a self-hosted instance issued a
+ * bearer token works through the same header on recent versions.
+ */
+async function fromUmami(): Promise<Traffic | null> {
+  const site = process.env.UMAMI_SITE_ID;
+  const key = process.env.UMAMI_API_KEY;
+  if (!site || !key) return null;
+
+  const host = process.env.UMAMI_HOST ?? "https://api.umami.is";
+  const base = host.includes("api.umami.is") ? `${host}/v1` : `${host}/api`;
+
+  // Umami takes an explicit millisecond window rather than a period keyword.
+  const endAt = Date.now();
+  const startAt = endAt - 30 * 24 * 60 * 60 * 1000;
+  const window = `startAt=${startAt}&endAt=${endAt}`;
+
+  const get = async (path: string) => {
+    const res = await fetch(`${base}/websites/${site}/${path}`, {
+      headers: { "x-umami-api-key": key, accept: "application/json" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) throw new Error(`Umami returned ${res.status}`);
+    return res.json();
+  };
+
+  const [stats, series, pages, sources] = await Promise.all([
+    get(`stats?${window}`),
+    get(`pageviews?${window}&unit=day&timezone=Asia/Kolkata`),
+    get(`metrics?${window}&type=url&limit=8`),
+    get(`metrics?${window}&type=referrer&limit=8`),
+  ]);
+
+  const value = (metric: unknown): number =>
+    typeof metric === "number" ? metric : ((metric as { value?: number })?.value ?? 0);
+
+  const visitors = value(stats.visitors);
+  const bounces = value(stats.bounces);
+  const totalTime = value(stats.totaltime);
+
+  return {
+    connected: true,
+    provider: "Umami",
+    period: "Last 30 days",
+    visitors,
+    pageviews: value(stats.pageviews),
+    // Umami reports a bounce count, not a rate — the panel wants a percent.
+    bounceRate: visitors > 0 ? Math.round((bounces / visitors) * 100) : null,
+    visitDuration: visitors > 0 ? Math.round(totalTime / visitors) : null,
+    series: ((series.sessions ?? series.pageviews ?? []) as { x: string; y: number }[]).map((p) => ({
+      date: p.x,
+      visitors: p.y ?? 0,
+    })),
+    topPages: ((pages ?? []) as { x: string; y: number }[]).map((r) => ({
+      path: r.x,
+      visitors: r.y ?? 0,
+    })),
+    topSources: ((sources ?? []) as { x: string; y: number }[]).map((r) => ({
+      source: r.x || "Direct",
+      visitors: r.y ?? 0,
+    })),
+  };
+}
+
 export async function getTraffic(): Promise<Traffic> {
   try {
+    // Whichever is configured wins; if both are, Plausible goes first.
     const plausible = await fromPlausible();
     if (plausible) return plausible;
+
+    const umamiResult = await fromUmami();
+    if (umamiResult) return umamiResult;
   } catch (error) {
     return {
       connected: false,

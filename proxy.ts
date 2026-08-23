@@ -20,6 +20,22 @@ export function proxy(request: NextRequest) {
   const password = process.env.ADMIN_PASSWORD;
   const user = process.env.ADMIN_USER ?? "riwaaya";
 
+  /*
+   * A browser opens its native sign-in box for ANY request that comes back 401
+   * with this header — including one the page made in the background. The
+   * footer's studio link was a next/link, which prefetches routes as they
+   * scroll into view, so visitors who reached the bottom of the public site
+   * had /admin fetched behind their back and were shown a password prompt out
+   * of nowhere.
+   *
+   * The fix is in the footer, which is now a plain anchor and prefetches
+   * nothing. It deliberately is NOT here: suppressing the header for prefetch
+   * requests was tried and cannot work, because Next strips RSC and
+   * Next-Router-Prefetch before the proxy runs — measured, not assumed; the
+   * proxy receives only accept, host, user-agent and the x-forwarded set. Any
+   * guard written against those header names would be dead code that reads
+   * like protection.
+   */
   const deny = (message: string) =>
     new NextResponse(message, {
       status: 401,

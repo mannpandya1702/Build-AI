@@ -79,16 +79,16 @@ export function SetupGrow({
         ? `Connected — the “Who is visiting” tab is reading real figures from ${traffic.provider}.`
         : plausibleEnvSet
           ? `The keys are set but the connection is failing: ${traffic.reason}`
-          : "Counting is already running and nothing is being lost — but showing the numbers in this panel needs a service with a readable API.",
+          : "Counting is already running and nothing is being lost — the charts are in Vercel today. Showing them here as well needs a service with a readable API; either Umami or Plausible works.",
       steps: traffic.connected
         ? undefined
         : plausibleEnvSet
           ? ["Check both values in Vercel → Settings → Environment Variables, then redeploy"]
           : [
-              "Create an account at plausible.io and add this site",
-              "Copy the site ID and an API key from its settings",
-              "In Vercel → Settings → Environment Variables, add PLAUSIBLE_SITE_ID and PLAUSIBLE_API_KEY",
-              "Redeploy — the tab fills in by itself",
+              "Counting is already running — the charts work today in Vercel → Analytics, with nothing to set up",
+              "To read the numbers into this panel instead, pick either: Umami (umami.is, free tier) or Plausible (plausible.io, paid)",
+              "Add that service's site ID and API key in Vercel → Settings → Environment Variables — UMAMI_SITE_ID and UMAMI_API_KEY, or PLAUSIBLE_SITE_ID and PLAUSIBLE_API_KEY",
+              "Redeploy — whichever is set, this tab fills in by itself",
             ],
     },
     {

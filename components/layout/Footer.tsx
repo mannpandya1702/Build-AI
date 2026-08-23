@@ -135,9 +135,20 @@ export function Footer() {
               looks and the owner always knows to look — putting it in the nav
               would advertise an admin door to every guest on the site.
               The page behind it asks for a password regardless.
+
+              A plain <a>, deliberately, NOT next/link. Link prefetches routes
+              as they scroll into view, so every visitor who reached the footer
+              had /admin fetched in the background — that request came back 401
+              with a WWW-Authenticate header, and the browser answered it by
+              opening its native sign-in box. A password prompt appearing
+              unbidden on a wedding site is about the worst thing this footer
+              could do. A plain anchor never prefetches, and clicking it does a
+              full navigation, so the prompt only ever appears on /admin itself,
+              which is where it belongs.
             */}
-            <Link
+            <a
               href="/admin"
+              rel="nofollow"
               className="inline-flex items-center gap-2 self-start rounded-full border border-chandni/20 px-4 py-2 text-chandni/70 transition-colors duration-[250ms] ease-riwaaya hover:border-chandni/45 hover:text-chandni"
             >
               <svg
@@ -152,7 +163,7 @@ export function Footer() {
                 <path d="M3.6 6V3.9a2.4 2.4 0 0 1 4.8 0V6" strokeLinecap="round" />
               </svg>
               Studio login
-            </Link>
+            </a>
           </div>
         </div>
       </div>

@@ -53,8 +53,11 @@ export default async function AdminPage() {
 
   const [pages, traffic] = await Promise.all([runAudit(audited.origin), getTraffic()]);
 
+  // "Keys are present" — either provider — so a failing connection can be
+  // reported as broken configuration rather than as nothing being set up.
   const plausibleEnvSet = Boolean(
-    process.env.PLAUSIBLE_SITE_ID && process.env.PLAUSIBLE_API_KEY,
+    (process.env.PLAUSIBLE_SITE_ID && process.env.PLAUSIBLE_API_KEY) ||
+      (process.env.UMAMI_SITE_ID && process.env.UMAMI_API_KEY),
   );
 
   const items = readinessItems(host);
